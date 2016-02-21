@@ -96,7 +96,7 @@ mutable Java collections.
 * Uses an `Option` whenever a value is optional.
 
 [[sct-feature-paging]]
-=== Performs paging
+=== Pages automatically
 
 Many AWS APIs that perform listings will return paged results.  Unfortunately, these paging APIs suffer from a couple of
 drawbacks:
@@ -218,3 +218,71 @@ val createdRole: Future[Role] =
 <5> Create a subflow that will attach the `AmazonS3ReadOnlyAccess` policy to the role.
 <6> Have the policy emit the role that was passed in (`rolePolicyAttacher` emits a role ARN)
 <7> Runs the entire flow, resulting in a future with the created role
+
+== Supported clients
+
+The following clients are currently available in {aws2scala}:
+
+CloudFormation::
+* Create, describe, list, and delete stacks
+* Describe stack events
+* List stack resources
+* Validate templates
+Elastic Compute Cloud (EC2)::
+* Create, describe, and delete key pairs
+* Describe instances
+Identity Management (IAM)::
+* Create, list, and delete roles
+* Attach, list, and detach managed policies to roles
+* Get users
+Key Management Service (KMS)::
+* Create, describe, and list keys
+* Schedule and cancel deletion of keys
+* Generate data keys with and without plaintext keys
+* Encrypt and decrypt
+Relational Database Service (RDS)::
+* Create, describe, and delete DB instances
+Simple Storage Service (S3)::
+* Create, list, check existence of, empty, and delete buckets
+* Manage bucket policies and tagging
+* Upload and download strings, byte arrays, and files
+* Copy, list, and delete objects
+* Get object URLs
+Security Token Service (STS)::
+* Assume roles
+Simple Notification Service (SNS)::
+* Create, list, and delete topics
+* Add and remove topic permissions
+* Create, confirm, list, and unsubscribe subscriptions
+* Create, list, and delete platform applications
+* Create, list, and delete platform endpoints
+* Get and set attributes for:
+** Topics
+** Subscriptions
+** Platform applications
+** Platform endpoints
+* Publish
+
+
+== Getting started
+
+=== Add the resolver and dependencies
+
+You will need to add the following to your `build.sbt`:
+
+1. The resolver to get the {aws2scala} dependency,
+2. The {aws2scala} dependency itself, and
+3. Any AWS SDK dependencies you may need.footnote:[{aws2scala} only transitively depends on `aws-java-sdk-core`.  It uses
+   the _provided_ scope for all other dependencies, allowing consumers to only pull in the library dependencies they
+   need]
+
+[source]
+.Adding {aws2scala} with KMS support to `build.sbt`
+----
+resolvers += Resolver.bintrayRepo("monsanto", "maven")      // <1>
+
+libraryDependencies ++= Seq(
+    "com.monsanto.arch" %% "aws2scala"         % "0.4.0"    // <2>
+    "com.amazonaws"      % "aws-java-sdk-kms"  % "1.10.52"  // <3>
+)
+----
