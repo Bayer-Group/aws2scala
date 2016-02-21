@@ -1,0 +1,220 @@
+aws2scala: a Scala-friendly API for AWS
+========================================
+:toc: preamble
+:sectanchors:
+:source-language: scala
+:aws2scala: pass:q[_aws2scala_]
+:idprefix: sct-
+:idseperator: -
+:source-highlighter: pygments
+
+[CAUTION]
+====
+This is pre-1.0 software, interfaces are subject to change.  Please refer to the documentation for each individual
+service API to find out more.
+====
+
+This library wraps the https://aws.amazon.com/sdk-for-java/[AWS SDK for Java] to make it much more Scala-friendly and
+simpler to consume.  It provides <<sct-feature-async,asynchronous>> and <<sct-feature-streaming,streaming>> APIs that
+are <<sct-feature-fewer-objects,easier to use>>, <<sct-feature-paging,perform paging automatically>>, and
+<<sct-feature-idiomatic,more idiomatic>>.
+
+== Features
+
+[[sct-feature-async]]
+=== Fully asynchronous
+
+The AWS SDK for Java provides both synchronous and asynchronous APIs for its clients.  Using the synchronous APIs in
+an asynchronous context, such as a Spray or Akka HTTP route, is problematic.  Unfortunately, using the asynchronous
+APIs is problematic since they use Java futures rather than Scala futures.  All of the non-streaming {aws2scala} APIs
+are fully asynchronous and return Scala futures, meaning you can compose them and use them with `for` comprehensions.
+
+The following section contains <<lst-create-role-aws,an example>> of using a synchronous AWS API asynchronously.
+
+[[sct-feature-fewer-objects]]
+=== Eliminates most request/result objects
+
+The AWS APIs make extensive use of request and result objects, this is even the case when they are only wrapping just
+one argument/result object.footnote:[In all fairness, most request objects are subclasses of `AmazonWebServiceRequest`
+and allow setting things like request timeouts, which is not yet implemented in {aws2scala}.]  {aws2scala} generally
+provides methods that take the essential arguments for a request and return the object of interest in the result.
+
+For example, you can compare how creating a role asynchronously differs between using <<lst-create-role-aws,the AWS IAM client>>
+and <<lst-create-role-scala,using the {aws2scala} IAM client>>.
+
+
+[[lst-create-role-aws]]
+[source]
+.Using the synchronous AWS API
+----
+import com.amazonaws.services.identitymanagement.AmazonIdentityManagementClient
+import com.amazonaws.services.identitymanagement.model.CreateRoleRequest
+import com.monsanto.arch.awsutil.identitymanagement.model.Role
+
+val iam = new AmazonIdentityManagementClient()
+val policy = // some policy string
+val eventualRole =
+    Future { // <1>
+        val request = new CreateRoleRequest()  // <2>
+                        .withRoleName("MyRole")
+                        .witAssumedRolePolicyDocument(policy)
+        val result = blocking { iam.createRole(request) } // <3>
+        val awsRole = result.getRole // <4>
+        Role.fromAws(awsRole) // <5>
+    }
+----
+<1> Execute the code asynchronously (we are using the synchronous AWS client)
+<2> Create an AWS request object
+<3> Execute the request withing a `blocking` context, getting the result object
+<4> Extract the mutable AWS `Role` bean from the result
+<4> Build an immutable {aws2scala} `Role` instance from the AWS result
+
+[[lst-create-role-scala]]
+[source]
+.Using the asynchronous {aws2scala} IAM client
+----
+import com.monsanto.arch.awsutil.AsyncAwsClient
+
+val iam = AsyncAwsClient.Default.identityManagement
+val policy = // some policy string
+val role = iam.createRole("MyRole", policy) // <1>
+----
+<1> This method automatically builds the request object and unpacks the result object, returning an immutable `Role`
+    value
+
+[[sct-feature-idiomatic]]
+=== Uses immutable Scala collections, options, and values
+
+The AWS APIs make extensive use of JavaBeans-style classes.  These are mutable objects that use Java-style getters and
+setters.  In cases where one of these properties may be optional, it is a null value. Additionally, all collections are
+mutable Java collections.
+
+{aws2scala} opts to take a more idiomatic Scala approach, it:
+
+* Uses immutable `Seq` and `Map` objects for all arguments and return values,
+* Represents compound data structures using case classes, ensuring immutability and allowing for pattern matching, and
+* Uses an `Option` whenever a value is optional.
+
+[[sct-feature-paging]]
+=== Performs paging
+
+Many AWS APIs that perform listings will return paged results.  Unfortunately, these paging APIs suffer from a couple of
+drawbacks:
+
+. Preparing a new request usually requires getting data from the previous result.  This means that is difficult to
+  process pages fully asynchronously.
+. They are inconsistent.  Some use `Result.getNextToken` and `Request.getNextToken`, others use `Result.getMarker` and
+  `Request.setMarker`, and still others use `Result.getNextMarker` and `Request.setMarker`.
+
+You can compare how to manually perform the work <<lst-list-roles-aws,using the AWS client>> versus
+<<lst-list-roles-scala,using {aws2scala}>>.  Note that in both versions, the future will not complete until all
+pages have been retrieved from AWS.  If this is undesirable, i.e. you only want to request new pages as needed, use
+a <<Streaming,streaming client>>.
+
+[[lst-list-roles-aws]]
+[source]
+.Listing all roles asynchronously using the synchronous AWS API
+----
+import com.amazonaws.services.identitymanagement.AmazonIdentityManagementClient
+import com.amazonaws.services.identitymanagement.model.ListRolesRequest
+import com.monsanto.arch.awsutil.identitymanagement.model.Role
+import scala.collection.JavaConverters._
+
+val iam = new AmazonIdentityManagementClient()
+
+val eventualRoles: Future[Seq[Role]] =
+    Future {
+        val request = new ListRolesRequest // <1>
+        var result: ListRolesResult = new ListRolesResult // <2>
+        val rolesListBuilder = Seq.newBuilder[Role] // <3>
+
+        do {
+            Option(request.getMarker).foreach(m ⇒ request.setMarker(m)) // <4>
+            result = blocking { iam.listRoles(request) } // <5>
+            val pagedRoles = result.getRoles.asScala.map(Role.fromAws) // <6>
+            rolesListBuilder ++= pagedRoles // <7>
+        } while (result.isTruncated) // <8>
+
+        rolesListBuilder.result() // <9>
+    }
+----
+<1> Create the new request
+<2> Create an empty result
+<3> Create builder to accumulate results
+<4> Set the next pages marker if it is in the result
+<5> Get results in a `blocking` context
+<6> Convert the Java collection of JavaBeans to a (mutable) Scala collection of case class instances
+<7> Add to the accumulated result
+<8> Repeat until there are no further pages
+<9> Get the final (immutable) Scala collection of immutable `Role` instances
+
+[[lst-list-roles-scala]]
+[source]
+.Listing all roles asynchronously using {aws2scala}
+----
+import com.monsanto.arch.awsutil.AsyncAwsClient
+
+val iam = AsyncAwsClient.Default.identityManagement
+val roles = iam.listRoles() // <1>
+----
+<1> Can it get any easier than this?
+
+
+[[sct-feature-streaming]]
+=== Streaming
+:akka-streams: http://doc.akka.io/docs/akka/snapshot/scala/stream/index.html[Akka streams]
+
+In addition to the asynchronous APIs, all {aws2scala} functionality is available through streaming APIs that are built
+using {akka-streams}.  For example, <<lst-create-role-for-current-user,the following listing>> constructs and runs a
+flow that:
+
+. Gets the current IAM user,
+. Creates a role for that user’s account,
+. Attaches a policy to the new role, and
+. Emits the role that was created.
+
+While the same result can be achieved using the asynchronous APIs and future composition, creating reusable graphs
+can make code easier to understand.  Additionally, the various listing flows that process paged results will emit
+items as soon as they are retrieved.  This allows for the construction of graphs that can process items in a listing
+as they are available without having to wait for the listing to complete.
+
+[[lst-create-role-for-current-user]]
+[source]
+.Setting up a role for the current IAM user
+----
+import com.monsanto.arch.awsutil.identitymanagement.model._
+import com.monsanto.arch.awsutil.StreamingAwsClient
+
+val s3ReadOnlyPolicy = "arn:aws:iam::aws:policy/AmazonS3ReadOnlyAccess"
+def createAssumRolePolicy(user: User): String =
+    s"""{
+            "Version": "2012-10-17",
+            "Statement": [
+                {
+                    "Action": "sts:AssumeRole",
+                    "Effect": "Allow",
+                    "Principal": { "AWS": "arn:aws:iam::${user.account}:root" }
+                }
+            ]
+        }"""
+
+val iam = StreamingAwsClient.Default.identityManagement
+val createdRole: Future[Role] =
+    Source.single(GetUserRequest.currentUser) // <1>
+        .via(iam.userGetter) // <2>
+        .map(user ⇒ CreateRoleRequest("MyRole", createAssumeRolePolicy(user))) // <3>
+        .via(iam.roleCreator) // <4>
+        .flatMapConcat { role ⇒
+            Source.single(AttachRolePolicyRequest(role.name, s3ReadOnlyPolicy)) // <5>
+                .via(iam.rolePolicyAttacher)
+                .map(_ ⇒ role) // <6>
+        }
+        .runWith(Sink.head) // <7>
+----
+<1> Start with a single `GetUserRequest` to get the current user
+<2> Send it through the IAM `userGetter` flow, which emits a `User` instance
+<3> Now, transform the the user into a `CreateRoleRequest`
+<4> Send it through the IAM `roleCreator` flow, which emits a `Role` instance
+<5> Create a subflow that will attach the `AmazonS3ReadOnlyAccess` policy to the role.
+<6> Have the policy emit the role that was passed in (`rolePolicyAttacher` emits a role ARN)
+<7> Runs the entire flow, resulting in a future with the created role

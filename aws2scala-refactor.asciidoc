@@ -1,0 +1,246 @@
+About the aws2scala refactor
+============================
+Daniel Solano_Gómez
+:toc:
+:source-highlighter: pygments
+:source-language: scala
+
+Motivations
+-----------
+
+=== Why the refactor of aws2scala?
+
+The original `aws2scala` did a great job of making the AWS asynchronous APIs
+more Scala-friendly.  However they suffered from a couple of drawbacks:
+
+. They did not account for many AWS requests that may be paged
+. They are a very thin layer over the AWS API requiring consumers to:
+  * Manipulate inconvenient request/response objects
+  * Convert to/from Java collections
+
+
+=== Why use Akka streams?
+
+Our initial attempt at working around the paging issue attempted to resolve the
+issue by composing futures.  However, it was impossible to create a fully
+asynchronous API because checking for and requesting a subsequent page of
+results required dereferencing futures.
+
+The Akka streams API, though a bit heavyweight, provides mechanisms to make
+dealing with paged results much easier, as well as allowing for composition of
+AWS operations that are entirely asynchronous.
+
+
+=== Why use Akka streams 2.0?
+
+While Akka 1.0 was released only recently, the first milestone release of Akka
+2.0 included some significant API changes.  Rather than building on a
+deprecated API, we are building on what we hope will be a more durable API.
+
+=== What are the objectives of the refactor?
+
+The primary objectives are to make the necessary changes to ensure that Stax as
+a Service and the StaaS agent have all of the functionality they need to
+perform correctly.
+
+Additional objectives include:
+
+* Better test coverage, including:
+** Mocked unit tests that do not require AWS
+** Integration tests that ensure the API works with AWS
+* Each client should have two ways of doing things:
+  . A lower level stream-based API, suitable for composition
+  . A higher-level API that is suitable for one-off operations
+* We should keep in mind that we are planning to open source this project, so
+  it is important to:
+** Be able to have a test suite that can run without AWS credentials
+** To keep Monsanto-specific behaviours either configurable (with a generic
+   set of default) or out of the library itself
+
+
+Roadmap
+-------
+
+The following clients need to be updated for StaaS(-agent):
+
+* CloudFormation _(complete)_
+* S3 _(in progress)_
+* EC2
+* KMS
+* RDS
+
+For each of these clients the goals are:
+
+. To have feature-parity with the non-stream-based client
+. To have full test coverage using unit tests that do not rely on AWS
+. To have sufficient test coverage using integration test that run on AWS
+. To update all clients to use the API
+
+For this last point, there are `streaming` branches for both
+https://github.com/MonsantoCo/stax-as-a-service/tree/streaming[Stax as a
+Service] and
+https://github.com/MonsantoCo/staas-agent/tree/streaming[Staas-Agent].
+
+
+Structure of a streaming client
+-------------------------------
+
+As part of this refactor, there are some changes being made to each client, including:
+
+. Each client is being moved into a package to match the service it wraps, e.g.
+  the CloudFormation client is being moved from `com.monsanto.arch.awsutil` to
+  `com.monsanto.arch.awsutil.cloudformation`.
+. The concrete implementations are taking the wrapped AWS implementation via
+  their interfaces, i.e. `AmazonCloudFormationAsync` rather than
+  `AmazonCloudFormationAsyncClient`.  This makes mocking AWS easier.
+
+
+=== Public interface
+
+For each client, there is a pure interface that represents the public interface
+of the client to its consumers.  This should be a pure trait, for ease of
+mocking.  For each logical operation in the client there are two different
+methods of invoking that implementation:
+
+. A ‘higher-level’ interface that is best for one-off operations.  These are
+  methods that take individual arguments and return a Scala future with the
+  result.  These will generally take a `Materializer` instance in order to be
+  able to do their work.  Where the inputs to an operation are simple enough,
+  it is best to take them directly rather than the AWS request object.
+. A ‘lower-level’ interface that produces Akka flows that perform the operation.
+
+In general, there will be a 1:1 mapping of lower-level flows to asynchronous
+AWS operations.  The higher level interface will be written in terms of the
+lower-level interface.
+
+Let’s take the CloudFormation ‘describe stacks’ operation as an example.  It
+takes `DescribeStacksRequest`, which really only takes a single optional
+argument, a stack name or ID.  When the argument is missing, it describes all
+stacks; when it is present, it describes the single stack.
+
+In terms of the high-level API, this looks like:
+
+[source]
+------------------------------------------------------------------------------
+def describeStacks()(implicit m: Materializer): Future[Seq[StackSummary]]
+def describeStack(stackNameOrID: String)(implicit m: Materializer): Future[StackSummary]
+------------------------------------------------------------------------------
+
+Note that these methods have different return types, but both return futures.
+Additionally, they take a `Materializer` implicit argument.  They are both
+implemented in terms of the lower-level API, which is:
+
+[source]
+------------------------------------------------------------------------------
+def stackDescriber: Flow[Option[String], StackSummary, Unit]
+------------------------------------------------------------------------------
+
+NOTE: This trait must be public, but it is advisable to make the
+implementations private to the `awsutil` package.
+
+
+=== Abstract implementation
+
+The code that implements the high-level APIs in terms of low-level APIs is
+generally placed in an abstract class that does just that.
+
+[source]
+------------------------------------------------------------------------------
+final override def describeStacks()(implicit m: Materializer) = {
+  val source = Source.single(None).via(stackDescriber) // <1>
+  FiniteRunners.vector(source) // <2>
+}
+
+final override def describeStack(stackNameOrID: String)(implicit m: Materializer) = {
+  FiniteRunners.head(Source.single(Some(stackNameOrID)).via(stackDescriber)) // <3>
+}
+------------------------------------------------------------------------------
+
+<1> Creates a new source that will send a single `None` into the flow defined
+    by `stackDescriber`
+<2> Since this returns zero or more `StackSummary` objects, uses the `vector`
+    utility from the https://github.com/MonsantoCo/akka-stream-util[`akka-stream-util`].
+<3> Like above, except that it passes a `Some` filled with the argument.  Since
+    we expect one result, we use `head` instead of `vector`.
+
+Note how both of these use the abstract `stackDescriber` method.
+
+
+=== Default implementation
+
+Finally, the default implementation for all of these classes provides the
+implementations of the low-level APIs:
+
+[source]
+------------------------------------------------------------------------------
+override val stackDescriber: Flow[Option[String], Stack, Unit] = {
+  Flow[Option[String]] // <1>
+    .map { maybeStackName => // <2>
+      val req = new DescribeStacksRequest
+      maybeStackName.foreach(req.setStackName)
+      req
+    }
+    .via(AWSFlow.pagedByNextToken(client.describeStacksAsync)) // <3>
+    .mapConcat(_.getStacks.toList) // <4>
+}
+------------------------------------------------------------------------------
+
+<1> Starts creating a new flow that takes `Option[String]` elements
+<2> Given an optional stack name, build a `DescribeStacksRequest` instance.
+<3> Now pass the request to a flow generated by `AWSFlow.pagedByNextToken`.
+    This will automatically handle multiple paged requests by emitting one or more
+    `DescribeStacksResult` objects.
+<4> Finally, since the only thing that is interesting about the result object
+    is its collection of `Stack` objects, we extract that by calling `getStacks`.
+    Since this is a collection which we want to flatten out, we are using
+    `mapConcat` instead of plain `map`.  Since `mapConcat` requires an
+    immutable Scala iterable, we use the `toList` conversion.
+
+NOTE: In those cases where paging is not required, you can use `AWSFlow.simple`.
+
+
+Testing of a streaming client
+=============================
+
+The tests are split into unit tests, residing under `core/src/test`, and
+integration tests, residing under `core/src/it`.  This is the configuration
+supported by SBT, and we are using it to ensure that tests that do not require
+AWS credentials will run independently of those that do.
+
+=== Unit tests
+
+The unit tests should:
+
+* Be run using `test`
+* Not touch AWS at all, instead they should use mocks
+* Be able to test failure scenarios
+* Provide the maximum practical amount of test coverage
+
+=== Integration tests
+
+The integrations test should:
+
+* Be run using `it:test`
+* Test all major functionality of the client through AWS itself
+* Be independent of any Monsanto AWS infrastructure, i.e. any resource you need
+  should be created as part of the suite rather than be presumed to exist
+* Ensure that any resources allocated by the test are easily identifiable as
+  belonging to the aws2scala test suite.  One pattern is
+  `aws2scala-it-$CLIENT-$UUID` where `CLIENT` identifies the client/suite
+  generating the resource and `UUID` is randomly generated on each run.
+* Clean up after itself.  This is tricky, as tests can be aborted.  It is
+  probably best to have a ‘test’ that runs at the end of a suite that removes
+  any resources created by that suite that are reasonably old (so as to not
+  break any concurrently-running instances of the suite).
+
+
+Resources
+=========
+
+* Akka Streams
+** http://doc.akka.io/docs/akka-stream-and-http-experimental/2.0-M1/scala.html[Reference documentation]
+** http://doc.akka.io/api/akka-stream-and-http-experimental/2.0-M1/[API documenation]
+* CloudFormation client built using streams
+** https://github.com/MonsantoCo/aws2scala/tree/streams/core/src/main/scala/com/monsanto/arch/awsutil/cloudformation[Implementation]
+** https://github.com/MonsantoCo/aws2scala/blob/streams/core/src/test/scala/com/monsanto/arch/awsutil/cloudformation/DefaultCloudFormationClientSpec.scala[Unit tests]
+** https://github.com/MonsantoCo/aws2scala/blob/streams/core/src/it/scala/com/monsanto/arch/awsutil/cloudformation/DefaultAsyncCloudFormationClientIntegrationSpec.scala[Integration tests]
