@@ -1,5 +1,5 @@
 aws2scala: a Scala-friendly API for AWS
-========================================
+=======================================
 :toc: preamble
 :sectanchors:
 :source-language: scala
@@ -282,7 +282,7 @@ You will need to add the following to your `build.sbt`:
 resolvers += Resolver.bintrayRepo("monsanto", "maven")      // <1>
 
 libraryDependencies ++= Seq(
-    "com.monsanto.arch" %% "aws2scala"         % "0.4.0"    // <2>
+    "com.monsanto.arch" %% "aws2scala"         % "0.4.1"    // <2>
     "com.amazonaws"      % "aws-java-sdk-kms"  % "1.10.52"  // <3>
 )
 ----
