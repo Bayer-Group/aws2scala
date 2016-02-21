@@ -28,12 +28,6 @@ lazy val commonSettings = Seq(
     Resolver.jcenterRepo
   ),
   credentials += Credentials(Path.userHome / ".ivy2" / ".credentials"),
-  dependencyOverrides ++= Set (
-    "org.scala-lang"          % "scala-reflect" % scalaVersion.value,
-    "org.scala-lang.modules" %% "scala-xml"     % "1.0.4",
-    "org.slf4j"               % "slf4j-api"     % "1.7.16",
-    "com.typesafe.akka"      %% "akka-actor"    % akka
-  ),
 
   // scala compilation
   scalaVersion := "2.11.7",
@@ -43,10 +37,7 @@ lazy val commonSettings = Seq(
     "-feature"
   ),
   (scalacOptions in Compile) ++= compileOnlyOptions,
-  (scalacOptions in Test) := {
-    val options = (scalacOptions in Test).value
-    options.filterNot(compileOnlyOptions.contains)
-  },
+  (scalacOptions in Test) --= compileOnlyOptions,
 
   // documentation
   apiMappingsScala ++= Map(
@@ -89,7 +80,6 @@ lazy val noPublishingSettings = Seq(
 )
 
 val commonDependencies = Seq(
-  "com.typesafe.akka"           %% "akka-actor"                % akka,
   "com.typesafe.akka"           %% "akka-stream"               % akka,
   "com.typesafe.scala-logging"  %% "scala-logging"             % "3.1.0"
 ) ++ awsDependencies("core")
@@ -127,6 +117,7 @@ lazy val core = (project in file("core"))
     name := "aws2scala",
     description := "Utilities for consuming AWS APIs in Scala",
     libraryDependencies ++= Seq(
+      "com.typesafe"                 % "config"                              % "1.3.0",
       "com.typesafe.scala-logging"  %% "scala-logging"                       % "3.1.0",
       "io.spray"                    %% "spray-json"                          % "1.3.2" % "it,test",
       "com.monsanto.arch"           %% "cloud-formation-template-generator"  % "3.1.2" % "it,test",
