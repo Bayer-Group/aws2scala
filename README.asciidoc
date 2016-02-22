@@ -270,7 +270,7 @@ Simple Notification Service (SNS)::
 
 You will need to add the following to your `build.sbt`:
 
-1. The resolver to get the {aws2scala} dependency,
+1. Add the JCenter resolver to get the {aws2scala} dependency,
 2. The {aws2scala} dependency itself, and
 3. Any AWS SDK dependencies you may need.footnote:[{aws2scala} only transitively depends on `aws-java-sdk-core`.  It uses
    the _provided_ scope for all other dependencies, allowing consumers to only pull in the library dependencies they
@@ -279,7 +279,7 @@ You will need to add the following to your `build.sbt`:
 [source]
 .Adding {aws2scala} with KMS support to `build.sbt`
 ----
-resolvers += Resolver.bintrayRepo("monsanto", "maven")      // <1>
+resolvers += Resolver.jcenterRepo                           // <1>
 
 libraryDependencies ++= Seq(
     "com.monsanto.arch" %% "aws2scala"         % "0.4.1"    // <2>
