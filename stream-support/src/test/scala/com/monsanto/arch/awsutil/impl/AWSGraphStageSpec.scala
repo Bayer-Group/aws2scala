@@ -298,7 +298,7 @@ object AWSGraphStageSpec {
       |    initial-input-buffer-size = 1
       |    max-input-buffer-size = 1
       |  }
-      |  test.single-expect-default = 25 milliseconds
+      |  test.single-expect-default = 100 milliseconds
       |}""".stripMargin).withFallback(ConfigFactory.load())
 
   case class TestRequest(id: Int, token: Option[String] = None) extends AmazonWebServiceRequest {

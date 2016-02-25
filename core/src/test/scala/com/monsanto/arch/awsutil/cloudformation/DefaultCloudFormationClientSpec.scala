@@ -9,21 +9,18 @@ import com.amazonaws.services.cloudformation.model._
 import com.monsanto.arch.awsutil.cloudformation.AsyncCloudFormationClient.Implicits._
 import com.monsanto.arch.awsutil.cloudformation.DefaultCloudFormationClientSpec._
 import com.monsanto.arch.awsutil.cloudformation.model.ValidatedTemplate
+import com.monsanto.arch.awsutil.test.AdaptableScalaFutures._
 import com.monsanto.arch.awsutil.{AwsMockUtils, Materialised}
 import com.monsanto.arch.cloudformation.model.resource.{`AWS::IAM::Group`, `AWS::SNS::Topic`}
 import com.monsanto.arch.cloudformation.model.{ParameterRef, StringParameter, Template}
 import org.scalamock.scalatest.MockFactory
 import org.scalatest.Matchers._
 import org.scalatest._
-import org.scalatest.concurrent.ScalaFutures._
 import spray.json.JsonWriter
 
 import scala.collection.JavaConverters._
-import scala.concurrent.duration.DurationInt
 
 class DefaultCloudFormationClientSpec extends FreeSpec with MockFactory with Materialised with AwsMockUtils {
-  implicit val patienceConfig = PatienceConfig(250.milliseconds, 5.milliseconds)
-
   val stackName = s"aws2scala-it-cf-${UUID.randomUUID()}"
   val stackId = "some:stack:id"
 

@@ -2,12 +2,12 @@ package com.monsanto.arch.awsutil.identitymanagement
 
 import akka.Done
 import com.monsanto.arch.awsutil.identitymanagement.model._
+import com.monsanto.arch.awsutil.test.AdaptableScalaFutures._
 import com.monsanto.arch.awsutil.test.Samplers.arbitrarySample
 import com.monsanto.arch.awsutil.{AwsGen, FlowMockUtils, Materialised}
 import org.scalamock.scalatest.MockFactory
 import org.scalatest.FreeSpec
 import org.scalatest.Matchers._
-import org.scalatest.concurrent.ScalaFutures._
 import org.scalatest.prop.GeneratorDrivenPropertyChecks._
 
 class DefaultAsyncIdentityManagementClientSpec extends FreeSpec with MockFactory with Materialised with FlowMockUtils {

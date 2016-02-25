@@ -3,6 +3,7 @@ package com.monsanto.arch.awsutil.ec2
 import akka.stream.scaladsl.Flow
 import com.amazonaws.AmazonServiceException
 import com.monsanto.arch.awsutil.ec2.model._
+import com.monsanto.arch.awsutil.test.AdaptableScalaFutures._
 import com.monsanto.arch.awsutil.test.Samplers.{EnhancedGen, arbitrarySample}
 import com.monsanto.arch.awsutil.{FlowMockUtils, Materialised}
 import org.scalacheck.Arbitrary.arbitrary
@@ -10,7 +11,6 @@ import org.scalacheck.Gen
 import org.scalamock.scalatest.MockFactory
 import org.scalatest.FreeSpec
 import org.scalatest.Matchers._
-import org.scalatest.concurrent.ScalaFutures._
 import org.scalatest.prop.GeneratorDrivenPropertyChecks._
 
 class AsyncEC2ClientSpec extends FreeSpec with MockFactory with Materialised with FlowMockUtils {

@@ -4,12 +4,12 @@ import akka.stream.scaladsl.{Sink, Source}
 import com.amazonaws.handlers.AsyncHandler
 import com.amazonaws.services.securitytoken.AWSSecurityTokenServiceAsync
 import com.amazonaws.services.securitytoken.model.{AssumeRoleRequest, AssumeRoleResult}
+import com.monsanto.arch.awsutil.test.AdaptableScalaFutures._
 import com.monsanto.arch.awsutil.test.Samplers.EnhancedGen
 import com.monsanto.arch.awsutil.{AwsGen, AwsMockUtils, Materialised}
 import org.scalamock.scalatest.MockFactory
 import org.scalatest.FreeSpec
 import org.scalatest.Matchers._
-import org.scalatest.concurrent.ScalaFutures._
 import org.scalatest.prop.GeneratorDrivenPropertyChecks._
 
 class DefaultStreamingSecurityTokenServiceClientSpec extends FreeSpec with MockFactory with Materialised with AwsMockUtils {

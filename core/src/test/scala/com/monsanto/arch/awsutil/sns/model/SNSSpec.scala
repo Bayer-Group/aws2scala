@@ -2,12 +2,12 @@ package com.monsanto.arch.awsutil.sns.model
 
 import akka.stream.scaladsl.{Flow, Source}
 import com.monsanto.arch.awsutil.sns.StreamingSNSClient
+import com.monsanto.arch.awsutil.test.AdaptableScalaFutures._
 import com.monsanto.arch.awsutil.{FlowMockUtils, Materialised}
 import org.scalacheck.Gen
 import org.scalamock.scalatest.MockFactory
 import org.scalatest.FreeSpec
 import org.scalatest.Matchers._
-import org.scalatest.concurrent.ScalaFutures._
 import org.scalatest.prop.GeneratorDrivenPropertyChecks._
 
 class SNSSpec extends FreeSpec with MockFactory with Materialised with FlowMockUtils {

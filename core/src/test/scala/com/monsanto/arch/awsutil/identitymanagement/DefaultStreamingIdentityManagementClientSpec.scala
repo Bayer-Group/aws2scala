@@ -1,14 +1,11 @@
 package com.monsanto.arch.awsutil.identitymanagement
 
 import akka.stream.scaladsl.{Sink, Source}
-
 import com.amazonaws.handlers.AsyncHandler
 import com.amazonaws.services.identitymanagement.AmazonIdentityManagementAsync
 import com.amazonaws.services.identitymanagement.model.{AttachRolePolicyRequest ⇒ AwsAttachRolePolicyRequest, DetachRolePolicyRequest ⇒ AwsDetachRolePolicyRequest, GetUserRequest ⇒ AwsGetUserRequest, ListAttachedRolePoliciesRequest ⇒ AwsListAttachedRolePoliciesRequest, ListRolesRequest ⇒ AwsListRolesRequest, _}
-import com.monsanto.arch.awsutil.identitymanagement.model.GetUserRequest
-import com.monsanto.arch.awsutil.identitymanagement.model.ListAttachedRolePoliciesRequest
-import com.monsanto.arch.awsutil.identitymanagement.model.ListRolesRequest
-import com.monsanto.arch.awsutil.identitymanagement.model.{AttachRolePolicyRequest, AttachedPolicy, DetachRolePolicyRequest}
+import com.monsanto.arch.awsutil.identitymanagement.model.{AttachRolePolicyRequest, AttachedPolicy, DetachRolePolicyRequest, GetUserRequest, ListAttachedRolePoliciesRequest, ListRolesRequest}
+import com.monsanto.arch.awsutil.test.AdaptableScalaFutures._
 import com.monsanto.arch.awsutil.test.Samplers._
 import com.monsanto.arch.awsutil.{AwsGen, AwsMockUtils, Materialised}
 import org.scalacheck.Arbitrary.arbitrary
@@ -16,7 +13,6 @@ import org.scalacheck.Gen
 import org.scalamock.scalatest.MockFactory
 import org.scalatest.FreeSpec
 import org.scalatest.Matchers._
-import org.scalatest.concurrent.ScalaFutures._
 import org.scalatest.prop.GeneratorDrivenPropertyChecks._
 
 class DefaultStreamingIdentityManagementClientSpec extends FreeSpec with MockFactory with Materialised with AwsMockUtils {

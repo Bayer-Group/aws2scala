@@ -3,11 +3,11 @@ package com.monsanto.arch.awsutil.rds
 import com.amazonaws.handlers.AsyncHandler
 import com.amazonaws.services.rds.AmazonRDSAsync
 import com.amazonaws.services.rds.model._
+import com.monsanto.arch.awsutil.test.AdaptableScalaFutures._
 import com.monsanto.arch.awsutil.{AwsMockUtils, Materialised}
 import org.scalamock.scalatest.MockFactory
 import org.scalatest.FreeSpec
 import org.scalatest.Matchers._
-import org.scalatest.concurrent.ScalaFutures._
 
 import scala.collection.JavaConverters._
 

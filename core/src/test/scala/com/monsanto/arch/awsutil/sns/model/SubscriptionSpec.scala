@@ -4,12 +4,12 @@ import java.util.UUID
 
 import akka.Done
 import com.monsanto.arch.awsutil.sns.StreamingSNSClient
+import com.monsanto.arch.awsutil.test.AdaptableScalaFutures._
 import com.monsanto.arch.awsutil.{AwsGen, FlowMockUtils, Materialised}
 import org.scalacheck.Arbitrary.arbitrary
 import org.scalamock.scalatest.MockFactory
 import org.scalatest.FreeSpec
 import org.scalatest.Matchers._
-import org.scalatest.concurrent.ScalaFutures._
 import org.scalatest.prop.GeneratorDrivenPropertyChecks._
 
 class SubscriptionSpec extends FreeSpec with Materialised with MockFactory with FlowMockUtils {

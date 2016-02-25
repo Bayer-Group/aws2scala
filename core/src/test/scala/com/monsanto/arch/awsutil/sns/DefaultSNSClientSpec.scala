@@ -5,13 +5,13 @@ import com.amazonaws.handlers.AsyncHandler
 import com.amazonaws.services.sns.{AmazonSNSAsync, model ⇒ aws}
 import com.monsanto.arch.awsutil.sns.model.SNSGen.TopicArn
 import com.monsanto.arch.awsutil.sns.model._
+import com.monsanto.arch.awsutil.test.AdaptableScalaFutures._
 import com.monsanto.arch.awsutil.{AwsGen, AwsMockUtils, Materialised}
 import org.scalacheck.Arbitrary.arbitrary
 import org.scalacheck.Gen
 import org.scalamock.scalatest.MockFactory
 import org.scalatest.FreeSpec
 import org.scalatest.Matchers._
-import org.scalatest.concurrent.ScalaFutures._
 import org.scalatest.prop.GeneratorDrivenPropertyChecks._
 import spray.json.{JsObject, JsString, JsonParser}
 

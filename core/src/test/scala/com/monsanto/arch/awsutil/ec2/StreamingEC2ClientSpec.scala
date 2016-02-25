@@ -7,12 +7,12 @@ import com.amazonaws.handlers.AsyncHandler
 import com.amazonaws.services.ec2.{model ⇒ aws}
 import com.monsanto.arch.awsutil.Materialised
 import com.monsanto.arch.awsutil.ec2.model.EC2Gen
+import com.monsanto.arch.awsutil.test.AdaptableScalaFutures._
 import com.monsanto.arch.awsutil.test.Samplers.EnhancedGen
 import org.scalacheck.Arbitrary.arbitrary
 import org.scalacheck.Gen
 import org.scalatest.FreeSpec
 import org.scalatest.Matchers._
-import org.scalatest.concurrent.ScalaFutures._
 import org.scalatest.prop.GeneratorDrivenPropertyChecks._
 
 import scala.collection.JavaConverters._

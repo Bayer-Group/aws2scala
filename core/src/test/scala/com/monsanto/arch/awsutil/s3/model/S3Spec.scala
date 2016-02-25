@@ -7,10 +7,10 @@ import akka.stream.scaladsl.Source
 import com.amazonaws.services.s3.{model ⇒ aws}
 import com.monsanto.arch.awsutil.Materialised
 import com.monsanto.arch.awsutil.s3.{AsyncS3Client, StreamingS3Client}
+import com.monsanto.arch.awsutil.test.AdaptableScalaFutures._
 import org.scalamock.scalatest.MockFactory
 import org.scalatest.FreeSpec
 import org.scalatest.Matchers._
-import org.scalatest.concurrent.ScalaFutures._
 
 import scala.concurrent.Future
 

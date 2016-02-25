@@ -13,13 +13,13 @@ import com.amazonaws.services.s3.transfer.{Download, TransferManager, Upload}
 import com.amazonaws.services.s3.{AbstractAmazonS3, Headers}
 import com.monsanto.arch.awsutil.s3.DefaultS3ClientSpec._
 import com.monsanto.arch.awsutil.s3.model.BucketNameAndKey
+import com.monsanto.arch.awsutil.test.AdaptableScalaFutures._
 import com.monsanto.arch.awsutil.{Materialised, Settings}
 import com.typesafe.config.ConfigFactory
 import org.scalacheck.Gen
 import org.scalamock.scalatest.MockFactory
 import org.scalatest.FreeSpec
 import org.scalatest.Matchers._
-import org.scalatest.concurrent.ScalaFutures._
 import org.scalatest.prop.GeneratorDrivenPropertyChecks._
 import spray.json.JsonParser
 

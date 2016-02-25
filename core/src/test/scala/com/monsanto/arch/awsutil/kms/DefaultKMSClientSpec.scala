@@ -10,11 +10,11 @@ import com.amazonaws.handlers.AsyncHandler
 import com.amazonaws.services.kms.AWSKMSAsync
 import com.amazonaws.services.kms.model.{CreateKeyRequest ⇒ AWSCreateKeyRequest, DataKeySpec ⇒ AWSDataKeySpec, DecryptRequest ⇒ AWSDecryptRequest, EncryptRequest ⇒ AWSEncryptRequest, GenerateDataKeyRequest ⇒ AWSGenerateDataKeyRequest, KeyMetadata ⇒ _, KeyState ⇒ _, _}
 import com.monsanto.arch.awsutil.kms.model._
+import com.monsanto.arch.awsutil.test.AdaptableScalaFutures._
 import com.monsanto.arch.awsutil.{AwsMockUtils, Materialised}
 import org.scalamock.scalatest.MockFactory
 import org.scalatest.FreeSpec
 import org.scalatest.Matchers._
-import org.scalatest.concurrent.ScalaFutures._
 
 import scala.collection.JavaConverters._
 

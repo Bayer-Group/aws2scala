@@ -4,12 +4,12 @@ import akka.Done
 import com.amazonaws.handlers.AsyncHandler
 import com.amazonaws.services.sns.{AmazonSNSAsync, model ⇒ am}
 import com.monsanto.arch.awsutil.sns.{DefaultStreamingSNSClient, StreamingSNSClient}
+import com.monsanto.arch.awsutil.test.AdaptableScalaFutures._
 import com.monsanto.arch.awsutil.{AwsMockUtils, FlowMockUtils, Materialised}
 import org.scalacheck.Gen
 import org.scalamock.scalatest.MockFactory
 import org.scalatest.FreeSpec
 import org.scalatest.Matchers._
-import org.scalatest.concurrent.ScalaFutures._
 import org.scalatest.prop.GeneratorDrivenPropertyChecks._
 import spray.json.{JsObject, JsString, JsonParser}
 

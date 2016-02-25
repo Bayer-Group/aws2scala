@@ -3,10 +3,10 @@ package com.monsanto.arch.awsutil.sns.model
 import akka.stream.scaladsl.Flow
 import com.monsanto.arch.awsutil.Materialised
 import com.monsanto.arch.awsutil.sns.StreamingSNSClient
+import com.monsanto.arch.awsutil.test.AdaptableScalaFutures._
 import org.scalamock.scalatest.MockFactory
 import org.scalatest.FreeSpec
 import org.scalatest.Matchers._
-import org.scalatest.concurrent.ScalaFutures._
 import org.scalatest.prop.GeneratorDrivenPropertyChecks._
 
 class SubscriptionSummarySpec extends FreeSpec with MockFactory with Materialised {
