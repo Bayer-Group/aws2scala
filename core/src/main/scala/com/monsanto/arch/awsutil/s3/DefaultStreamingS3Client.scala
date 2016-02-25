@@ -15,7 +15,7 @@ import com.amazonaws.services.s3.transfer.{Download, TransferManager}
 import com.amazonaws.services.s3.{AmazonS3, AmazonS3Client}
 import com.monsanto.arch.awsutil.s3.DefaultStreamingS3Client._
 import com.monsanto.arch.awsutil.s3.model.BucketNameAndKey
-import com.monsanto.arch.awsutil.{AWSAsyncCall, AWSFlow, Settings}
+import com.monsanto.arch.awsutil.{AWSAsyncCall, AWSFlow, AwsSettings}
 import com.typesafe.scalalogging.LazyLogging
 
 import scala.collection.JavaConverters._
@@ -23,7 +23,7 @@ import scala.concurrent.duration.{Duration, TimeUnit}
 import scala.concurrent.{Await, ExecutionContext, Future, blocking}
 import scala.util.{Failure, Success}
 
-private[awsutil] class DefaultStreamingS3Client(s3client: AmazonS3, transferManager: TransferManager, settings: Settings)
+private[awsutil] class DefaultStreamingS3Client(s3client: AmazonS3, transferManager: TransferManager, settings: AwsSettings)
                                                (implicit ec: ExecutionContext) extends StreamingS3Client with LazyLogging {
   /** The S3 region derived from the settings. */
   private val region = {

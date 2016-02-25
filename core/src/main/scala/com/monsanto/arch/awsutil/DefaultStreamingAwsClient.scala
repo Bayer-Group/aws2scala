@@ -27,11 +27,11 @@ import com.typesafe.scalalogging.LazyLogging
 import scala.collection.mutable.ListBuffer
 import scala.concurrent.ExecutionContext
 
-private[awsutil] class DefaultStreamingAwsClient(private[awsutil] val settings: Settings,
+private[awsutil] class DefaultStreamingAwsClient(private[awsutil] val settings: AwsSettings,
                                                  private[awsutil] val credentialsProvider: AWSCredentialsProvider,
                                                  private[awsutil] val executorService: ExecutorService) extends StreamingAwsClient with LazyLogging {
   /** Create a new streaming client using the default credentials provider change and a fixed thread pool. */
-  def this(settings: Settings) = this(settings, new DefaultAWSCredentialsProviderChain, Executors.newFixedThreadPool(50))
+  def this(settings: AwsSettings) = this(settings, new DefaultAWSCredentialsProviderChain, Executors.newFixedThreadPool(50))
 
   /** A list of callbacks that should called to ensure that all clients have shut down. */
   private[awsutil] val shutdownHooks = ListBuffer.empty[ShutdownHook]

@@ -51,10 +51,10 @@ trait AsyncAwsClient {
 
 object AsyncAwsClient {
   /** Returns an asynchronous AWS client using the given settings. */
-  def apply(settings: Settings): AsyncAwsClient = new DefaultStreamingAwsClient(settings).asyncClient
+  def apply(settings: AwsSettings): AsyncAwsClient = new DefaultStreamingAwsClient(settings).asyncClient
   /** Returns an asynchronous AWS client using the given configuration. */
-  def apply(config: Config): AsyncAwsClient = apply(new Settings(config))
+  def apply(config: Config): AsyncAwsClient = apply(new AwsSettings(config))
 
   /** A client built using the default settings. */
-  lazy val Default: AsyncAwsClient = apply(Settings.Default)
+  lazy val Default: AsyncAwsClient = apply(AwsSettings.Default)
 }

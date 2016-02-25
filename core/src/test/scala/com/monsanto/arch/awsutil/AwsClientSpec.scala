@@ -57,7 +57,7 @@ class AwsClientSpec extends FreeSpec {
 
   "when creating a child streaming client" - {
     "it will use the new credentials" in {
-      val parent = new DefaultStreamingAwsClient(Settings.Default)
+      val parent = new DefaultStreamingAwsClient(AwsSettings.Default)
       val newProvider = new ProfileCredentialsProvider()
       val child = parent.withCredentialsProvider(newProvider)
       child.credentialsProvider shouldBe theSameInstanceAs (newProvider)
@@ -67,7 +67,7 @@ class AwsClientSpec extends FreeSpec {
     }
 
     "the child will not shut down the parent" in {
-      val parent = new DefaultStreamingAwsClient(Settings.Default)
+      val parent = new DefaultStreamingAwsClient(AwsSettings.Default)
       val parentHook = new PromiseShutDownHook
       parent.shutdownHooks += parentHook
 
@@ -93,7 +93,7 @@ class AwsClientSpec extends FreeSpec {
     }
 
     "the parent will shut down the child" in {
-      val parent = new DefaultStreamingAwsClient(Settings.Default)
+      val parent = new DefaultStreamingAwsClient(AwsSettings.Default)
       val parentHook = new PromiseShutDownHook
       parent.shutdownHooks += parentHook
 
@@ -115,7 +115,7 @@ class AwsClientSpec extends FreeSpec {
 
   "when creating a child asynchronous client" - {
     "it will use a streaming client with the new credentials" in {
-      val streamer = new DefaultStreamingAwsClient(Settings.Default)
+      val streamer = new DefaultStreamingAwsClient(AwsSettings.Default)
       val parent = new DefaultAsyncAwsClient(streamer)
       val newProvider = new ProfileCredentialsProvider()
       val child = parent.withCredentialsProvider(newProvider)

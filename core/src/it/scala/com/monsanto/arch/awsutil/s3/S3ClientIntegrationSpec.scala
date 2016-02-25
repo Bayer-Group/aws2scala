@@ -5,7 +5,7 @@ import java.net.URL
 import java.util.UUID
 
 import com.amazonaws.services.s3.model.{Bucket, S3ObjectSummary}
-import com.monsanto.arch.awsutil.Settings
+import com.monsanto.arch.awsutil.AwsSettings
 import com.monsanto.arch.awsutil.test.AwsScalaFutures._
 import com.monsanto.arch.awsutil.test.{AwsIntegrationSpec, IntegrationCleanup, IntegrationTest, TestDefaults}
 import com.typesafe.scalalogging.StrictLogging
@@ -28,7 +28,7 @@ class S3ClientIntegrationSpec extends FreeSpec with AwsIntegrationSpec with Stri
   val bytesContent = Array.tabulate[Byte](200)(i ⇒ i.toByte)
   val fileKey = "file.uuids"
   val fileContent = Seq.fill(100){ UUID.randomUUID() }.mkString("\n")
-  val defaultPolicy = JsonParser(Settings.Default.s3.defaultBucketPolicy.get.replaceAll("@BUCKET_NAME@", bucketName))
+  val defaultPolicy = JsonParser(AwsSettings.Default.s3.defaultBucketPolicy.get.replaceAll("@BUCKET_NAME@", bucketName))
 
   "the default Async S3 client can" - {
     "create a bucket" in {

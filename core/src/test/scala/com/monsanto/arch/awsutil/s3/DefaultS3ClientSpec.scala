@@ -14,7 +14,7 @@ import com.amazonaws.services.s3.{AbstractAmazonS3, Headers}
 import com.monsanto.arch.awsutil.s3.DefaultS3ClientSpec._
 import com.monsanto.arch.awsutil.s3.model.BucketNameAndKey
 import com.monsanto.arch.awsutil.test.AdaptableScalaFutures._
-import com.monsanto.arch.awsutil.{Materialised, Settings}
+import com.monsanto.arch.awsutil.{AwsSettings, Materialised}
 import com.typesafe.config.ConfigFactory
 import org.scalacheck.Gen
 import org.scalamock.scalatest.MockFactory
@@ -39,7 +39,7 @@ class DefaultS3ClientSpec extends FreeSpec with Materialised with MockFactory {
     }
   }
 
-  def s3behaviours(settings: Settings): Unit = {
+  def s3behaviours(settings: AwsSettings): Unit = {
     val bucketName = s"aws2scala-s3-test-common-${UUID.randomUUID()}"
     val s3region = settings.region.getName match {
       case "us-east-1" => S3Region.US_Standard
@@ -622,7 +622,7 @@ class DefaultS3ClientSpec extends FreeSpec with Materialised with MockFactory {
     }
   }
 
-  private def withFixture(settings: Settings)(test: BasicFixture => Any): Unit = {
+  private def withFixture(settings: AwsSettings)(test: BasicFixture => Any): Unit = {
     val s3 = mock[AbstractAmazonS3]("s3")
     val transferManager = mock[TransferManager]("transferManager")
     val streamingClient = new DefaultStreamingS3Client(s3, transferManager, settings)(materialiser.executionContext)
@@ -652,7 +652,7 @@ class DefaultS3ClientSpec extends FreeSpec with Materialised with MockFactory {
 
   case class BasicFixture(s3: AbstractAmazonS3,
                           transferManager: TransferManager,
-                          settings: Settings,
+                          settings: AwsSettings,
                           streamingClient: DefaultStreamingS3Client,
                           asyncClient: DefaultAsyncS3Client)
 }
@@ -665,8 +665,8 @@ object DefaultS3ClientSpec {
       |}
     """.stripMargin)
 
-  val DefaultSettings = new Settings(TestUploadCheckConfig.withFallback(ConfigFactory.load()))
-  val AltSettings = new Settings(TestUploadCheckConfig.withFallback(ConfigFactory.load("s3-alt-settings")))
+  val DefaultSettings = new AwsSettings(TestUploadCheckConfig.withFallback(ConfigFactory.load()))
+  val AltSettings = new AwsSettings(TestUploadCheckConfig.withFallback(ConfigFactory.load("s3-alt-settings")))
 
   def genBucketPolicy(bucketName: String): String =
     AltSettings.s3.defaultBucketPolicy.get.replace("@BUCKET_NAME@", bucketName)

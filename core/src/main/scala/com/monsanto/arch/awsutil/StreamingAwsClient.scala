@@ -51,13 +51,13 @@ trait StreamingAwsClient {
 
 object StreamingAwsClient {
   /** Returns a streaming AWS client using the given settings. */
-  def apply(settings: Settings): StreamingAwsClient = new DefaultStreamingAwsClient(settings)
+  def apply(settings: AwsSettings): StreamingAwsClient = new DefaultStreamingAwsClient(settings)
   /** Returns a streaming AWS client using the given configuration. */
-  def apply(config: Config): StreamingAwsClient = apply(new Settings(config))
+  def apply(config: Config): StreamingAwsClient = apply(new AwsSettings(config))
 
   /** A client built using the default settings. */
   lazy val Default: StreamingAwsClient = {
-    val client = apply(Settings.Default)
+    val client = apply(AwsSettings.Default)
 
     val shutdownHook = new Thread(new Runnable {
       override def run(): Unit = client.shutdown()

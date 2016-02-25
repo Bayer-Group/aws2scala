@@ -3,49 +3,48 @@ package com.monsanto.arch.awsutil
 import com.amazonaws.regions.{Region, Regions}
 import com.amazonaws.services.s3.Headers
 import com.amazonaws.services.s3.model.ObjectMetadata
+import com.monsanto.arch.awsutil.AwsSettingsSpec._
 import com.typesafe.config._
-import org.scalatest.{FreeSpec, Matchers}
+import org.scalatest.FreeSpec
+import org.scalatest.Matchers._
 import spray.json.{JsArray, JsObject, JsString, JsonParser}
 
 import scala.concurrent.duration.DurationInt
 
-class SettingsSpec extends FreeSpec {
-  import Matchers._
-  import SettingsSpec._
-
-  "the Settings class" - {
+class AwsSettingsSpec extends FreeSpec {
+  "the AwsSettings class" - {
     "loads the defaults" in {
-      val settings = new Settings(ConfigFactory.defaultReference())
+      val settings = new AwsSettings(ConfigFactory.defaultReference())
       settings.region shouldBe Region.getRegion(Regions.US_EAST_1)
       settings.s3.defaultBucketPolicy shouldBe empty
       settings.s3.defaultCopyObjectHeaders shouldBe empty
       settings.s3.defaultPutObjectHeaders shouldBe empty
       settings.s3.uploadCheckInterval shouldBe 1.second
       settings.s3.uploadCheckTimeout shouldBe 1.minute
-      settings.s3.parallelism shouldBe Settings.DefaultS3Parallelism
+      settings.s3.parallelism shouldBe AwsSettings.DefaultS3Parallelism
     }
 
     "has a readable toString" in {
-      val settings = new Settings(ConfigFactory.defaultReference())
-      settings.toString shouldBe "Settings(region -> us-east-1, s3 -> S3(uploadCheckInterval -> 1000 milliseconds, " +
+      val settings = new AwsSettings(ConfigFactory.defaultReference())
+      settings.toString shouldBe "AwsSettings(region -> us-east-1, s3 -> S3(uploadCheckInterval -> 1000 milliseconds, " +
         "uploadCheckTimeout -> 60000 milliseconds, defaultBucketPolicy -> None, defaultCopyObjectHeaders -> Map(), " +
-        s"defaultPutObjectHeaders -> Map(), parallelism -> ${Settings.DefaultS3Parallelism}))"
+        s"defaultPutObjectHeaders -> Map(), parallelism -> ${AwsSettings.DefaultS3Parallelism}))"
     }
 
     "requires a region to be" - {
       "present" in {
-        a [ConfigException.Missing] shouldBe thrownBy(new Settings(ConfigFactory.parseString("")))
+        a [ConfigException.Missing] shouldBe thrownBy(new AwsSettings(ConfigFactory.parseString("")))
       }
 
       "a valid AWS region name" in {
-        a [ConfigException.BadValue] shouldBe thrownBy(new Settings(ConfigFactory.parseString("awsutil.region = 2")))
+        a [ConfigException.BadValue] shouldBe thrownBy(new AwsSettings(ConfigFactory.parseString("awsutil.region = 2")))
       }
     }
 
     "the s3 settings" - {
-      def objectHeaderSetting(path: String, headersFrom: Settings ⇒ Map[String,AnyRef]): Unit = {
+      def objectHeaderSetting(path: String, headersFrom: AwsSettings ⇒ Map[String,AnyRef]): Unit = {
         "that are sane" in {
-          val settings = new Settings(S3AltConfig)
+          val settings = new AwsSettings(S3AltConfig)
           headersFrom(settings) shouldBe Map(
             Headers.SERVER_SIDE_ENCRYPTION → ObjectMetadata.AES_256_SERVER_SIDE_ENCRYPTION
           )
@@ -53,7 +52,7 @@ class SettingsSpec extends FreeSpec {
 
         "that are booleans" in {
           val config = ConfigFactory.parseString(s"$path.bool = true").withFallback(MinimalConfig)
-          val settings = new Settings(config)
+          val settings = new AwsSettings(config)
           headersFrom(settings) shouldBe Map(
             "bool" → "true"
           )
@@ -61,7 +60,7 @@ class SettingsSpec extends FreeSpec {
 
         "that are numbers" in {
           val config = ConfigFactory.parseString(s"$path.number = 2").withFallback(MinimalConfig)
-          val settings = new Settings(config)
+          val settings = new AwsSettings(config)
           headersFrom(settings) shouldBe Map(
             "number" → 2
           )
@@ -73,13 +72,13 @@ class SettingsSpec extends FreeSpec {
                |  list = [1, 2, 3]
                |}
              """.stripMargin).withFallback(MinimalConfig)
-          a [ConfigException.BadValue] shouldBe thrownBy(new Settings(config))
+          a [ConfigException.BadValue] shouldBe thrownBy(new AwsSettings(config))
         }
 
       }
 
       "may contain a default bucket policy" in {
-        val settings = new Settings(S3AltConfig)
+        val settings = new AwsSettings(S3AltConfig)
         settings.s3.defaultBucketPolicy shouldBe defined
         JsonParser(settings.s3.defaultBucketPolicy.get) shouldBe S3AltDefaultBucketPolicy
       }
@@ -97,12 +96,12 @@ class SettingsSpec extends FreeSpec {
 
         "present" in {
           val config = MinimalConfig.withoutPath(path)
-          a [ConfigException.Missing] shouldBe thrownBy(new Settings(config))
+          a [ConfigException.Missing] shouldBe thrownBy(new AwsSettings(config))
         }
 
         "at least one millisecond" in {
           val config = ConfigFactory.parseString(s"$path = 1ns").withFallback(MinimalConfig)
-          a [ConfigException.BadValue] shouldBe thrownBy(new Settings(config))
+          a [ConfigException.BadValue] shouldBe thrownBy(new AwsSettings(config))
         }
       }
 
@@ -111,12 +110,12 @@ class SettingsSpec extends FreeSpec {
 
         "present" in {
           val config = MinimalConfig.withoutPath(path)
-          a [ConfigException.Missing] shouldBe thrownBy(new Settings(config))
+          a [ConfigException.Missing] shouldBe thrownBy(new AwsSettings(config))
         }
 
         "larger than the interval" in {
           val config = ConfigFactory.parseString(s"$path = 1s").withFallback(MinimalConfig)
-          a [ConfigException.BadValue] shouldBe thrownBy(new Settings(config))
+          a [ConfigException.BadValue] shouldBe thrownBy(new AwsSettings(config))
         }
       }
 
@@ -125,64 +124,64 @@ class SettingsSpec extends FreeSpec {
 
         "present" in {
           val config = MinimalConfig.withoutPath(path)
-          a [ConfigException.Missing] shouldBe thrownBy(new Settings(config))
+          a [ConfigException.Missing] shouldBe thrownBy(new AwsSettings(config))
         }
 
         "possibly ‘auto’" in {
           val config = ConfigFactory.parseString(s"$path = auto").withFallback(MinimalConfig)
-          new Settings(config).s3.parallelism shouldBe Settings.DefaultS3Parallelism
+          new AwsSettings(config).s3.parallelism shouldBe AwsSettings.DefaultS3Parallelism
         }
 
         "not a string that is not ‘auto’" in {
           val config = ConfigFactory.parseString(s"$path = aero").withFallback(MinimalConfig)
-          a [ConfigException.BadValue] shouldBe thrownBy(new Settings(config))
+          a [ConfigException.BadValue] shouldBe thrownBy(new AwsSettings(config))
         }
 
         "possibly a positive integer" in {
           val config = ConfigFactory.parseString(s"$path = 3").withFallback(MinimalConfig)
-          new Settings(config).s3.parallelism shouldBe 3
+          new AwsSettings(config).s3.parallelism shouldBe 3
         }
 
         "not a double" in {
           val config = ConfigFactory.parseString(s"$path = 3.14").withFallback(MinimalConfig)
-          a [ConfigException.BadValue] shouldBe thrownBy(new Settings(config))
+          a [ConfigException.BadValue] shouldBe thrownBy(new AwsSettings(config))
         }
 
         "not a long" in {
           val config = ConfigFactory.parseString(s"$path = 314159265358979").withFallback(MinimalConfig)
-          a [ConfigException.BadValue] shouldBe thrownBy(new Settings(config))
+          a [ConfigException.BadValue] shouldBe thrownBy(new AwsSettings(config))
         }
 
         "not zero" in {
           val config = ConfigFactory.parseString(s"$path = 0").withFallback(MinimalConfig)
-          a [ConfigException.BadValue] shouldBe thrownBy(new Settings(config))
+          a [ConfigException.BadValue] shouldBe thrownBy(new AwsSettings(config))
         }
 
         "not negative" in {
           val config = ConfigFactory.parseString(s"$path = -2").withFallback(MinimalConfig)
-          a [ConfigException.BadValue] shouldBe thrownBy(new Settings(config))
+          a [ConfigException.BadValue] shouldBe thrownBy(new AwsSettings(config))
         }
 
         "not an array" in {
           val config = ConfigFactory.parseString(s"$path = []").withFallback(MinimalConfig)
-          a [ConfigException.BadValue] shouldBe thrownBy(new Settings(config))
+          a [ConfigException.BadValue] shouldBe thrownBy(new AwsSettings(config))
         }
 
         "not a boolean" in {
           val config = ConfigFactory.parseString(s"$path = false").withFallback(MinimalConfig)
-          a [ConfigException.BadValue] shouldBe thrownBy(new Settings(config))
+          a [ConfigException.BadValue] shouldBe thrownBy(new AwsSettings(config))
         }
 
         "not an object" in {
           val config = ConfigFactory.parseString(s"$path {}").withFallback(MinimalConfig)
-          a [ConfigException.BadValue] shouldBe thrownBy(new Settings(config))
+          a [ConfigException.BadValue] shouldBe thrownBy(new AwsSettings(config))
         }
       }
     }
   }
 }
 
-object SettingsSpec {
+object AwsSettingsSpec {
   val S3AltConfig = ConfigFactory.load("s3-alt-settings")
 
   val MinimalConfig = ConfigFactory.defaultReference().withOnlyPath("awsutil")

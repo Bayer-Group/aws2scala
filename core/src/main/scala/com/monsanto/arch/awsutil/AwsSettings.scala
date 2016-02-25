@@ -7,7 +7,7 @@ import com.typesafe.config._
 
 import scala.concurrent.duration.FiniteDuration
 
-class Settings(config: Config) {
+class AwsSettings(config: Config) {
   val region: Region = {
     val regionString = config.getString("awsutil.region")
     val enumValue = try {
@@ -50,7 +50,7 @@ class Settings(config: Config) {
 
     val defaultBucketPolicy: Option[String] = {
       if (config.hasPath("awsutil.s3.default-bucket-policy")) {
-        Some(config.getValue("awsutil.s3.default-bucket-policy").render(Settings.JsonRenderer))
+        Some(config.getValue("awsutil.s3.default-bucket-policy").render(AwsSettings.JsonRenderer))
       } else {
         None
       }
@@ -96,7 +96,7 @@ class Settings(config: Config) {
               path,
               s"must be a positive integer or ‘auto’ (got ${value.unwrapped()}")
           }
-          Settings.DefaultS3Parallelism
+          AwsSettings.DefaultS3Parallelism
         case ConfigValueType.NUMBER ⇒
           value.unwrapped() match {
             case d: java.lang.Double ⇒
@@ -134,16 +134,16 @@ class Settings(config: Config) {
   }
 
   override def toString =
-    s"Settings(region -> $region, s3 -> $s3)"
+    s"AwsSettings(region -> $region, s3 -> $s3)"
 
   // force the object to be loaded
   s3
 }
 
-object Settings {
+object AwsSettings {
   private val JsonRenderer = ConfigRenderOptions.concise().setJson(true)
 
-  lazy val Default = new Settings(ConfigFactory.load())
+  lazy val Default = new AwsSettings(ConfigFactory.load())
 
   /** The default level of parallelism for asynchronous S3 operations. */
   val DefaultS3Parallelism = Runtime.getRuntime.availableProcessors() * 4
