@@ -14,6 +14,10 @@ This is pre-1.0 software, interfaces are subject to change.  Please refer to the
 service API to find out more.
 ====
 
+image:https://api.bintray.com/packages/monsanto/maven/aws2scala/images/download.svg["Latest release", link="https://bintray.com/monsanto/maven/aws2scala/_latestVersion"]
+image:https://coveralls.io/repos/github/MonsantoCo/aws2scala/badge.svg?branch=master["Coverage status", link="https://coveralls.io/github/MonsantoCo/aws2scala?branch=master"]
+image:https://travis-ci.org/MonsantoCo/aws2scala.svg?branch=master["Build status", link="https://travis-ci.org/MonsantoCo/aws2scala"]
+
 This library wraps the https://aws.amazon.com/sdk-for-java/[AWS SDK for Java] to make it much more Scala-friendly and
 simpler to consume.  It provides <<sct-feature-async,asynchronous>> and <<sct-feature-streaming,streaming>> APIs that
 are <<sct-feature-fewer-objects,easier to use>>, <<sct-feature-paging,perform paging automatically>>, and
