@@ -63,9 +63,9 @@ class StreamingEC2ClientSpec extends FreeSpec with Materialised {
     }
 
     "describe key pairs" in {
-      forAll { (requestArgs: EC2Gen.DescribeKeyPairRequestArgs, resultArgs: Seq[EC2Gen.KeyPairInfoArgs]) ⇒
+      forAll { requestArgs: EC2Gen.DescribeKeyPairRequestArgs ⇒
         val request = requestArgs.toRequest
-        val keyPairInfo = resultArgs.map(_.toKeyPairInfo)
+        val keyPairInfo = Gen.resize(10, arbitrary[Seq[EC2Gen.KeyPairInfoArgs]]).reallySample.map(_.toKeyPairInfo)
         val ec2 = new FakeAmazonEC2Async {
           override def describeKeyPairsAsync(describeKeyPairsRequest: aws.DescribeKeyPairsRequest,
                                              asyncHandler: AsyncHandler[aws.DescribeKeyPairsRequest, aws.DescribeKeyPairsResult]): JFuture[aws.DescribeKeyPairsResult] = {
