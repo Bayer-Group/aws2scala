@@ -660,8 +660,8 @@ class DefaultS3ClientSpec extends FreeSpec with Materialised with MockFactory {
 object DefaultS3ClientSpec {
   val TestUploadCheckConfig = ConfigFactory.parseString(
     """awsutil.s3 {
-      |  upload-check-interval = 5ms
-      |  upload-check-timeout = 100ms
+      |  upload-check-interval = 10ms
+      |  upload-check-timeout = 500ms
       |}
     """.stripMargin)
 
