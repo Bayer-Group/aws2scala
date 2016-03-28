@@ -52,7 +52,8 @@ lazy val commonSettings = Seq(
   coverageExcludedPackages := "com\\.monsanto\\.arch\\.awsutil\\.test_support\\..*;com\\.monsanto\\.arch\\.awsutil\\.testkit\\..*",
 
   // Allow resolution on JCenter
-  resolvers += Resolver.jcenterRepo
+  resolvers += Resolver.jcenterRepo,
+  javaOptions += "-Xmx1g"
 )
 
 val AwsDocURL = "http://docs.aws.amazon.com/AWSJavaSDK/latest/javadoc"
