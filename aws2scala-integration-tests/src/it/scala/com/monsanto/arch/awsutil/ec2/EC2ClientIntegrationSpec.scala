@@ -186,7 +186,7 @@ object EC2ClientIntegrationSpec {
 
     val subnet = `AWS::EC2::Subnet`("TestSubnet",
       VpcId = vpc,
-      AvailabilityZone = "us-east-1a",
+      AvailabilityZone = Some("us-east-1a"),
       CidrBlock = CidrBlock(10, 0, 0, 0, 24),
       Tags = Tags
     )

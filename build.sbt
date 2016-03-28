@@ -7,7 +7,7 @@ val aws = "1.10.52"
 val scalaCheck = "org.scalacheck"     %% "scalacheck"                          % "1.12.5"
 val scalaTest  = "org.scalatest"      %% "scalatest"                           % "2.2.6"
 val sprayJson  = "io.spray"           %% "spray-json"                          % "1.3.2"
-val cftg       = "com.monsanto.arch"  %% "cloud-formation-template-generator"  % "3.1.2"
+val cftg       = "com.monsanto.arch"  %% "cloud-formation-template-generator"  % "3.3.0"
 
 val compileOnlyOptions = Seq(
   "-deprecation",
@@ -27,7 +27,7 @@ lazy val commonSettings = Seq(
   licenses := Seq("BSD New" → url("http://opensource.org/licenses/BSD-3-Clause")),
 
   // scala compilation
-  scalaVersion := "2.11.7",
+  scalaVersion := "2.11.8",
   scalacOptions ++= Seq(
     "-encoding", "UTF-8",
     "-unchecked",
@@ -102,7 +102,7 @@ lazy val testSupport = Project("aws2scala-test-support", file("aws2scala-test-su
       scalaCheck,
       "org.scalamock"      %% "scalamock-scalatest-support"  % "3.2.2",
       scalaTest,
-      "ch.qos.logback"      % "logback-classic"              % "1.1.5"
+      "ch.qos.logback"      % "logback-classic"              % "1.1.6"
     ) ++ commonDependencies
   )
 
