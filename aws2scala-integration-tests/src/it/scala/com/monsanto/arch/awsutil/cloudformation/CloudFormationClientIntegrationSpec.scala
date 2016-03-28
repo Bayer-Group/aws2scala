@@ -1,5 +1,6 @@
 package com.monsanto.arch.awsutil.cloudformation
 
+import akka.Done
 import akka.stream.scaladsl.{Sink, Source}
 import com.amazonaws.services.cloudformation.model._
 import com.monsanto.arch.awsutil.cloudformation.AsyncCloudFormationClient.Implicits._
@@ -120,7 +121,7 @@ class CloudFormationClientIntegrationSpec extends FreeSpec with AwsIntegrationSp
     "can delete the stack" in {
       logger.info(s"Deleting stack with name ‘$stackName’")
       val result = client.deleteStack(stackName)
-      result.futureValue shouldBe stackName
+      result.futureValue shouldBe Done
       logger.debug("Successfully request stack deletion.")
     }
 

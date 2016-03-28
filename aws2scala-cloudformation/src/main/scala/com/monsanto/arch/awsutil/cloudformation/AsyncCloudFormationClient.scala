@@ -2,6 +2,7 @@ package com.monsanto.arch.awsutil.cloudformation
 
 import java.net.URL
 
+import akka.Done
 import akka.stream.Materializer
 import com.amazonaws.services.cloudformation.model._
 import com.monsanto.arch.awsutil.AsyncAwsClient
@@ -44,9 +45,17 @@ trait AsyncCloudFormationClient extends AsyncAwsClient {
   /** Requests deletion of the stack with the given name or ID.
     *
     * @param stackNameOrID the name or ID of stack to delete
-    * @return a future containing the stack name or ID that is now being deleted
     */
-  def deleteStack(stackNameOrID: String)(implicit m: Materializer): Future[String]
+  def deleteStack(stackNameOrID: String)(implicit m: Materializer): Future[Done]
+
+  /** Requests deletion of the stack with the given name or ID.
+    *
+    * @param stackNameOrID the name or ID of stack to delete
+    * @param retainResources For stacks in the `DELETE_FAILED` state, a list of resource logical IDs that are associated
+    *                        with the resources you want to retain.  During deletion, AWS CloudFormation deletes the
+    *                        stack but does not delete the retained resources.
+    */
+  def deleteStack(stackNameOrID: String, retainResources: Seq[String])(implicit m: Materializer): Future[Done]
 
   /** Validates the given template body. */
   def validateTemplateBody(body: String)(implicit m: Materializer): Future[ValidatedTemplate]

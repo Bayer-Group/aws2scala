@@ -4,6 +4,7 @@ import akka.stream.scaladsl.{Sink, Source}
 import com.amazonaws.services.cloudformation.model.{Output ⇒ _, _}
 import com.monsanto.arch.awsutil.cloudformation.AsyncCloudFormationClient.Implicits._
 import com.monsanto.arch.awsutil.cloudformation.CloudFormation
+import com.monsanto.arch.awsutil.cloudformation.model.DeleteStackRequest
 import com.monsanto.arch.awsutil.ec2.EC2ClientIntegrationSpec._
 import com.monsanto.arch.awsutil.ec2.model.{Instance, KeyPair, KeyPairInfo}
 import com.monsanto.arch.awsutil.test_support.AwsScalaFutures._
@@ -137,7 +138,7 @@ class EC2ClientIntegrationSpec extends FreeSpec with AwsIntegrationSpec with Str
     "remove the stack" in {
       logger.info(s"Removing stack $stackName")
 
-      val deleteComplete = Source.single(stackName)
+      val deleteComplete = Source.single(DeleteStackRequest(stackName, Seq.empty))
         .via(streamingCloudFormation.stackDeleter)
         .flatMapConcat { stackName ⇒
           Source.tick(5.seconds, 5.seconds, Some(stackID))

@@ -155,8 +155,10 @@ object Instance {
   object LifecycleType extends AwsEnumerationCompanion[LifecycleType,aws.InstanceLifecycleType] {
     /** Denotes that this is a spot instance. */
     case object Spot extends LifecycleType(aws.InstanceLifecycleType.Spot)
+    /** Denotes that this is a scheduled instance. */
+    case object Scheduled extends LifecycleType(aws.InstanceLifecycleType.Scheduled)
 
-    override def values: Seq[LifecycleType] = Seq(Spot)
+    override def values: Seq[LifecycleType] = Seq(Spot, Scheduled)
   }
 
   /** Describes a network interface.

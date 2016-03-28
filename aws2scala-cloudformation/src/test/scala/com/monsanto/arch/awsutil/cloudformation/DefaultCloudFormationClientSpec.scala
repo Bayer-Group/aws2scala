@@ -3,6 +3,7 @@ package com.monsanto.arch.awsutil.cloudformation
 import java.net.URL
 import java.util.{Date, UUID}
 
+import akka.Done
 import com.amazonaws.handlers.AsyncHandler
 import com.amazonaws.services.cloudformation.AmazonCloudFormationAsync
 import com.amazonaws.services.cloudformation.model._
@@ -211,7 +212,7 @@ class DefaultCloudFormationClientSpec extends FreeSpec with MockFactory with Mat
         .withVoidAwsSuccess()
 
       val result = f.asyncClient.deleteStack(stackName).futureValue
-      result shouldBe stackName
+      result shouldBe Done
     }
   }
 }

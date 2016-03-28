@@ -8,6 +8,7 @@ import com.amazonaws.services.cloudformation.model.StackStatus
 import com.amazonaws.services.rds.model.DescribeDBInstancesRequest
 import com.amazonaws.services.sqs.AmazonSQSClient
 import com.monsanto.arch.awsutil.cloudformation.CloudFormation
+import com.monsanto.arch.awsutil.cloudformation.model.DeleteStackRequest
 import com.monsanto.arch.awsutil.identitymanagement.IdentityManagement
 import com.monsanto.arch.awsutil.identitymanagement.model.{DetachRolePolicyRequest, ListAttachedRolePoliciesRequest, ListRolesRequest}
 import com.monsanto.arch.awsutil.impl.AkkaStreamUtils.Implicits._
@@ -57,6 +58,7 @@ trait IntegrationCleanup { this: FreeSpec with StrictLogging with AwsIntegration
           .map(_.getStackName)
           .buffer(100, OverflowStrategy.backpressure)
           .map { n ⇒ logger.info(s"Removing old stack: $n"); n }
+          .map(n ⇒ DeleteStackRequest(n, Seq.empty))
           .via(cloudFormation.stackDeleter)
           .runWith(Sink.count)
           .futureValue
