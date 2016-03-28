@@ -1,8 +1,13 @@
 import java.util.Date
+import UnidocKeys._
 
 // dependency versions
 val akka = "2.4.2"
 val aws = "1.10.52"
+val scalaCheck = "org.scalacheck"     %% "scalacheck"                          % "1.12.5"
+val scalaTest  = "org.scalatest"      %% "scalatest"                           % "2.2.6"
+val sprayJson  = "io.spray"           %% "spray-json"                          % "1.3.2"
+val cftg       = "com.monsanto.arch"  %% "cloud-formation-template-generator"  % "3.1.2"
 
 val compileOnlyOptions = Seq(
   "-deprecation",
@@ -21,14 +26,6 @@ lazy val commonSettings = Seq(
   startYear := Some(2015),
   licenses := Seq("BSD New" → url("http://opensource.org/licenses/BSD-3-Clause")),
 
-  // dependency resolution
-  resolvers ++= Seq(
-    "AWS" at "https://nexus.agro.services/content/repositories/releases/",
-    "AWS Snapshots" at "https://nexus.agro.services/content/repositories/snapshots/",
-    Resolver.jcenterRepo
-  ),
-  credentials += Credentials(Path.userHome / ".ivy2" / ".credentials"),
-
   // scala compilation
   scalaVersion := "2.11.7",
   scalacOptions ++= Seq(
@@ -39,6 +36,9 @@ lazy val commonSettings = Seq(
   (scalacOptions in Compile) ++= compileOnlyOptions,
   (scalacOptions in Test) --= compileOnlyOptions,
 
+  // Needed to avoid OOM errors
+  (fork in Test) := true,
+
   // documentation
   apiMappingsScala ++= Map(
     ("com.typesafe.akka", "akka-actor") → "http://doc.akka.io/api/akka/%s",
@@ -46,7 +46,10 @@ lazy val commonSettings = Seq(
   ),
   apiMappingsJava ++= Map(
     ("com.typesafe", "config") → "http://typesafehub.github.io/config/latest/api"
-  ) ++ createAwsApiMappings("core", "cloudformation", "ec2", "kms", "rds", "s3", "sns", "sts")
+  ) ++ createAwsApiMappings("core", "cloudformation", "ec2", "kms", "rds", "s3", "sns", "sts"),
+
+  // coverage
+  coverageExcludedPackages := "com\\.monsanto\\.arch\\.awsutil\\.test_support\\..*;com\\.monsanto\\.arch\\.awsutil\\.testkit\\..*"
 )
 
 val AwsDocURL = "http://docs.aws.amazon.com/AWSJavaSDK/latest/javadoc"
@@ -80,59 +83,286 @@ lazy val noPublishingSettings = Seq(
 )
 
 val commonDependencies = Seq(
-  "com.typesafe.akka"           %% "akka-stream"               % akka,
-  "com.typesafe.scala-logging"  %% "scala-logging"             % "3.1.0"
-) ++ awsDependencies("core")
-
-val commonTestDependencies = Seq(
-  "com.typesafe.akka"  %% "akka-stream-testkit"               % akka        % "test",
-  "com.typesafe.akka"  %% "akka-slf4j"                        % akka        % "test",
-  "org.scalacheck"     %% "scalacheck"                        % "1.12.5"    % "test",
-  "org.scalamock"      %% "scalamock-scalatest-support"       % "3.2.2"     % "test",
-  "org.scalatest"      %% "scalatest"                         % "2.2.6"     % "test",
-  "ch.qos.logback"      % "logback-classic"                   % "1.1.5"     % "test"
+  "com.typesafe.akka"           %% "akka-stream"    % akka,
+  "com.typesafe.scala-logging"  %% "scala-logging"  % "3.1.0",
+  awsDependency("core")
 )
 
-def awsDependencies(libs: String*): Seq[ModuleID] = libs.map(lib ⇒ "com.amazonaws" % s"aws-java-sdk-$lib" % aws)
+def awsDependency(lib: String): ModuleID = "com.amazonaws" % s"aws-java-sdk-$lib" % aws
 
-lazy val `stream-support` = (project in file("stream-support"))
-  .settings(commonSettings: _*)
-  .settings(noPublishingSettings: _*)
+def awsDependencies(libs: String*): Seq[ModuleID] = libs.map(awsDependency)
+
+lazy val testSupport = Project("aws2scala-test-support", file("aws2scala-test-support"))
   .settings(
-    name := "aws2scala-stream-support",
-    description := "Macros and libraries to enable Akka stream support in aws2scala",
+    commonSettings,
+    noPublishingSettings,
+    description := "Common configuration and utilities for testing in aws2scala",
     libraryDependencies ++= Seq(
-      "org.scala-lang"               % "scala-reflect"             % scalaVersion.value
-    ) ++ commonTestDependencies ++ commonDependencies
+      "com.typesafe.akka"  %% "akka-slf4j"                   % akka,
+      scalaCheck,
+      "org.scalamock"      %% "scalamock-scalatest-support"  % "3.2.2",
+      scalaTest,
+      "ch.qos.logback"      % "logback-classic"              % "1.1.5"
+    ) ++ commonDependencies
   )
 
-lazy val core = (project in file("core"))
-  .dependsOn(`stream-support` % "compile-internal,test-internal,it-internal")
-  .configs(IntegrationTest)
-  .settings(commonSettings: _*)
-  .settings(bintrayPublishingSettings: _*)
-  .settings(Defaults.itSettings: _*)
-  .settings(scalaUnidocSettings: _*)
+lazy val coreMacros = Project("aws2scala-core-macros", file("aws2scala-core-macros"))
+  .dependsOn(testSupport % "test->test")
   .settings(
-    name := "aws2scala",
-    description := "Utilities for consuming AWS APIs in Scala",
+    commonSettings,
+    bintrayPublishingSettings,
+    description := "Macros and libraries to enable Akka stream support in aws2scala",
     libraryDependencies ++= Seq(
-      "com.typesafe"                 % "config"                              % "1.3.0",
-      "com.typesafe.scala-logging"  %% "scala-logging"                       % "3.1.0",
-      "io.spray"                    %% "spray-json"                          % "1.3.2" % "it,test",
-      "com.monsanto.arch"           %% "cloud-formation-template-generator"  % "3.1.2" % "it,test",
-      "commons-io"                   % "commons-io"                          % "2.4"   % "it,test"
-    ) ++ commonTestDependencies.map(dep => dep.copy(configurations = Some("it,test")))
-      ++ awsDependencies("cloudformation", "ec2", "iam", "kms", "rds", "s3", "sns", "sts").map(_ % "provided")
-      ++ awsDependencies("sqs").map(_ % "it,test")
-      ++ commonDependencies,
-    mappings in (Compile, packageBin) ++= mappings.in(`stream-support`, Compile, packageBin).value,
-    mappings in (Compile, packageSrc) ++= mappings.in(`stream-support`, Compile, packageSrc).value,
-    mappings in (Compile, packageDoc) := mappings.in(ScalaUnidoc, packageDoc).value,
-    (doc in ScalaUnidoc) <<= apiMappingsFixJavaLinks(doc in ScalaUnidoc)
+      "com.typesafe.akka"  %% "akka-stream-testkit"  % akka                % "test",
+      "org.scala-lang"      % "scala-reflect"        % scalaVersion.value
+    ) ++ commonDependencies
+  )
+
+lazy val core = Project("aws2scala-core", file("aws2scala-core"))
+  .dependsOn(coreMacros)
+  .settings(
+    commonSettings,
+    bintrayPublishingSettings,
+    description := "Core library for aws2scala",
+    libraryDependencies += "com.typesafe" % "config" % "1.3.0"
+  )
+
+lazy val coreTestSupport = Project("aws2scala-core-test-support", file("aws2scala-core-test-support"))
+  .dependsOn(core, testSupport)
+  .settings(
+    commonSettings,
+    noPublishingSettings,
+    description := "Additional aws2scala test support that depends on the core library"
+  )
+
+lazy val coreTestkit = Project("aws2scala-core-testkit", file("aws2scala-core-testkit"))
+  .dependsOn(core)
+  .settings(
+    commonSettings,
+    bintrayPublishingSettings,
+    description := "Test utility library for aws2scala-core",
+    libraryDependencies += scalaCheck
+  )
+
+lazy val coreTests = Project("aws2scala-core-tests", file("aws2scala-core-tests"))
+  .dependsOn(
+    core             % "test",
+    coreTestSupport  % "test",
+    coreTestkit      % "test",
+    testSupport      % "test->test"
+  )
+  .settings(
+    commonSettings,
+    noPublishingSettings,
+    description := "Test suite for aws2scala-core",
+    libraryDependencies ++= Seq(
+      sprayJson            % "test",
+      awsDependency("s3")  % "test"
+    )
+  )
+
+lazy val cloudFormation = Project("aws2scala-cloudformation", file("aws2scala-cloudformation"))
+  .dependsOn(core, testSupport % "test->test", coreTestSupport % "test")
+  .settings(
+    commonSettings,
+    bintrayPublishingSettings,
+    description := "Client for AWS CloudFormation",
+    libraryDependencies ++= Seq(
+      awsDependency("cloudformation"),
+      sprayJson  % "test",
+      cftg       % "test"
+    )
+  )
+
+lazy val ec2 = Project("aws2scala-ec2", file("aws2scala-ec2"))
+  .dependsOn(core)
+  .settings(
+    commonSettings,
+    bintrayPublishingSettings,
+    description := "Client for Amazon Elastic Cloud Compute (EC2)",
+    libraryDependencies += awsDependency("ec2")
+  )
+
+lazy val ec2Testkit = Project("aws2scala-ec2-testkit", file("aws2scala-ec2-testkit"))
+  .dependsOn(ec2, coreTestkit, iamTestkit)
+  .settings(
+    commonSettings,
+    bintrayPublishingSettings,
+    description := "Test utility library for aws2scala-ec2",
+    libraryDependencies ++= Seq(
+      scalaCheck,
+      "org.bouncycastle" % "bcprov-jdk15on" % "1.54",
+      "org.bouncycastle" % "bcpkix-jdk15on" % "1.54"
+    )
+  )
+
+lazy val ec2Tests = Project("aws2scala-ec2-tests", file("aws2scala-ec2-tests"))
+  .dependsOn(
+    ec2             % "test",
+    ec2Testkit      % "test",
+    coreTestSupport % "test",
+    testSupport     % "test->test"
+  )
+  .settings(
+    commonSettings,
+    noPublishingSettings,
+    description := "Tests for aws2scala-ec2"
+  )
+
+lazy val iam = Project("aws2scala-iam", file("aws2scala-iam"))
+  .dependsOn(core)
+  .settings(
+    commonSettings,
+    bintrayPublishingSettings,
+    description := "Client for AWS Identity and Access Management (IAM)",
+    libraryDependencies += awsDependency("iam")
+  )
+
+lazy val iamTestkit = Project("aws2scala-iam-testkit", file("aws2scala-iam-testkit"))
+  .dependsOn(iam, coreTestkit)
+  .settings(
+    commonSettings,
+    bintrayPublishingSettings,
+    description := "Test utility library for aws2scala-iam",
+    libraryDependencies += scalaCheck
+  )
+
+lazy val iamTests = Project("aws2scala-iam-tests", file("aws2scala-iam-tests"))
+  .dependsOn(
+    iam             % "test",
+    iamTestkit      % "test",
+    coreTestSupport % "test",
+    testSupport     % "test->test"
+  )
+  .settings(
+    commonSettings,
+    noPublishingSettings,
+    description := "Test suite for aws2scala-iam"
+  )
+
+lazy val kms = Project("aws2scala-kms", file("aws2scala-kms"))
+  .dependsOn(core, testSupport % "test->test", coreTestSupport % "test")
+  .settings(
+    commonSettings,
+    bintrayPublishingSettings,
+    description := "Client for AWS Key Management Service (KMS)",
+    libraryDependencies += awsDependency("kms")
+  )
+
+lazy val rds = Project("aws2scala-rds", file("aws2scala-rds"))
+  .dependsOn(core, testSupport % "test->test", coreTestSupport % "test")
+  .settings(
+    commonSettings,
+    bintrayPublishingSettings,
+    description := "Client for Amazon Relational Database Service (RDS)",
+    libraryDependencies += awsDependency("rds")
+  )
+
+lazy val s3 = Project("aws2scala-s3", file("aws2scala-s3"))
+  .dependsOn(core, testSupport % "test->test", coreTestSupport % "test")
+  .settings(
+    commonSettings,
+    bintrayPublishingSettings,
+    description := "Client for Amazon Simple Storage Service (S3)",
+    libraryDependencies ++= Seq(
+      awsDependency("s3"),
+      sprayJson            % "test"
+    )
+  )
+
+lazy val sns = Project("aws2scala-sns", file("aws2scala-sns"))
+  .dependsOn(core)
+  .settings(
+    commonSettings,
+    bintrayPublishingSettings,
+    description := "Client for Amazon Simple Notification Service (SNS)",
+    libraryDependencies += awsDependency("sns")
+  )
+
+lazy val snsTestkit = Project("aws2scala-sns-testkit", file("aws2scala-sns-testkit"))
+  .dependsOn(sns, coreTestkit, iamTestkit)
+  .settings(
+    commonSettings,
+    bintrayPublishingSettings,
+    description := "Test utility library for aws2scala-sns",
+    libraryDependencies ++= Seq(scalaCheck, sprayJson)
+  )
+
+lazy val snsTests = Project("aws2scala-sns-tests", file("aws2scala-sns-tests"))
+  .dependsOn(
+    sns             % "test",
+    snsTestkit      % "test",
+    coreTestSupport % "test",
+    testSupport     % "test->test"
+  )
+  .settings(
+    commonSettings,
+    noPublishingSettings,
+    description := "Tests for aws2scala-sns"
+  )
+
+lazy val sts = Project("aws2scala-sts", file("aws2scala-sts"))
+  .dependsOn(core)
+  .settings(
+    commonSettings,
+    bintrayPublishingSettings,
+    description := "Client for AWS Security Token Service (STS)",
+    libraryDependencies += awsDependency("sts")
+  )
+
+lazy val stsTestkit = Project("aws2scala-sts-testkit", file("aws2scala-sts-testkit"))
+  .dependsOn(sts, coreTestkit, iamTestkit)
+  .settings(
+    commonSettings,
+    bintrayPublishingSettings,
+    description := "Test utility library for aws2scala-sts",
+    libraryDependencies += scalaCheck
+  )
+
+lazy val stsTests = Project("aws2scala-sts-tests", file("aws2scala-sts-tests"))
+  .dependsOn(
+    sts             % "test",
+    stsTestkit      % "test",
+    coreTestSupport % "test",
+    testSupport     % "test->test"
+  )
+  .settings(
+    commonSettings,
+    noPublishingSettings,
+    description := "Tests for aws2scala-sts"
+  )
+
+lazy val integrationTests = Project("aws2scala-integration-tests", file("aws2scala-integration-tests"))
+  .dependsOn(core, testSupport, cloudFormation, ec2, iam, kms, rds, s3, sns, sts)
+  .configs(IntegrationTest)
+  .settings(
+    commonSettings,
+    noPublishingSettings,
+    Defaults.itSettings,
+    description := "Integration test suite for aws2scala",
+    libraryDependencies ++= Seq(
+      cftg                                   % "it",
+      "commons-io"  % "commons-io"  % "2.4"  % "it"
+    )
   )
 
 lazy val aws2scala = (project in file("."))
-  .aggregate(`stream-support`, core)
-  .settings(commonSettings: _*)
-  .settings(noPublishingSettings: _*)
+  .aggregate(
+    testSupport,
+    coreMacros, core, coreTestSupport, coreTests, coreTestkit,
+    cloudFormation,
+    ec2, ec2Testkit, ec2Tests,
+    kms,
+    iam, iamTestkit, iamTests,
+    rds,
+    s3,
+    sns, snsTestkit, snsTests,
+    sts, stsTestkit, stsTests,
+    integrationTests)
+  .settings(
+    commonSettings,
+    noPublishingSettings,
+    // unidoc
+    unidocSettings,
+    unidocProjectFilter in (ScalaUnidoc, unidoc) := inAnyProject -- inProjects(testSupport, coreTestSupport)
+  )
