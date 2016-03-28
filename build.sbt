@@ -49,7 +49,10 @@ lazy val commonSettings = Seq(
   ) ++ createAwsApiMappings("core", "cloudformation", "ec2", "kms", "rds", "s3", "sns", "sts"),
 
   // coverage
-  coverageExcludedPackages := "com\\.monsanto\\.arch\\.awsutil\\.test_support\\..*;com\\.monsanto\\.arch\\.awsutil\\.testkit\\..*"
+  coverageExcludedPackages := "com\\.monsanto\\.arch\\.awsutil\\.test_support\\..*;com\\.monsanto\\.arch\\.awsutil\\.testkit\\..*",
+
+  // Allow resolution on JCenter
+  resolvers += Resolver.jcenterRepo
 )
 
 val AwsDocURL = "http://docs.aws.amazon.com/AWSJavaSDK/latest/javadoc"
