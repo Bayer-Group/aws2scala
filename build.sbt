@@ -262,15 +262,34 @@ lazy val rds = Project("aws2scala-rds", file("aws2scala-rds"))
   )
 
 lazy val s3 = Project("aws2scala-s3", file("aws2scala-s3"))
-  .dependsOn(core, testSupport % "test->test", coreTestSupport % "test")
+  .dependsOn(core)
   .settings(
     commonSettings,
     bintrayPublishingSettings,
     description := "Client for Amazon Simple Storage Service (S3)",
-    libraryDependencies ++= Seq(
-      awsDependency("s3"),
-      sprayJson            % "test"
-    )
+    libraryDependencies += awsDependency("s3")
+  )
+
+lazy val s3Testkit = Project("aws2scala-s3-testkit", file("aws2scala-s3-testkit"))
+  .dependsOn(s3)
+  .settings(
+    commonSettings,
+    bintrayPublishingSettings,
+    description := "Test utility library for aws2scala-s3"
+  )
+
+lazy val s3Tests = Project("aws2scala-s3-tests", file("aws2scala-s3-tests"))
+  .dependsOn(
+    s3              % "test",
+    s3Testkit       % "test",
+    coreTestSupport % "test",
+    testSupport     % "test->test"
+  )
+  .settings(
+    commonSettings,
+    noPublishingSettings,
+    description := "Tests for aws2scala-s3",
+    libraryDependencies += sprayJson
   )
 
 lazy val sns = Project("aws2scala-sns", file("aws2scala-sns"))
@@ -358,7 +377,7 @@ lazy val aws2scala = (project in file("."))
     kms,
     iam, iamTestkit, iamTests,
     rds,
-    s3,
+    s3, s3Testkit, s3Tests,
     sns, snsTestkit, snsTests,
     sts, stsTestkit, stsTests,
     integrationTests)
