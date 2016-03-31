@@ -49,8 +49,7 @@ trait AwsEnumerationBehaviours { this: FreeSpec ⇒
 
     "provides an extractor" in {
       forAll(scalaValues) { scalaValue ⇒
-        scalaValue.toString should matchPattern { case companion(`scalaValue`) ⇒ }
-
+        companion.unapply(scalaValue.toString) shouldBe Some(scalaValue)
       }
     }
   }
