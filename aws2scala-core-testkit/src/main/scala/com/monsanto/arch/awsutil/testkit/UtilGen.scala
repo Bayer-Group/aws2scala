@@ -44,9 +44,9 @@ object UtilGen {
     Sizer(minSize, maxSize).sized { size ⇒
       for {
         n ← Gen.choose(minSize, size)
-        str ← Gen.listOfN(n, charGen).map(_.mkString).suchThat(_.length >= minSize)
+        str ← Gen.listOfN(n, charGen).map(_.mkString)
       } yield str
-    }
+    }.suchThat(_.length >= minSize)
 
   val nonEmptyString: Gen[String] = Gen.nonEmptyListOf(arbitrary[Char]).map(_.mkString).suchThat(_.nonEmpty)
 
