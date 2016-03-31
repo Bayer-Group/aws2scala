@@ -90,3 +90,28 @@ case class Bucket(name: String, owner: Owner, creationDate: Date) {
   def upload[T: UploadSource](key: String, content: T)(implicit asyncS3Client: AsyncS3Client, m: Materializer): Future[Object] =
     asyncS3Client.upload(name, key, content).map(Implicits.fromAws)(m.executionContext)
 }
+
+object Bucket {
+  /** The set of all valid bucket name characters. */
+  private val ValidBucketNameChar = (('a' to 'z') ++ ('0' to '9') :+ '-' :+ '.').toSet
+
+  private val IPv4Regex = "^(?:[0-9]{1,3}\\.){3}[0-9]{1,3}$"
+
+  /** Verifies that the given name may be used as a bucket name in any region (US East is a little more permissive). */
+  def validName(name: String): Boolean = {
+    name.length >= 3 &&
+      name.length < 64 &&
+      name.forall(ValidBucketNameChar) &&
+      !name.matches("^(?:[0-9]{1,3}\\.){3}[0-9]{1,3}$") &&
+      {
+        val labels = {
+          val result = name.foldLeft((Seq.empty[String], Seq.empty[Char])) {
+            case ((strings, chars), '.') ⇒ (strings :+ chars.mkString, Seq.empty)
+            case ((strings, chars), c) ⇒ (strings, chars :+ c)
+          }
+          result._1 :+ result._2.mkString
+        }
+        labels.forall(l ⇒ l.nonEmpty && l.head.isLetterOrDigit && l.last.isLetterOrDigit)
+      }
+  }
+}

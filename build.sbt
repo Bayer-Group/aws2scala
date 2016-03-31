@@ -271,11 +271,12 @@ lazy val s3 = Project("aws2scala-s3", file("aws2scala-s3"))
   )
 
 lazy val s3Testkit = Project("aws2scala-s3-testkit", file("aws2scala-s3-testkit"))
-  .dependsOn(s3)
+  .dependsOn(s3, coreTestkit)
   .settings(
     commonSettings,
     bintrayPublishingSettings,
-    description := "Test utility library for aws2scala-s3"
+    description := "Test utility library for aws2scala-s3",
+    libraryDependencies += scalaCheck
   )
 
 lazy val s3Tests = Project("aws2scala-s3-tests", file("aws2scala-s3-tests"))

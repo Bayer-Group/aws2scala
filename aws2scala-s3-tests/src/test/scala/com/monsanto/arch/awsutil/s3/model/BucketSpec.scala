@@ -9,11 +9,15 @@ import com.amazonaws.services.s3.{model ⇒ aws}
 import com.monsanto.arch.awsutil.s3.{AsyncS3Client, UploadSource}
 import com.monsanto.arch.awsutil.test_support.AdaptableScalaFutures._
 import com.monsanto.arch.awsutil.test_support.Materialised
+import com.monsanto.arch.awsutil.testkit.UtilGen
+import org.scalacheck.Gen
 import org.scalamock.scalatest.MockFactory
 import org.scalatest.FreeSpec
 import org.scalatest.Matchers._
+import org.scalatest.prop.GeneratorDrivenPropertyChecks._
 
 import scala.concurrent.Future
+import scala.util.Try
 
 class BucketSpec extends FreeSpec with MockFactory with Materialised {
   private val who = System.getProperty("user.name")
@@ -210,6 +214,161 @@ class BucketSpec extends FreeSpec with MockFactory with Materialised {
           .returning(Future.successful(toAws(uploadedObject)))
 
         bucket.upload(key, file).futureValue shouldBe uploadedObject
+      }
+    }
+  }
+
+  "Bucket.validName" - {
+    val lowerDigitChar = Gen.oneOf(('a' to 'z') ++ ('0' to '9'))
+    def nameContaining(sub: String): Gen[String] = {
+      val subLen = sub.length
+      val baseMin = (3 - subLen).max(1)
+      val baseMax = 63 - subLen
+      val gen =
+        for {
+          baseName ← UtilGen.stringOf(lowerDigitChar, baseMin, baseMax)
+          index ← Gen.choose(1, baseName.length - 1)
+        } yield {
+          val (start, end) = baseName.splitAt(index)
+          s"$start$sub$end"
+        }
+      gen.suchThat { name ⇒
+        val subIndex = name.indexOf(sub)
+        name.length > 3 && subIndex != 0 && subIndex != (name.length - subLen)
+      }
+    }
+    def nameStartingWith(prefix: String): Gen[String] = {
+      val prefixLength = prefix.length
+      val baseMin = (3 - prefixLength).max(1)
+      val baseMax = 63 - prefixLength
+      val gen = UtilGen.stringOf(lowerDigitChar, baseMin, baseMax).map(prefix + _)
+      gen.suchThat { name ⇒
+        name.length > 3 && name.startsWith(prefix)
+      }
+    }
+    def nameEndingWith(suffix: String): Gen[String] = {
+      val suffixLength = suffix.length
+      val baseMin = (3 - suffixLength).max(1)
+      val baseMax = 63 - suffixLength
+      val gen = UtilGen.stringOf(lowerDigitChar, baseMin, baseMax).map(_ + suffix)
+      gen.suchThat { name ⇒
+        name.length > 3 && name.endsWith(suffix)
+      }
+    }
+
+
+    "accepts" - {
+      "simple names" in {
+        forAll(UtilGen.stringOf(lowerDigitChar, 3, 63)) { name ⇒
+          Bucket.validName(name) shouldBe true
+        }
+      }
+
+      "names with hyphens" in {
+        forAll(nameContaining("-")) { name ⇒
+          Bucket.validName(name) shouldBe true
+        }
+      }
+
+      "names with full stops" in {
+        forAll(nameContaining(".")) { name ⇒
+          Bucket.validName(name) shouldBe true
+        }
+      }
+    }
+
+    "rejects" - {
+      "short names" in {
+        val shortName = UtilGen.stringOf(lowerDigitChar, 0, 2)
+        forAll(shortName) { name ⇒
+          Bucket.validName(name) shouldBe false
+        }
+      }
+
+      "long names" in {
+        val longName = UtilGen.stringOf(lowerDigitChar, 64, 1024)
+        forAll(longName) { name ⇒
+          Bucket.validName(name) shouldBe false
+        }
+      }
+
+      "names with upper-case characters" in {
+        val upperCharName = UtilGen.stringOf(lowerDigitChar, 3, 63).map(_.toUpperCase).suchThat(_.exists(_.isUpper))
+        forAll(upperCharName) { name ⇒
+          Bucket.validName(name) shouldBe false
+        }
+      }
+
+      "names with invalid punctuation" in {
+        val badChars = Seq('_', ',', '\'', '"', '$', '%', '!', '?')
+        val badCharName =
+          for {
+            badChar ← Gen.oneOf(badChars).map(_.toString)
+            name ← Gen.oneOf(
+              nameContaining(badChar),
+              nameStartingWith(badChar),
+              nameEndingWith(badChar)
+            )
+          } yield name
+        forAll(badCharName) { name ⇒
+          Bucket.validName(name) shouldBe false
+        }
+      }
+
+      "names that start with a full stop" in {
+        forAll(nameStartingWith(".")) { name ⇒
+          Bucket.validName(name) shouldBe false
+        }
+      }
+
+      "names that end with a full stop" in {
+        forAll(nameEndingWith(".")) { name ⇒
+          Bucket.validName(name) shouldBe false
+        }
+      }
+
+      "names containing two full stops in a row" in {
+        forAll(nameContaining("..")) { name ⇒
+          Bucket.validName(name) shouldBe false
+        }
+      }
+
+      "names that begin with a hyphen" in {
+        forAll(nameStartingWith("-")) { name ⇒
+          Bucket.validName(name) shouldBe false
+        }
+      }
+
+      "names that end with a hyphen" in {
+        forAll(nameEndingWith("-")) { name ⇒
+          Bucket.validName(name) shouldBe false
+        }
+      }
+
+      "labels that begin with a hyphen" in {
+        forAll(nameContaining(".-")) { name ⇒
+          Bucket.validName(name) shouldBe false
+        }
+      }
+
+      "labels that end with a hyphen" in {
+        forAll(nameEndingWith("-.")) { name ⇒
+          Bucket.validName(name) shouldBe false
+        }
+      }
+
+      "names that look like IP addresses" in {
+        val ipName =
+          Gen.listOfN(4, Gen.choose(0, 255)).map(_.mkString("."))
+            .suchThat { ip ⇒
+              Try {
+                val octets = ip.split('.').map(_.toInt)
+                octets.length == 4 && octets.forall(b ⇒ b >= 0 && b < 256)
+              }.getOrElse(false)
+            }
+        forAll(ipName) { name ⇒
+          Bucket.validName(name) shouldBe false
+        }
       }
     }
   }
