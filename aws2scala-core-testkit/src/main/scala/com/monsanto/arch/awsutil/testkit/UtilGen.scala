@@ -62,4 +62,6 @@ object UtilGen {
 
     def sized[T](f: Int ⇒ Gen[T]): Gen[T] = Gen.sized(n ⇒ f(apply(n)))
   }
+
+  val emailAddress: Gen[String] = Gen.identifier.map(u ⇒ s"$u@example.com").suchThat(_.matches("^.+@example\\.com$"))
 }

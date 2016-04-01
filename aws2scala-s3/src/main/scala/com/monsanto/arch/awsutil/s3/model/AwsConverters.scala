@@ -10,4 +10,32 @@ object AwsConverters {
         case None ⇒ new aws.CreateBucketRequest(request.bucketName)
       }
   }
+
+  implicit class ScalaGrantee(val grantee: Grantee) extends AnyVal {
+    def asAws: aws.Grantee =
+      grantee match {
+        case Grantee.Canonical(id, None) ⇒
+          new aws.CanonicalGrantee(id)
+        case Grantee.Canonical(id, Some(displayName)) ⇒
+          val g = new aws.CanonicalGrantee(id)
+          g.setDisplayName(displayName)
+          g
+        case Grantee.EmailAddress(emailAddress) ⇒
+          new aws.EmailAddressGrantee(emailAddress)
+        case Grantee.AllUsers ⇒ aws.GroupGrantee.AllUsers
+        case Grantee.AuthenticatedUsers ⇒ aws.GroupGrantee.AuthenticatedUsers
+        case Grantee.LogDelivery ⇒ aws.GroupGrantee.LogDelivery
+      }
+  }
+
+  implicit class AwsGrantee(val grantee: aws.Grantee) extends AnyVal {
+    def asScala: Grantee =
+      grantee match {
+        case c: aws.CanonicalGrantee ⇒ Grantee.Canonical(c.getIdentifier, Option(c.getDisplayName))
+        case e: aws.EmailAddressGrantee ⇒ Grantee.EmailAddress(e.getIdentifier)
+        case aws.GroupGrantee.AllUsers ⇒ Grantee.AllUsers
+        case aws.GroupGrantee.AuthenticatedUsers ⇒ Grantee.AuthenticatedUsers
+        case aws.GroupGrantee.LogDelivery ⇒ Grantee.LogDelivery
+      }
+  }
 }
