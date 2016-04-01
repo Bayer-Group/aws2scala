@@ -11,6 +11,14 @@ object AwsConverters {
       }
   }
 
+  implicit class AwsGrant(val grant: aws.Grant) extends AnyVal {
+    def asScala: Grant = Grant(grant.getGrantee.asScala, grant.getPermission.asScala)
+  }
+
+  implicit class ScalaGrant(val grant: Grant) extends AnyVal {
+    def asAws: aws.Grant = new aws.Grant(grant.grantee.asAws, grant.permission.asAws)
+  }
+
   implicit class ScalaGrantee(val grantee: Grantee) extends AnyVal {
     def asAws: aws.Grantee =
       grantee match {
@@ -37,5 +45,13 @@ object AwsConverters {
         case aws.GroupGrantee.AuthenticatedUsers ⇒ Grantee.AuthenticatedUsers
         case aws.GroupGrantee.LogDelivery ⇒ Grantee.LogDelivery
       }
+  }
+
+  implicit class AwsPermission(val permission: aws.Permission) extends AnyVal {
+    def asScala: Permission = Permission.fromAws(permission)
+  }
+
+  implicit class ScalaPermission(val permission: Permission) extends AnyVal {
+    def asAws: aws.Permission = permission.toAws
   }
 }

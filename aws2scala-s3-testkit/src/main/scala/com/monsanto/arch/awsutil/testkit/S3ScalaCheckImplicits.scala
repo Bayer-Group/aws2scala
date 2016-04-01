@@ -1,6 +1,6 @@
 package com.monsanto.arch.awsutil.testkit
 
-import com.monsanto.arch.awsutil.s3.model.{Bucket, CreateBucketRequest, Grantee, Region}
+import com.monsanto.arch.awsutil.s3.model._
 import org.scalacheck.Arbitrary.arbitrary
 import org.scalacheck.{Arbitrary, Gen, Shrink}
 
@@ -21,6 +21,10 @@ object S3ScalaCheckImplicits {
         Shrink.shrink(name).filter(Bucket.validName).map(n ⇒ r.copy(bucketName = n)) append
           Shrink.shrink(region).map(x ⇒ r.copy(region = x))
     }
+
+  implicit lazy val arbGrant: Arbitrary[Grant] = Arbitrary(Gen.resultOf(Grant.apply _))
+
+  implicit lazy val shrinkGrant: Shrink[Grant] = Shrink.xmap((Grant.apply _).tupled, Grant.unapply(_).get)
 
   implicit lazy val arbGrantee: Arbitrary[Grantee] =
     Arbitrary {
@@ -57,4 +61,6 @@ object S3ScalaCheckImplicits {
     Shrink { grantee ⇒
       Shrink.shrink(grantee.emailAddress).filter(_.matches("^.+@example.com$")).map(x ⇒ grantee.copy(emailAddress = x))
     }
+
+  implicit lazy val arbPermission: Arbitrary[Permission] = Arbitrary(Gen.oneOf(Permission.values))
 }
