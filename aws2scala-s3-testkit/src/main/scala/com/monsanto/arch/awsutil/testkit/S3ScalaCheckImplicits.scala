@@ -12,12 +12,21 @@ object S3ScalaCheckImplicits {
       for {
         name ← S3Gen.bucketName
         region ← arbitrary[Option[Region]]
-      } yield CreateBucketRequest.CreateBucketWithNoAcl(name, region)
+        cannedAcl ← arbitrary[Option[CannedAccessControlList]]
+      } yield {
+        cannedAcl match {
+          case None ⇒ CreateBucketRequest.CreateBucketWithNoAcl(name, region)
+          case Some(acl) ⇒ CreateBucketRequest.CreateBucketWithCannedAcl(name, acl, region)
+        }
+      }
     }
 
   implicit lazy val shrinkCreateBucketRequest: Shrink[CreateBucketRequest] =
     Shrink {
       case r @ CreateBucketRequest.CreateBucketWithNoAcl(name, region) ⇒
+        Shrink.shrink(name).filter(Bucket.validName).map(n ⇒ r.copy(bucketName = n)) append
+          Shrink.shrink(region).map(x ⇒ r.copy(region = x))
+      case r @ CreateBucketRequest.CreateBucketWithCannedAcl(name, _, region) ⇒
         Shrink.shrink(name).filter(Bucket.validName).map(n ⇒ r.copy(bucketName = n)) append
           Shrink.shrink(region).map(x ⇒ r.copy(region = x))
     }
@@ -63,4 +72,7 @@ object S3ScalaCheckImplicits {
     }
 
   implicit lazy val arbPermission: Arbitrary[Permission] = Arbitrary(Gen.oneOf(Permission.values))
+
+  implicit lazy val arbCannedAccessControlList: Arbitrary[CannedAccessControlList] =
+    Arbitrary(Gen.oneOf(CannedAccessControlList.values))
 }

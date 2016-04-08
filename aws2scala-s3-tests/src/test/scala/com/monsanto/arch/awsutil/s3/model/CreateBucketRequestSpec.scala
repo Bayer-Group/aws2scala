@@ -22,15 +22,33 @@ class CreateBucketRequestSpec extends FreeSpec {
           CreateBucketRequest(name, region) shouldBe CreateBucketRequest.CreateBucketWithNoAcl(name, Some(region))
         }
       }
+
+      "with a bucket name and canned ACL" in {
+        forAll(S3Gen.bucketName, arbitrary[CannedAccessControlList]) { (name, cannedAcl) ⇒
+          CreateBucketRequest(name, cannedAcl) shouldBe
+            CreateBucketRequest.CreateBucketWithCannedAcl(name, cannedAcl, None)
+        }
+      }
+
+      "with a bucket name, canned ACL, and region" in {
+        forAll(S3Gen.bucketName, arbitrary[CannedAccessControlList], arbitrary[Region]) { (name, cannedAcl, region) ⇒
+          CreateBucketRequest(name, cannedAcl, region) shouldBe
+            CreateBucketRequest.CreateBucketWithCannedAcl(name, cannedAcl, Some(region))
+        }
+      }
     }
 
     "converts to the correct AWS object" in {
       forAll { request: CreateBucketRequest ⇒
+        val cannedAcl = request match {
+          case CreateBucketRequest.CreateBucketWithCannedAcl(_, acl, _) ⇒ Some(acl)
+          case _ ⇒ None
+        }
         request.asAws should have (
           'AccessControlList (null),
           'BucketName (request.bucketName),
-          'CannedAcl (null),
-          'Region (request.region.orNull)
+          'CannedAcl (cannedAcl.map(_.asAws).orNull),
+          'Region (request.region.map(_.toString).orNull)
         )
       }
     }

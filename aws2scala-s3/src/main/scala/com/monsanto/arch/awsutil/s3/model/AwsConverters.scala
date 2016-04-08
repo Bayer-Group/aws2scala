@@ -4,11 +4,17 @@ import com.amazonaws.services.s3.{model ⇒ aws}
 
 object AwsConverters {
   implicit class ScalaCreateBucketRequest(val request: CreateBucketRequest) extends AnyVal {
-    def asAws: aws.CreateBucketRequest =
-      request.region match {
-        case Some(r) ⇒ new aws.CreateBucketRequest(request.bucketName, r.toAws)
-        case None ⇒ new aws.CreateBucketRequest(request.bucketName)
+    def asAws: aws.CreateBucketRequest = {
+      val awsRequest =
+        request.region match {
+          case Some(r) ⇒ new aws.CreateBucketRequest(request.bucketName, r.toAws)
+          case None    ⇒ new aws.CreateBucketRequest(request.bucketName)
+        }
+      request.acl match {
+        case None      ⇒ awsRequest
+        case Some(acl) ⇒ awsRequest.withCannedAcl(acl.toAws)
       }
+    }
   }
 
   implicit class AwsGrant(val grant: aws.Grant) extends AnyVal {
@@ -53,5 +59,9 @@ object AwsConverters {
 
   implicit class ScalaPermission(val permission: Permission) extends AnyVal {
     def asAws: aws.Permission = permission.toAws
+  }
+
+  implicit class ScalaCannedAccessControlList(val cannedAcl: CannedAccessControlList) extends AnyVal {
+    def asAws: aws.CannedAccessControlList = cannedAcl.toAws
   }
 }
