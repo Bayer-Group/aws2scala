@@ -3,7 +3,7 @@ package com.monsanto.arch.awsutil.s3.model
 sealed trait CreateBucketRequest {
   def bucketName: String
   def region: Option[Region]
-  def acl: Option[CannedAccessControlList]
+  def acl: Option[Either[CannedAccessControlList,Seq[Grant]]]
 }
 
 object CreateBucketRequest {
@@ -37,11 +37,28 @@ object CreateBucketRequest {
   def apply(bucketName: String, cannedAcl: CannedAccessControlList, region: Region): CreateBucketRequest =
     CreateBucketWithCannedAcl(bucketName, cannedAcl, Some(region))
 
+  /** Returns a `CreateBucketRequest` using the default region and with an ACL specified by a list of grants.
+    *
+    * @param bucketName the name of the bucket to create
+    * @param grants the list of grants to be used as an access control list
+    */
+  def apply(bucketName: String, grants: Seq[Grant]): CreateBucketRequest =
+    CreateBucketWithGrants(bucketName, grants, None)
+
+  /** Returns a `CreateBucketRequest` using the given region and with an ACL specified by a list of grants.
+    *
+    * @param bucketName the name of the bucket to create
+    * @param grants the list of grants to be used as an access control list
+    * @param region the region in which to locate the bucket
+    */
+  def apply(bucketName: String, grants: Seq[Grant], region: Region): CreateBucketRequest =
+    CreateBucketWithGrants(bucketName, grants, Some(region))
+
   /** A [[com.monsanto.arch.awsutil.s3.model.CreateBucketRequest CreateBucketRequest]] that does not specify an access
     * control list.
     */
   private[awsutil] case class CreateBucketWithNoAcl(bucketName: String, region: Option[Region]) extends CreateBucketRequest {
-    override def acl: Option[CannedAccessControlList] = None
+    override val acl = None
   }
 
   /** A [[com.monsanto.arch.awsutil.s3.model.CreateBucketRequest CreateBucketRequest]] that specifies a canned access
@@ -50,7 +67,16 @@ object CreateBucketRequest {
   private[awsutil] case class CreateBucketWithCannedAcl(bucketName: String,
                                                         cannedAcl: CannedAccessControlList,
                                                         region: Option[Region]) extends CreateBucketRequest {
-    override def acl: Option[CannedAccessControlList] = Some(cannedAcl)
+    override val acl = Some(Left(cannedAcl))
+  }
+
+  /** A [[com.monsanto.arch.awsutil.s3.model.CreateBucketRequest CreateBucketRequest]] that specifies an access
+    * control list as a list of grants.
+    */
+  private[awsutil] case class CreateBucketWithGrants(bucketName: String,
+                                                     grants: Seq[Grant],
+                                                     region: Option[Region]) extends CreateBucketRequest {
+    override val acl = Some(Right(grants))
   }
 }
 

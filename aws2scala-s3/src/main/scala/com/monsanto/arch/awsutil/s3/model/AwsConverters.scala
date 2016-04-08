@@ -11,8 +11,9 @@ object AwsConverters {
           case None    ⇒ new aws.CreateBucketRequest(request.bucketName)
         }
       request.acl match {
-        case None      ⇒ awsRequest
-        case Some(acl) ⇒ awsRequest.withCannedAcl(acl.toAws)
+        case None                  ⇒ awsRequest
+        case Some(Left(cannedAcl)) ⇒ awsRequest.withCannedAcl(cannedAcl.toAws)
+        case Some(Right(grants))   ⇒ awsRequest.withAccessControlList(grants.asAws)
       }
     }
   }
@@ -63,5 +64,13 @@ object AwsConverters {
 
   implicit class ScalaCannedAccessControlList(val cannedAcl: CannedAccessControlList) extends AnyVal {
     def asAws: aws.CannedAccessControlList = cannedAcl.toAws
+  }
+
+  implicit class ScalaGrantList(val grants: Seq[Grant]) extends AnyVal {
+    def asAws: aws.AccessControlList = {
+      val acl = new aws.AccessControlList
+      acl.grantAllPermissions(grants.map(_.asAws): _*)
+      acl
+    }
   }
 }

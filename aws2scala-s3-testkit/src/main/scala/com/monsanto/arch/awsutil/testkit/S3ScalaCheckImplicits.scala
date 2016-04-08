@@ -12,11 +12,15 @@ object S3ScalaCheckImplicits {
       for {
         name ← S3Gen.bucketName
         region ← arbitrary[Option[Region]]
-        cannedAcl ← arbitrary[Option[CannedAccessControlList]]
+        acl ← arbitrary[Option[Either[CannedAccessControlList,Seq[Grant]]]]
       } yield {
-        cannedAcl match {
-          case None ⇒ CreateBucketRequest.CreateBucketWithNoAcl(name, region)
-          case Some(acl) ⇒ CreateBucketRequest.CreateBucketWithCannedAcl(name, acl, region)
+        acl match {
+          case None ⇒
+            CreateBucketRequest.CreateBucketWithNoAcl(name, region)
+          case Some(Left(cannedAcl)) ⇒
+            CreateBucketRequest.CreateBucketWithCannedAcl(name, cannedAcl, region)
+          case Some(Right(grants)) ⇒
+            CreateBucketRequest.CreateBucketWithGrants(name, grants, region)
         }
       }
     }
@@ -28,6 +32,10 @@ object S3ScalaCheckImplicits {
           Shrink.shrink(region).map(x ⇒ r.copy(region = x))
       case r @ CreateBucketRequest.CreateBucketWithCannedAcl(name, _, region) ⇒
         Shrink.shrink(name).filter(Bucket.validName).map(n ⇒ r.copy(bucketName = n)) append
+          Shrink.shrink(region).map(x ⇒ r.copy(region = x))
+      case r @ CreateBucketRequest.CreateBucketWithGrants(name, grants, region) ⇒
+        Shrink.shrink(name).filter(Bucket.validName).map(n ⇒ r.copy(bucketName = n)) append
+          Shrink.shrink(grants).map(g ⇒ r.copy(grants = g)) append
           Shrink.shrink(region).map(x ⇒ r.copy(region = x))
     }
 

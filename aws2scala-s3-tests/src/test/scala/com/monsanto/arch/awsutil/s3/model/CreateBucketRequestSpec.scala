@@ -36,18 +36,33 @@ class CreateBucketRequestSpec extends FreeSpec {
             CreateBucketRequest.CreateBucketWithCannedAcl(name, cannedAcl, Some(region))
         }
       }
+
+      "with a bucket name and list of grants" in {
+        forAll(S3Gen.bucketName, arbitrary[Seq[Grant]]) { (name, grants) ⇒
+          CreateBucketRequest(name, grants) shouldBe
+            CreateBucketRequest.CreateBucketWithGrants(name, grants, None)
+        }
+      }
+
+      "with a bucket name, list of grants, and region" in {
+        forAll(S3Gen.bucketName, arbitrary[Seq[Grant]], arbitrary[Region]) { (name, grants, region) ⇒
+          CreateBucketRequest(name, grants, region) shouldBe
+            CreateBucketRequest.CreateBucketWithGrants(name, grants, Some(region))
+        }
+      }
     }
 
     "converts to the correct AWS object" in {
       forAll { request: CreateBucketRequest ⇒
-        val cannedAcl = request match {
-          case CreateBucketRequest.CreateBucketWithCannedAcl(_, acl, _) ⇒ Some(acl)
-          case _ ⇒ None
+        val (maybeCannedAcl, maybeAccessControlList) = request.acl match {
+          case None                  ⇒ (None, None)
+          case Some(Left(cannedAcl)) ⇒ (Some(cannedAcl.toAws), None)
+          case Some(Right(grants))   ⇒ (None, Some(grants.asAws))
         }
         request.asAws should have (
-          'AccessControlList (null),
+          'AccessControlList (maybeAccessControlList.orNull),
           'BucketName (request.bucketName),
-          'CannedAcl (cannedAcl.map(_.asAws).orNull),
+          'CannedAcl (maybeCannedAcl.orNull),
           'Region (request.region.map(_.toString).orNull)
         )
       }
