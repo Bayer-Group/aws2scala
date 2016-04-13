@@ -14,10 +14,6 @@ import scala.language.implicitConversions
   * @author Daniel Solano Gómez
   */
 object S3 {
-  /** Returns whether or not a bucket with the given name exists. */
-  def exists(name: String)(implicit asyncS3Client: AsyncS3Client, m: Materializer): Future[Boolean] =
-    asyncS3Client.doesBucketExist(name)
-
   /** Lists all available buckets. */
   def list()(implicit asyncS3Client: AsyncS3Client, m: Materializer): Future[Seq[Bucket]] = {
     import m.executionContext

@@ -65,12 +65,6 @@ class DefaultS3ClientSpec extends FreeSpec with Materialised with MockFactory {
       result shouldBe buckets
     }
 
-    "can check for a bucket‘s existence" in withFixture(settings) { f =>
-      (f.s3.doesBucketExist _).expects(bucketName).returning(true)
-      val result = f.asyncClient.doesBucketExist(bucketName).futureValue
-      result shouldBe true
-    }
-
     "can get a bucket policy when" - {
       "one is available" in withFixture(settings) { f =>
         val policyText = "{}"

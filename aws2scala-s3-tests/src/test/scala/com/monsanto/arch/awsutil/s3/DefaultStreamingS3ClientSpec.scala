@@ -8,11 +8,13 @@ import com.monsanto.arch.awsutil.s3.model.AwsConverters._
 import com.monsanto.arch.awsutil.s3.model.{Bucket, CreateBucketRequest}
 import com.monsanto.arch.awsutil.test_support.AdaptableScalaFutures._
 import com.monsanto.arch.awsutil.test_support.Materialised
+import com.monsanto.arch.awsutil.testkit.S3Gen
 import com.monsanto.arch.awsutil.testkit.S3ScalaCheckImplicits._
 import org.scalamock.scalatest.MockFactory
 import org.scalatest.FreeSpec
 import org.scalatest.Matchers._
 import org.scalatest.prop.GeneratorDrivenPropertyChecks._
+import org.scalacheck.Arbitrary.arbitrary
 
 import scala.collection.JavaConverters._
 
@@ -46,6 +48,22 @@ class DefaultStreamingS3ClientSpec extends FreeSpec with MockFactory with Materi
             .futureValue
 
           result shouldBe bucket
+        }
+      }
+    }
+
+    "check if a bucket exists" in {
+      forAll(S3Gen.bucketName, arbitrary[Boolean]) { (bucketName, exists) ⇒
+        withFixture { f ⇒
+          (f.s3.doesBucketExist _)
+            .expects(bucketName)
+            .returning(exists)
+          val result = Source.single(bucketName)
+            .via(f.streamingClient.bucketExistenceChecker)
+            .runWith(Sink.head)
+            .futureValue
+
+          result shouldBe exists
         }
       }
     }

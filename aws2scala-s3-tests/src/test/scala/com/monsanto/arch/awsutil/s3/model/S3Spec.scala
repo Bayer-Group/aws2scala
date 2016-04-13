@@ -28,14 +28,6 @@ class S3Spec extends FreeSpec with MockFactory with Materialised {
       result shouldBe buckets
     }
 
-    "can check if a bucket exists" in {
-      implicit val client = mock[AsyncS3Client]
-      val name = "some-name"
-
-      (client.doesBucketExist(_: String)(_: Materializer)).expects(name, materialiser).returning(Future.successful(true))
-      S3.exists(name).futureValue shouldBe true
-    }
-
     "can look for a bucket" - {
       "and find it" in {
         val awsBuckets = makeAwsBuckets()

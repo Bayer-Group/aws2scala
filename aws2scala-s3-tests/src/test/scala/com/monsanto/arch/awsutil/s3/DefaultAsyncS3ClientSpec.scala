@@ -12,8 +12,8 @@ import org.scalatest.Matchers._
 import org.scalatest.prop.GeneratorDrivenPropertyChecks._
 
 class DefaultAsyncS3ClientSpec extends FreeSpec with MockFactory with Materialised with FlowMockUtils {
-  "the async S3 client" - {
-    "can create buckets" in {
+  "the async S3 client can" - {
+    "create buckets" in {
       forAll(S3Gen.bucketName, arbitrary[Bucket]) { (bucketName, bucket) ⇒
         val streaming = mock[StreamingS3Client]("streaming")
         val async = new DefaultAsyncS3Client(streaming)
@@ -24,6 +24,20 @@ class DefaultAsyncS3ClientSpec extends FreeSpec with MockFactory with Materialis
 
         val result = async.createBucket(bucketName).futureValue
         result shouldBe bucket
+      }
+    }
+
+    "check if buckets exist" in {
+      forAll(S3Gen.bucketName, arbitrary[Boolean]) { (bucketName, exists) ⇒
+        val streaming = mock[StreamingS3Client]("streaming")
+        val async = new DefaultAsyncS3Client(streaming)
+
+        (streaming.bucketExistenceChecker _)
+          .expects()
+          .returningFlow(bucketName, exists)
+
+        val result = async.doesBucketExist(bucketName).futureValue
+        result shouldBe exists
       }
     }
   }
