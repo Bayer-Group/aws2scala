@@ -4,9 +4,9 @@ import java.io.File
 import java.net.URL
 
 import akka.stream.Materializer
-import com.amazonaws.services.s3.model._
+import com.amazonaws.services.s3.{model ⇒ aws}
 import com.monsanto.arch.awsutil.AsyncAwsClient
-import com.monsanto.arch.awsutil.s3.model.BucketNameAndKey
+import com.monsanto.arch.awsutil.s3.model.{Bucket, BucketNameAndKey}
 
 import scala.concurrent.Future
 
@@ -17,7 +17,7 @@ import scala.concurrent.Future
   */
 trait AsyncS3Client extends AsyncAwsClient {
   /** Creates a new bucket with the given name.  The location of the bucket is dependent on the location for which the
-    * client is configured.  The default bucket policy, if any, will be applied to the newly created bucket.
+    * client is configured.
     *
     * @param bucketName the name of the bucket to create
     * @return a future containing the bucket created by AWS
@@ -45,7 +45,7 @@ trait AsyncS3Client extends AsyncAwsClient {
   def emptyAndDeleteBucket(bucketName:String)(implicit m: Materializer) :Future[String]
 
   /** Returns a sequence of all of the buckets available. */
-  def listBuckets()(implicit m: Materializer): Future[Seq[Bucket]]
+  def listBuckets()(implicit m: Materializer): Future[Seq[aws.Bucket]]
 
   /** Returns whether the bucket exists. */
   def doesBucketExist(bucketName: String)(implicit m: Materializer): Future[Boolean]
@@ -100,7 +100,7 @@ trait AsyncS3Client extends AsyncAwsClient {
     * uploaded object and return the object summary.  By default, the content may be a string, array of bytes, or a
     * file.
     */
-  def upload[T: UploadSource](bucketName: String, key: String, t: T)(implicit m: Materializer): Future[S3ObjectSummary]
+  def upload[T: UploadSource](bucketName: String, key: String, t: T)(implicit m: Materializer): Future[aws.S3ObjectSummary]
 
   /** Downloads the object at the given bucket and key to an object.  By default, the sink type may be a string or a
     * byte array.
@@ -112,18 +112,18 @@ trait AsyncS3Client extends AsyncAwsClient {
 
   /** Copies the object from one key to another in the same bucket, returning the object summary of the copy. */
   def copy(bucketName: String, sourceKey: String, destKey: String)
-          (implicit m: Materializer): Future[S3ObjectSummary]
+          (implicit m: Materializer): Future[aws.S3ObjectSummary]
 
   /** Copies the object from one bucket and key to another bucket and key, returning the object summary of the copy. */
   def copy(sourceBucketName: String, sourceKey: String,
            destBucketName: String, destKey: String)
-          (implicit m: Materializer): Future[S3ObjectSummary]
+          (implicit m: Materializer): Future[aws.S3ObjectSummary]
 
   /** List all the objects in a bucket*/
-  def listObjects(bucketName: String)(implicit m: Materializer): Future[Seq[S3ObjectSummary]]
+  def listObjects(bucketName: String)(implicit m: Materializer): Future[Seq[aws.S3ObjectSummary]]
 
   /** List all the objects in a bucket matching the given prefix*/
-  def listObjects(bucketName: String, prefix: String)(implicit m: Materializer): Future[Seq[S3ObjectSummary]]
+  def listObjects(bucketName: String, prefix: String)(implicit m: Materializer): Future[Seq[aws.S3ObjectSummary]]
 
   /** Deletes an object. */
   def deleteObject(bucketName: String, key: String)(implicit m: Materializer): Future[BucketNameAndKey]

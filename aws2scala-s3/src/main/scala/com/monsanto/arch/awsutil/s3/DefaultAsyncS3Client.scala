@@ -4,11 +4,11 @@ import java.io.File
 
 import akka.stream.Materializer
 import akka.stream.scaladsl.{Sink, Source}
-import com.monsanto.arch.awsutil.s3.model.BucketNameAndKey
+import com.monsanto.arch.awsutil.s3.model.{BucketNameAndKey, CreateBucketRequest}
 
 private[awsutil] class DefaultAsyncS3Client(streamingS3Client: StreamingS3Client) extends AsyncS3Client {
   override def createBucket(bucketName: String)(implicit m: Materializer) =
-    Source.single(bucketName)
+    Source.single(CreateBucketRequest(bucketName))
       .via(streamingS3Client.bucketCreator)
       .runWith(Sink.head)
 

@@ -5,6 +5,7 @@ import java.util.{Date, UUID}
 import akka.stream.Materializer
 import akka.stream.scaladsl.Source
 import com.amazonaws.services.s3.{model ⇒ aws}
+import com.monsanto.arch.awsutil.s3.model.AwsConverters._
 import com.monsanto.arch.awsutil.s3.{AsyncS3Client, StreamingS3Client}
 import com.monsanto.arch.awsutil.test_support.AdaptableScalaFutures._
 import com.monsanto.arch.awsutil.test_support.Materialised
@@ -20,26 +21,11 @@ class S3Spec extends FreeSpec with MockFactory with Materialised {
   "the S3 object" - {
     "can list buckets" in {
       val awsBuckets = makeAwsBuckets()
-      val buckets = awsBuckets.map(S3.Implicits.fromAws)
+      val buckets = awsBuckets.map(_.asScala)
       implicit val client = mock[AsyncS3Client]
       (client.listBuckets()(_: Materializer)).expects(materialiser).returning(Future.successful(awsBuckets))
       val result = S3.list().futureValue
       result shouldBe buckets
-    }
-
-    "can create a bucket" in {
-      implicit val client = mock[AsyncS3Client]
-      val name = "some-name"
-      val now = new Date
-      val awsBucket = {
-        val b = new aws.Bucket(name)
-        b.setOwner(new aws.Owner(who, who))
-        b.setCreationDate(now)
-        b
-      }
-      (client.createBucket(_: String)(_: Materializer)).expects(name, materialiser).returning(Future.successful(awsBucket))
-      val result = S3.create(name).futureValue
-      result shouldBe Bucket(name, Owner(who, who), now)
     }
 
     "can check if a bucket exists" in {
@@ -53,7 +39,7 @@ class S3Spec extends FreeSpec with MockFactory with Materialised {
     "can look for a bucket" - {
       "and find it" in {
         val awsBuckets = makeAwsBuckets()
-        val buckets = awsBuckets.map(S3.Implicits.fromAws)
+        val buckets = awsBuckets.map(_.asScala)
         val theBucket = buckets(12)
 
         implicit val client = mock[StreamingS3Client]

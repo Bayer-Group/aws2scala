@@ -1,10 +1,41 @@
 package com.monsanto.arch.awsutil.testkit
 
+import java.util.Date
+
 import com.monsanto.arch.awsutil.s3.model._
 import org.scalacheck.Arbitrary.arbitrary
 import org.scalacheck.{Arbitrary, Gen, Shrink}
 
 object S3ScalaCheckImplicits {
+  implicit lazy val arbBucket: Arbitrary[Bucket] =
+    Arbitrary {
+      for {
+        name ← S3Gen.bucketName
+        owner ← arbitrary[Owner]
+        creationDate ← arbitrary[Date]
+      } yield Bucket(name, owner, creationDate)
+    }
+
+  implicit lazy val shrinkBucket: Shrink[Bucket] =
+    Shrink { bucket ⇒
+      Shrink.shrink(bucket.name).filter(Bucket.validName).map(n ⇒ bucket.copy(name = n)) append
+        Shrink.shrink(bucket.owner).map(o ⇒ bucket.copy(owner = o)) append
+        Shrink.shrink(bucket.creationDate).map(d ⇒ bucket.copy(creationDate = d))
+    }
+
+  implicit lazy val arbOwner: Arbitrary[Owner] =
+    Arbitrary {
+      for {
+        id ← S3Gen.canonicalIdentifier
+        displayName ← UtilGen.nonEmptyString
+      } yield Owner(id, displayName)
+    }
+
+  implicit lazy val shrinkOwner: Shrink[Owner] =
+    Shrink { owner ⇒
+      Shrink.shrink(owner.displayName).filter(_.nonEmpty).map(x ⇒ owner.copy(displayName = x))
+    }
+
   implicit lazy val arbRegion: Arbitrary[Region] = Arbitrary(Gen.oneOf(Region.values))
 
   implicit lazy val arbCreateBucketRequest: Arbitrary[CreateBucketRequest] =

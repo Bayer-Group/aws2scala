@@ -3,8 +3,8 @@ package com.monsanto.arch.awsutil.s3.model
 import java.util.Date
 
 import akka.stream.Materializer
-import com.monsanto.arch.awsutil.s3.{UploadSource, AsyncS3Client}
 import com.monsanto.arch.awsutil.s3.model.S3.Implicits
+import com.monsanto.arch.awsutil.s3.{AsyncS3Client, UploadSource}
 
 import scala.concurrent.Future
 import scala.language.implicitConversions
@@ -94,8 +94,6 @@ case class Bucket(name: String, owner: Owner, creationDate: Date) {
 object Bucket {
   /** The set of all valid bucket name characters. */
   private val ValidBucketNameChar = (('a' to 'z') ++ ('0' to '9') :+ '-' :+ '.').toSet
-
-  private val IPv4Regex = "^(?:[0-9]{1,3}\\.){3}[0-9]{1,3}$"
 
   /** Verifies that the given name may be used as a bucket name in any region (US East is a little more permissive). */
   def validName(name: String): Boolean = {

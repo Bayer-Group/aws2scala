@@ -33,7 +33,7 @@ class S3ClientIntegrationSpec extends FreeSpec with AwsIntegrationSpec with Stri
   "the default Async S3 client can" - {
     "create a bucket" in {
       val result = asyncClient.createBucket(bucketName).futureValue
-      result.getName shouldBe bucketName
+      result.name shouldBe bucketName
       logger.info(s"Created bucket $bucketName")
       eventually {
         asyncClient.doesBucketExist(bucketName).futureValue shouldBe true
@@ -49,12 +49,6 @@ class S3ClientIntegrationSpec extends FreeSpec with AwsIntegrationSpec with Stri
     "list the buckets" in {
       val result = asyncClient.listBuckets().futureValue
       (result should contain (bucketName)) (decided by theBucketName)
-    }
-
-    "verify that the bucket has the default policy" in {
-      val result = asyncClient.getBucketPolicy(bucketName).futureValue
-
-      JsonParser(result.get) shouldBe defaultPolicy
     }
 
     "remove the policy from the bucket" in {

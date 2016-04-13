@@ -5,9 +5,9 @@ import java.net.URL
 
 import akka.NotUsed
 import akka.stream.scaladsl.{Flow, Source}
-import com.amazonaws.services.s3.model._
+import com.amazonaws.services.s3.{model ⇒ aws}
 import com.monsanto.arch.awsutil.StreamingAwsClient
-import com.monsanto.arch.awsutil.s3.model.BucketNameAndKey
+import com.monsanto.arch.awsutil.s3.model.{Bucket, BucketNameAndKey, CreateBucketRequest}
 
 /** Provides an interface to S3 built around Akka streams.
   *
@@ -16,7 +16,7 @@ import com.monsanto.arch.awsutil.s3.model.BucketNameAndKey
   */
 trait StreamingS3Client extends StreamingAwsClient {
   /** Returns an Akka flow that given a bucket name, it will create the bucket, applying the default bucket policy. */
-  def bucketCreator: Flow[String, Bucket, NotUsed]
+  def bucketCreator: Flow[CreateBucketRequest, Bucket, NotUsed]
 
   /** Returns an Akka flow that given a bucket name it will emit the policy for the bucket. */
   def bucketPolicyGetter: Flow[String, Option[String], NotUsed]
@@ -44,7 +44,7 @@ trait StreamingS3Client extends StreamingAwsClient {
   def bucketEmptier: Flow[String, String, NotUsed]
 
   /** Returns an Akka source that will output all of the buckets available. */
-  def bucketLister: Source[Bucket, NotUsed]
+  def bucketLister: Source[aws.Bucket, NotUsed]
 
   /** Returns an Akka flow that given a bucket name emits whether or not the bucket exists. */
   def bucketExistenceChecker: Flow[String, Boolean, NotUsed]
@@ -52,18 +52,18 @@ trait StreamingS3Client extends StreamingAwsClient {
   /** Returns an Akka flow that list objects given a bucket name and optional prefix, emitting the result object
     *  summaries.
     */
-  def objectLister: Flow[(String, Option[String]), S3ObjectSummary, NotUsed]
+  def objectLister: Flow[(String, Option[String]), aws.S3ObjectSummary, NotUsed]
 
   /** Returns an Akka flow that performs the list requests, emitting the result object summaries. */
-  def rawObjectLister: Flow[ListObjectsRequest, S3ObjectSummary, NotUsed]
+  def rawObjectLister: Flow[aws.ListObjectsRequest, aws.S3ObjectSummary, NotUsed]
 
   /** Creates an Akka flow that takes a bucket name, key, and source, and uploads it to S3.  Emits a summary for the
     * object resulting from the upload.
     */
-  def uploader[T: UploadSource]: Flow[(BucketNameAndKey, T), S3ObjectSummary, NotUsed]
+  def uploader[T: UploadSource]: Flow[(BucketNameAndKey, T), aws.S3ObjectSummary, NotUsed]
 
   /** Returns an Akka flow that takes put object requests and emits the object summary of the uploaded object. */
-  def rawUploader: Flow[PutObjectRequest, S3ObjectSummary, NotUsed]
+  def rawUploader: Flow[aws.PutObjectRequest, aws.S3ObjectSummary, NotUsed]
 
   /** Returns an Akka flow that takes a bucket name and key and downloads its content to an object of the specified
     * type (by default, a string or byte array).
@@ -74,21 +74,21 @@ trait StreamingS3Client extends StreamingAwsClient {
   def fileDownloader: Flow[(BucketNameAndKey, File), File, NotUsed]
 
   /** Returns an Akka flow that takes a raw request and emits an input stream to the object‘s content. */
-  def rawDownloader: Flow[GetObjectRequest, S3ObjectInputStream, NotUsed]
+  def rawDownloader: Flow[aws.GetObjectRequest, aws.S3ObjectInputStream, NotUsed]
 
   /** Returns an Akka flow that takes a raw request and file downloads the object‘s content to the file.  Emits the
     * file once the download is complete.
     */
-  def rawFileDownloader: Flow[(GetObjectRequest,File), File, NotUsed]
+  def rawFileDownloader: Flow[(aws.GetObjectRequest,File), File, NotUsed]
 
   /** Returns an Akka flow that performs an object copy, emitting the new object summary of the copy.  The input to
     * this flow is a tuple of two tuples (source and destination) of bucket name and key, e.g.
     * `((sourceBucketName, sourceKey) (destinationBucketName, destinationKey))`.
     */
-  def copier: Flow[(BucketNameAndKey, BucketNameAndKey), S3ObjectSummary, NotUsed]
+  def copier: Flow[(BucketNameAndKey, BucketNameAndKey), aws.S3ObjectSummary, NotUsed]
 
   /** Returns an Akka flow that performs the given request, emitting the new object summary of the copy. */
-  def rawCopier: Flow[CopyObjectRequest, S3ObjectSummary, NotUsed]
+  def rawCopier: Flow[aws.CopyObjectRequest, aws.S3ObjectSummary, NotUsed]
 
   /** Deletes the given object, identified by bucket name and key, emitting a tuple of bucket name and key. */
   def objectDeleter: Flow[BucketNameAndKey, BucketNameAndKey, NotUsed]

@@ -10,11 +10,10 @@ import akka.stream.scaladsl.GraphDSL.Implicits._
 import akka.stream.scaladsl._
 import com.amazonaws.handlers.AsyncHandler
 import com.amazonaws.regions.ServiceAbbreviations
-import com.amazonaws.services.s3.model.{ProgressListener ⇒ _, _}
 import com.amazonaws.services.s3.transfer.{Download, TransferManager}
-import com.amazonaws.services.s3.{AmazonS3, AmazonS3Client}
-import com.monsanto.arch.awsutil.s3.DefaultStreamingS3Client._
-import com.monsanto.arch.awsutil.s3.model.BucketNameAndKey
+import com.amazonaws.services.s3.{AmazonS3, AmazonS3Client, model ⇒ aws}
+import com.monsanto.arch.awsutil.s3.model.AwsConverters._
+import com.monsanto.arch.awsutil.s3.model.{BucketNameAndKey, CreateBucketRequest}
 import com.monsanto.arch.awsutil.{AWSAsyncCall, AWSFlow, AwsSettings}
 import com.typesafe.scalalogging.LazyLogging
 
@@ -25,18 +24,6 @@ import scala.util.{Failure, Success}
 
 private[awsutil] class DefaultStreamingS3Client(s3client: AmazonS3, transferManager: TransferManager, settings: AwsSettings)
                                                (implicit ec: ExecutionContext) extends StreamingS3Client with LazyLogging {
-  /** The S3 region derived from the settings. */
-  private val region = {
-    val s3endpoint = settings.region.getServiceEndpoint(ServiceAbbreviations.S3)
-    s3endpoint match {
-      case "s3.amazonaws.com" | "s3-external-1.amazonaws.com" =>
-        // <sigh> the Region.S3_REGIONAL_ENDPOINT_PATTERN fails with the standard region
-        Region.US_Standard
-      case RegionRegex(regionStr, _) =>
-        Region.fromValue(regionStr)
-    }
-  }
-
   private val parallelism = settings.s3.parallelism
 
   override val bucketPolicySetter =
@@ -54,47 +41,19 @@ private[awsutil] class DefaultStreamingS3Client(s3client: AmazonS3, transferMana
       }
       .named("S3.bucketPolicySetter")
 
-  /** Encapsulates the process for generating a bucket and applying the default bucket policy. */
-  private val createBucketGraph = GraphDSL.create() { implicit b =>
-    val createBucket = b.add(
-      Flow[String]
-        .map(new CreateBucketRequest(_, region))
-        .mapAsync(parallelism)(asAsync(s3client.createBucket)))
-
-    val outlet = settings.s3.defaultBucketPolicy match {
-      case None =>
-        // no default bucket policy, just create the bucket and go
-        createBucket.outlet
-      case Some(policy) =>
-        // if there is a bucket policy, things are a little more tricky.  We only need the bucket name for setting the
-        // policy, so we split the flow so that the bucket can be returned at the end
-
-        // duplicates the bucket to two streams
-        val splitter = b.add(Broadcast[Bucket](2))
-
-        // given a bucket, returns a tuple of the bucket name and the policy to apply
-        val toNameAndPolicyTuple = b.add(Flow[Bucket].map { bucket =>
-          val name = bucket.getName
-          (name, Some(policy.replace("@BUCKET_NAME@", name)))
-        })
-        // sets the policy on the bucket
-        val setPolicy = b.add(bucketPolicySetter)
-        // synchronises the stream with the duplicated bucket, producing a tuple of the bucket name and the bucket
-        val zipper = b.add(Zip[String,Bucket]())
-        // takes the tuple for the zipper and extracts the bucket
-        val onlyBucket = b.add(Flow[(String,Bucket)].map(_._2))
-
-        // the assembled flow
-        createBucket ~> splitter ~> toNameAndPolicyTuple ~> setPolicy ~> zipper.in0; zipper.out ~> onlyBucket
-        ;               splitter                         ~>              zipper.in1
-
-        onlyBucket.outlet
-    }
-
-    FlowShape(createBucket.in, outlet)
-  }
-
-  override val bucketCreator = Flow.fromGraph(createBucketGraph).named("S3.bucketCreator")
+  override val bucketCreator =
+    Flow[CreateBucketRequest]
+      .map(_.asAws)
+      .mapAsync(parallelism)(asAsync(s3client.createBucket(_: aws.CreateBucketRequest)))
+      .map(_.getName)
+      .flatMapConcat { name ⇒
+        Source.single(new aws.ListBucketsRequest)
+          .mapAsync(parallelism)(asAsync(s3client.listBuckets))
+          .mapConcat(_.asScala.toList)
+          .filter(_.getName == name)
+          .map(_.asScala)
+      }
+      .named("S3.bucketCreator")
 
   override val bucketDeleter =
     Flow[String]
@@ -106,7 +65,7 @@ private[awsutil] class DefaultStreamingS3Client(s3client: AmazonS3, transferMana
       .mapAsync(parallelism)(capturingAwsExceptions(asReturnInputAsync(s3client.deleteBucket(_: String))))
 
   override val bucketLister =
-    Source.single(new ListBucketsRequest)
+    Source.single(new aws.ListBucketsRequest)
       .mapAsync(parallelism)(asAsync(s3client.listBuckets))
       .mapConcat(_.asScala.toList)
       .named("S3.bucketLister")
@@ -118,7 +77,7 @@ private[awsutil] class DefaultStreamingS3Client(s3client: AmazonS3, transferMana
 
   override val objectLister =
     Flow[(String, Option[String])]
-      .map(args ⇒ new ListObjectsRequest(args._1, args._2.orNull, null, null, null))
+      .map(args ⇒ new aws.ListObjectsRequest(args._1, args._2.orNull, null, null, null))
       .via(rawObjectLister)
       .named("S3.objectLister")
 
@@ -157,7 +116,7 @@ private[awsutil] class DefaultStreamingS3Client(s3client: AmazonS3, transferMana
           } else {
             s3client.setBucketTaggingConfiguration(
               bucketName,
-              new BucketTaggingConfiguration(Seq(new TagSet(tags.asJava)).asJavaCollection))
+              new aws.BucketTaggingConfiguration(Seq(new aws.TagSet(tags.asJava)).asJavaCollection))
           }
           bucketName
         }
@@ -165,7 +124,7 @@ private[awsutil] class DefaultStreamingS3Client(s3client: AmazonS3, transferMana
       .named("S3.bucketTagsSetter")
 
   override val rawUploader =
-    Flow[PutObjectRequest]
+    Flow[aws.PutObjectRequest]
       .map(applyPutObjectDefaults)
       .mapAsync(parallelism)(asAsync(transferManager.upload))
       .mapAsync(parallelism) { upload ⇒
@@ -184,7 +143,7 @@ private[awsutil] class DefaultStreamingS3Client(s3client: AmazonS3, transferMana
   override val objectDeleter =
     Flow[BucketNameAndKey]
       .mapAsync(parallelism)(asAsync{ o ⇒
-        val r = new DeleteObjectRequest(o.bucketName, o.key)
+        val r = new aws.DeleteObjectRequest(o.bucketName, o.key)
         s3client.deleteObject(r)
         o
       })
@@ -194,7 +153,7 @@ private[awsutil] class DefaultStreamingS3Client(s3client: AmazonS3, transferMana
             Source.single(spec)
               .via(objectLister)
               .filter(os ⇒ os.getBucketName  == o.bucketName && os.getKey == o.key)
-              .fold(Seq.empty[S3ObjectSummary])(_ :+ _)
+              .fold(Seq.empty[aws.S3ObjectSummary])(_ :+ _)
           }
           .filter(_.isEmpty)
           .map(_ ⇒ o)
@@ -204,7 +163,7 @@ private[awsutil] class DefaultStreamingS3Client(s3client: AmazonS3, transferMana
       .named("S3.objectDeleter")
 
   override val rawCopier =
-    Flow[CopyObjectRequest]
+    Flow[aws.CopyObjectRequest]
       .map(applyCopyObjectDefaults)
       .mapAsync(parallelism) {
         asAsync { request ⇒
@@ -218,7 +177,7 @@ private[awsutil] class DefaultStreamingS3Client(s3client: AmazonS3, transferMana
   override val copier =
     Flow[(BucketNameAndKey, BucketNameAndKey)]
       .map { case (source, destination) ⇒
-          new CopyObjectRequest(source.bucketName, source.key, destination.bucketName, destination.key)
+          new aws.CopyObjectRequest(source.bucketName, source.key, destination.bucketName, destination.key)
       }
       .via(rawCopier)
       .named("S3.copier")
@@ -232,7 +191,7 @@ private[awsutil] class DefaultStreamingS3Client(s3client: AmazonS3, transferMana
           Source.single((bucketName, None))
             .via(objectLister)
             .mapAsyncUnordered(parallelism)(asAsync{ o ⇒
-              val r = new DeleteObjectRequest(o.getBucketName, o.getKey)
+              val r = new aws.DeleteObjectRequest(o.getBucketName, o.getKey)
               s3client.deleteObject(r)
               o
             })
@@ -248,23 +207,23 @@ private[awsutil] class DefaultStreamingS3Client(s3client: AmazonS3, transferMana
   override val bucketEmptierAndDeleter = bucketEmptier.via(bucketDeleter).named("S3.bucketEmptierAndDeleter")
 
   override val rawDownloader =
-    Flow[GetObjectRequest]
+    Flow[aws.GetObjectRequest]
       .mapAsync(parallelism)(asAsync(s3client.getObject))
       .map(_.getObjectContent)
       .named("S3.rawDownloader")
 
   override def downloader[T](implicit downloadSink: DownloadSink[T]) =
     Flow[BucketNameAndKey]
-      .map(x ⇒ new GetObjectRequest(x.bucketName, x.key))
+      .map(x ⇒ new aws.GetObjectRequest(x.bucketName, x.key))
       .via(rawDownloader)
       .mapAsync(parallelism)(downloadSink.apply)
       .named("S3.downloader")
 
   override val rawFileDownloader =
     Flow.fromGraph(GraphDSL.create() { implicit b ⇒
-      val broadcast = b.add(Broadcast[(GetObjectRequest,File)](2))
-      val merge = b.add(ZipWith[(GetObjectRequest,File), Download, File]((x, _) => x._2))
-      val downloader = Flow[(GetObjectRequest,File)]
+      val broadcast = b.add(Broadcast[(aws.GetObjectRequest,File)](2))
+      val merge = b.add(ZipWith[(aws.GetObjectRequest,File), Download, File]((x, _) => x._2))
+      val downloader = Flow[(aws.GetObjectRequest,File)]
         .map(args ⇒ transferManager.download(args._1, args._2))
         .mapAsync(parallelism) { download ⇒
           Future(blocking(download.waitForCompletion())).map(_ ⇒ download)
@@ -276,7 +235,7 @@ private[awsutil] class DefaultStreamingS3Client(s3client: AmazonS3, transferMana
 
   override val fileDownloader =
     Flow[(BucketNameAndKey,File)]
-      .map(args ⇒ (new GetObjectRequest(args._1.bucketName, args._1.key), args._2))
+      .map(args ⇒ (new aws.GetObjectRequest(args._1.bucketName, args._1.key), args._2))
       .via(rawFileDownloader)
       .named("S3.fileDownloader")
 
@@ -297,18 +256,18 @@ private[awsutil] class DefaultStreamingS3Client(s3client: AmazonS3, transferMana
           .named("S3.pseudoObjectUrlGetter")
     }
 
-  private def applyPutObjectDefaults(request: PutObjectRequest): PutObjectRequest = {
+  private def applyPutObjectDefaults(request: aws.PutObjectRequest): aws.PutObjectRequest = {
     val metadata = applyDefaultHeaders(request.getMetadata, settings.s3.defaultPutObjectHeaders)
     request.withMetadata(metadata)
   }
 
-  private def applyCopyObjectDefaults(request: CopyObjectRequest): CopyObjectRequest = {
+  private def applyCopyObjectDefaults(request: aws.CopyObjectRequest): aws.CopyObjectRequest = {
     val metadata = applyDefaultHeaders(request.getNewObjectMetadata, settings.s3.defaultCopyObjectHeaders)
     request.withNewObjectMetadata(metadata)
   }
 
-  private def applyDefaultHeaders(metadata: ObjectMetadata, defaults: Map[String,AnyRef]): ObjectMetadata = {
-    val defaultedMetadata = Option(metadata).getOrElse(new ObjectMetadata())
+  private def applyDefaultHeaders(metadata: aws.ObjectMetadata, defaults: Map[String,AnyRef]): aws.ObjectMetadata = {
+    val defaultedMetadata = Option(metadata).getOrElse(new aws.ObjectMetadata())
     defaults.foreach { case (key, defaultValue) ⇒
       val value = defaultedMetadata.getRawMetadataValue(key)
       if (value == null) {
@@ -319,9 +278,9 @@ private[awsutil] class DefaultStreamingS3Client(s3client: AmazonS3, transferMana
   }
 
   /** Given an upload result, return a source that will emit an object summary once the upload result is visible. */
-  private def pollForObjectSummary(bucketAndKey: (String, String)): Source[S3ObjectSummary,Cancellable] = {
+  private def pollForObjectSummary(bucketAndKey: (String, String)): Source[aws.S3ObjectSummary,Cancellable] = {
     val (bucketName, key) = bucketAndKey
-    val listObjectsRequest = new ListObjectsRequest(bucketName, key, null, null, null)
+    val listObjectsRequest = new aws.ListObjectsRequest(bucketName, key, null, null, null)
 
     Source.tick(Duration.Zero, settings.s3.uploadCheckInterval, listObjectsRequest)
       .flatMapConcat(r ⇒ Source.single(r).via(rawObjectLister))
@@ -332,10 +291,10 @@ private[awsutil] class DefaultStreamingS3Client(s3client: AmazonS3, transferMana
   }
 
   /** Adapts S3’s `listObjects` so that it can be used as an [[AWSAsyncCall]]. */
-  private object AsyncObjectLister extends AWSAsyncCall[ListObjectsRequest, ObjectListing] {
-    private val AsyncCall = asAsync(s3client.listObjects(_: ListObjectsRequest))
+  private object AsyncObjectLister extends AWSAsyncCall[aws.ListObjectsRequest, aws.ObjectListing] {
+    private val AsyncCall = asAsync(s3client.listObjects(_: aws.ListObjectsRequest))
 
-    override def apply(request: ListObjectsRequest, handler: AsyncHandler[ListObjectsRequest, ObjectListing]) =  {
+    override def apply(request: aws.ListObjectsRequest, handler: AsyncHandler[aws.ListObjectsRequest, aws.ObjectListing]) =  {
       val eventualObjectListing = AsyncCall(request)
       eventualObjectListing.onComplete {
         case Success(listing) ⇒
@@ -349,7 +308,7 @@ private[awsutil] class DefaultStreamingS3Client(s3client: AmazonS3, transferMana
           // $COVERAGE-ON$ this should never occur, included to make the match comprehensive
       }
       // $COVERAGE-OFF$ theoretically, this will be invoked in AWSGraphStage to attempt to cancel a future
-      new JFuture[ObjectListing] {
+      new JFuture[aws.ObjectListing] {
         /** Cancellation is not supported. */
         override def isCancelled = false
 
@@ -371,9 +330,9 @@ private[awsutil] class DefaultStreamingS3Client(s3client: AmazonS3, transferMana
     in
   }
 
-  private def capturingAwsExceptions[In,Out](f:In => Future[Out]): In =>Future[(Option[AmazonS3Exception],Option[Out])] = {
+  private def capturingAwsExceptions[In,Out](f:In => Future[Out]): In =>Future[(Option[aws.AmazonS3Exception],Option[Out])] = {
    in:In =>
-    f(in).map(x=>(None,Some(x))).recover{case e:AmazonS3Exception => (Some(e),None)}
+    f(in).map(x=>(None,Some(x))).recover{case e:aws.AmazonS3Exception => (Some(e),None)}
   }
 
   private def asAsync[In, Out](fn: In => Out): In => Future[Out] = { in: In =>
@@ -383,5 +342,5 @@ private[awsutil] class DefaultStreamingS3Client(s3client: AmazonS3, transferMana
 }
 
 private[awsutil] object DefaultStreamingS3Client {
-  val RegionRegex = Region.S3_REGIONAL_ENDPOINT_PATTERN.pattern().r
+  val RegionRegex = aws.Region.S3_REGIONAL_ENDPOINT_PATTERN.pattern().r
 }

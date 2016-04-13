@@ -7,7 +7,7 @@ import com.monsanto.arch.awsutil.cloudformation.AsyncCloudFormationClient.Implic
 import com.monsanto.arch.awsutil.cloudformation.CloudFormationClientIntegrationSpec._
 import com.monsanto.arch.awsutil.cloudformation.model.ValidatedTemplate
 import com.monsanto.arch.awsutil.s3.S3
-import com.monsanto.arch.awsutil.s3.model.BucketNameAndKey
+import com.monsanto.arch.awsutil.s3.model.{BucketNameAndKey, CreateBucketRequest}
 import com.monsanto.arch.awsutil.test_support.AwsScalaFutures._
 import com.monsanto.arch.awsutil.test_support.{AwsIntegrationSpec, IntegrationCleanup, IntegrationTest, TestDefaults}
 import com.monsanto.arch.cloudformation.model.resource.`AWS::SNS::Topic`
@@ -98,9 +98,9 @@ class CloudFormationClientIntegrationSpec extends FreeSpec with AwsIntegrationSp
         val s3Key = "template.json"
         try {
           val validatedTemplate =
-            Source.single(stackName)
+            Source.single(CreateBucketRequest(stackName))
               .via(s3.bucketCreator)
-              .map(bucket ⇒ (BucketNameAndKey(bucket.getName, s3Key), body))
+              .map(bucket ⇒ (BucketNameAndKey(bucket.name, s3Key), body))
               .via(s3.uploader)
               .map(BucketNameAndKey.fromObjectSummary)
               .via(s3.objectUrlGetter)

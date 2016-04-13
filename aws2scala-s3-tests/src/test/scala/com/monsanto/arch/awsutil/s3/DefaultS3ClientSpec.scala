@@ -7,7 +7,7 @@ import java.util.{Date, UUID}
 
 import akka.stream.scaladsl.{Sink, Source}
 import com.amazonaws.event.ProgressListener
-import com.amazonaws.services.s3.model.{ProgressEvent ⇒ _, ProgressListener ⇒ _, Region ⇒ S3Region, _}
+import com.amazonaws.services.s3.model.{Region ⇒ S3Region, ProgressEvent ⇒ _, ProgressListener ⇒ _, _}
 import com.amazonaws.services.s3.transfer.model.UploadResult
 import com.amazonaws.services.s3.transfer.{Download, TransferManager, Upload}
 import com.amazonaws.services.s3.{AbstractAmazonS3, Headers}
@@ -51,23 +51,6 @@ class DefaultS3ClientSpec extends FreeSpec with Materialised with MockFactory {
     }
     val sseValue = settings.s3.defaultPutObjectHeaders.get(Headers.SERVER_SIDE_ENCRYPTION)
     sseValue shouldBe settings.s3.defaultCopyObjectHeaders.get(Headers.SERVER_SIDE_ENCRYPTION)
-
-    "can create a bucket" in withFixture(settings) { f =>
-      val expected = mockBucket(bucketName)
-      (f.s3.createBucket(_: CreateBucketRequest))
-        .expects(where { (request: CreateBucketRequest) =>
-          request.getBucketName == bucketName && request.getRegion == s3region.toString
-        })
-        .returning(expected)
-      defaultBucketPolicy.foreach { jsonPolicy =>
-        (f.s3.setBucketPolicy(_: String, _: String))
-          .expects(where { (name: String, policyString: String) =>
-            name == bucketName && JsonParser(policyString) == jsonPolicy
-          })
-      }
-      val actual = f.asyncClient.createBucket(bucketName).futureValue
-      actual shouldBe theSameInstanceAs(expected)
-    }
 
     "can delete a bucket" in withFixture(settings) { f =>
       (f.s3.deleteBucket(_: String)).expects(bucketName)

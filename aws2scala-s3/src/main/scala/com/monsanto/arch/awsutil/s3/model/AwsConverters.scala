@@ -18,6 +18,19 @@ object AwsConverters {
     }
   }
 
+  implicit class AwsBucket(val bucket: aws.Bucket) extends AnyVal {
+    def asScala: Bucket = Bucket(bucket.getName, Option(bucket.getOwner).map(_.asScala).orNull, bucket.getCreationDate)
+  }
+
+  implicit class ScalaBucket(val bucket: Bucket) extends AnyVal {
+    def asAws: aws.Bucket = {
+      val awsBucket = new aws.Bucket(bucket.name)
+      awsBucket.setOwner(Option(bucket.owner).map(_.asAws).orNull)
+      awsBucket.setCreationDate(bucket.creationDate)
+      awsBucket
+    }
+  }
+
   implicit class AwsGrant(val grant: aws.Grant) extends AnyVal {
     def asScala: Grant = Grant(grant.getGrantee.asScala, grant.getPermission.asScala)
   }
@@ -52,6 +65,14 @@ object AwsConverters {
         case aws.GroupGrantee.AuthenticatedUsers ⇒ Grantee.AuthenticatedUsers
         case aws.GroupGrantee.LogDelivery ⇒ Grantee.LogDelivery
       }
+  }
+
+  implicit class AwsOwner(val owner: aws.Owner) extends AnyVal {
+    def asScala: Owner = Owner(owner.getId, owner.getDisplayName)
+  }
+
+  implicit class ScalaOwner(val owner: Owner) extends AnyVal {
+    def asAws: aws.Owner = new aws.Owner(owner.id, owner.displayName)
   }
 
   implicit class AwsPermission(val permission: aws.Permission) extends AnyVal {
