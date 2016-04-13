@@ -4,6 +4,7 @@ import java.io.File
 import java.net.URL
 import java.util.concurrent.{Future ⇒ JFuture}
 
+import akka.NotUsed
 import akka.actor.Cancellable
 import akka.stream.FlowShape
 import akka.stream.scaladsl.GraphDSL.Implicits._
@@ -41,20 +42,6 @@ private[awsutil] class DefaultStreamingS3Client(s3client: AmazonS3, transferMana
       }
       .named("S3.bucketPolicySetter")
 
-  override val bucketCreator =
-    Flow[CreateBucketRequest]
-      .map(_.asAws)
-      .mapAsync(parallelism)(asAsync(s3client.createBucket(_: aws.CreateBucketRequest)))
-      .map(_.getName)
-      .flatMapConcat { name ⇒
-        Source.single(new aws.ListBucketsRequest)
-          .mapAsync(parallelism)(asAsync(s3client.listBuckets))
-          .mapConcat(_.asScala.toList)
-          .filter(_.getName == name)
-          .map(_.asScala)
-      }
-      .named("S3.bucketCreator")
-
   override val bucketDeleter =
     Flow[String]
       .mapAsync(parallelism)(asReturnInputAsync(s3client.deleteBucket(_: String)))
@@ -65,10 +52,20 @@ private[awsutil] class DefaultStreamingS3Client(s3client: AmazonS3, transferMana
       .mapAsync(parallelism)(capturingAwsExceptions(asReturnInputAsync(s3client.deleteBucket(_: String))))
 
   override val bucketLister =
-    Source.single(new aws.ListBucketsRequest)
+    Source.single(NotUsed.getInstance())
+      .map(_ ⇒ new aws.ListBucketsRequest)
       .mapAsync(parallelism)(asAsync(s3client.listBuckets))
       .mapConcat(_.asScala.toList)
+      .map(_.asScala)
       .named("S3.bucketLister")
+
+  override val bucketCreator =
+    Flow[CreateBucketRequest]
+      .map(_.asAws)
+      .mapAsync(parallelism)(asAsync(s3client.createBucket(_: aws.CreateBucketRequest)))
+      .map(_.getName)
+      .flatMapConcat(name ⇒ bucketLister.filter(_.name == name))
+      .named("S3.bucketCreator")
 
   override val rawObjectLister =
     AWSFlow.pagedByNextMarker(AsyncObjectLister)

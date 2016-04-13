@@ -1,5 +1,6 @@
 package com.monsanto.arch.awsutil.s3
 
+import akka.stream.scaladsl.Source
 import com.monsanto.arch.awsutil.s3.model.{Bucket, CreateBucketRequest}
 import com.monsanto.arch.awsutil.test_support.AdaptableScalaFutures._
 import com.monsanto.arch.awsutil.test_support.{FlowMockUtils, Materialised}
@@ -39,6 +40,20 @@ class DefaultAsyncS3ClientSpec extends FreeSpec with MockFactory with Materialis
         val result = async.doesBucketExist(bucketName).futureValue
         result shouldBe exists
       }
+    }
+  }
+
+  "list buckets" in {
+    forAll(maxSize(25)) { buckets: List[Bucket] ⇒
+      val streaming = mock[StreamingS3Client]("streaming")
+      val async = new DefaultAsyncS3Client(streaming)
+
+      (streaming.bucketLister _)
+        .expects()
+        .returning(Source(buckets))
+
+      val result = async.listBuckets().futureValue
+      result shouldBe buckets
     }
   }
 }

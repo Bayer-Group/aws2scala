@@ -3,8 +3,8 @@ package com.monsanto.arch.awsutil.s3.model
 import akka.stream.Materializer
 import akka.stream.scaladsl.Sink
 import com.amazonaws.services.s3.{model ⇒ aws}
+import com.monsanto.arch.awsutil.s3.StreamingS3Client
 import com.monsanto.arch.awsutil.s3.model.AwsConverters._
-import com.monsanto.arch.awsutil.s3.{AsyncS3Client, StreamingS3Client}
 
 import scala.concurrent.Future
 import scala.language.implicitConversions
@@ -14,17 +14,10 @@ import scala.language.implicitConversions
   * @author Daniel Solano Gómez
   */
 object S3 {
-  /** Lists all available buckets. */
-  def list()(implicit asyncS3Client: AsyncS3Client, m: Materializer): Future[Seq[Bucket]] = {
-    import m.executionContext
-    asyncS3Client.listBuckets().map(_.map(_.asScala))
-  }
-
   /** Returns the bucket with the given name, if any. */
   def find(name: String)(implicit streamingS3Client: StreamingS3Client, m: Materializer): Future[Option[Bucket]] =
     streamingS3Client.bucketLister
-      .filter(_.getName == name)
-      .map(_.asScala)
+      .filter(_.name == name)
       .runWith(Sink.headOption)
 
   object Implicits {

@@ -34,9 +34,9 @@ trait IntegrationCleanup { this: FreeSpec with StrictLogging with AwsIntegration
       val s3 = awsClient.streaming(S3)
       val deletedCount =
         s3.bucketLister
-          .filter(_.getName.startsWith(prefix))
-          .filter(_.getCreationDate.before(oneHourAgo))
-          .map(_.getName)
+          .filter(_.name.startsWith(prefix))
+          .filter(_.creationDate.before(oneHourAgo))
+          .map(_.name)
           .buffer(100, OverflowStrategy.backpressure)
           .map { b ⇒ logger.info(s"Removing old bucket: $b"); b }
           .via(s3.bucketEmptierAndDeleter)

@@ -58,13 +58,6 @@ class DefaultS3ClientSpec extends FreeSpec with Materialised with MockFactory {
       result shouldBe bucketName
     }
 
-    "can list buckets" in withFixture(settings) { f =>
-      val buckets = List.fill(20)(mockBucket(s"aws2scala-s3-test-list-${UUID.randomUUID()}"))
-      (f.s3.listBuckets(_: ListBucketsRequest)).expects(*).returning(buckets.asJava)
-      val result = f.asyncClient.listBuckets().futureValue
-      result shouldBe buckets
-    }
-
     "can get a bucket policy when" - {
       "one is available" in withFixture(settings) { f =>
         val policyText = "{}"

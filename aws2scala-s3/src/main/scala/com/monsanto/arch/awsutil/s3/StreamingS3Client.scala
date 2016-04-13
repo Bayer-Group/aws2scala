@@ -44,7 +44,7 @@ trait StreamingS3Client extends StreamingAwsClient {
   def bucketEmptier: Flow[String, String, NotUsed]
 
   /** Returns an Akka source that will output all of the buckets available. */
-  def bucketLister: Source[aws.Bucket, NotUsed]
+  def bucketLister: Source[Bucket, NotUsed]
 
   /** Returns an Akka flow that given a bucket name emits whether or not the bucket exists. */
   def bucketExistenceChecker: Flow[String, Boolean, NotUsed]

@@ -67,6 +67,22 @@ class DefaultStreamingS3ClientSpec extends FreeSpec with MockFactory with Materi
         }
       }
     }
+
+    "list buckets" in {
+      forAll(maxSize(25)) { buckets: Seq[Bucket] ⇒
+        withFixture { f ⇒
+          (f.s3.listBuckets(_: aws.ListBucketsRequest))
+            .expects(*)
+            .returning(buckets.map(_.asAws).asJava)
+          val result =
+            f.streamingClient.bucketLister
+              .runWith(Sink.seq)
+              .futureValue
+
+          result shouldBe buckets
+        }
+      }
+    }
   }
 
   private case class Fixture(s3: AmazonS3, transferManager: TransferManager, streamingClient: StreamingS3Client)

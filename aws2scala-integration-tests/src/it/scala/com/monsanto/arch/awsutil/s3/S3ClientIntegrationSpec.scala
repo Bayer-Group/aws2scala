@@ -4,8 +4,9 @@ import java.io.File
 import java.net.URL
 import java.util.UUID
 
-import com.amazonaws.services.s3.model.{Bucket, S3ObjectSummary}
+import com.amazonaws.services.s3.model.S3ObjectSummary
 import com.monsanto.arch.awsutil.AwsSettings
+import com.monsanto.arch.awsutil.s3.model.Bucket
 import com.monsanto.arch.awsutil.test_support.AwsScalaFutures._
 import com.monsanto.arch.awsutil.test_support.{AwsIntegrationSpec, IntegrationCleanup, IntegrationTest, TestDefaults}
 import com.typesafe.scalalogging.StrictLogging
@@ -194,7 +195,7 @@ class S3ClientIntegrationSpec extends FreeSpec with AwsIntegrationSpec with Stri
   private val theBucketName = new Equality[Bucket] {
     override def areEqual(a: Bucket, b: Any): Boolean = {
       b match {
-        case s: String => a.getName == s
+        case s: String => a.name == s
       }
     }
   }

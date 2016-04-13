@@ -45,7 +45,7 @@ trait AsyncS3Client extends AsyncAwsClient {
   def emptyAndDeleteBucket(bucketName:String)(implicit m: Materializer) :Future[String]
 
   /** Returns a sequence of all of the buckets available. */
-  def listBuckets()(implicit m: Materializer): Future[Seq[aws.Bucket]]
+  def listBuckets()(implicit m: Materializer): Future[Seq[Bucket]]
 
   /** Returns whether the bucket exists. */
   def doesBucketExist(bucketName: String)(implicit m: Materializer): Future[Boolean]
