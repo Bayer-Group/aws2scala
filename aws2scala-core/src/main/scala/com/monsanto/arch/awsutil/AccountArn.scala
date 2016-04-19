@@ -7,12 +7,15 @@ private[awsutil] case class AccountArn(account: Account) extends Arn(account.par
 }
 
 private[awsutil] object AccountArn {
-  def fromArn(arn: String): Option[AccountArn] = {
-    arn match {
-      case AccountArnRegex(Partition(p), id) ⇒ Some(AccountArn(Account(id, p)))
-      case _ ⇒ None
+  /** Extracts an [[AccountArn]] instance from a string. */
+  object FromString {
+    def unapply(arn: String): Option[AccountArn] = {
+      arn match {
+        case AccountArnRegex(Partition(p), id) ⇒ Some(AccountArn(Account(id, p)))
+        case _ ⇒ None
+      }
     }
-  }
 
-  private val AccountArnRegex = "arn:([^:]+):iam::([^:]+):root".r
+    private val AccountArnRegex = "arn:([^:]+):iam::([^:]+):root".r
+  }
 }

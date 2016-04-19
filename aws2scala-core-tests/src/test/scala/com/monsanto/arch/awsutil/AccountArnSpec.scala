@@ -23,7 +23,7 @@ class AccountArnSpec extends FreeSpec {
 
     "round-trip via an ARN" in {
       forAll { arn: AccountArn ⇒
-        AccountArn.fromArn(arn.value) shouldBe Some(arn)
+        AccountArn.FromString.unapply(arn.value) shouldBe Some(arn)
       }
     }
   }
