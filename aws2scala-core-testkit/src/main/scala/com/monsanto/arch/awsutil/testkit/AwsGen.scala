@@ -6,7 +6,7 @@ import com.monsanto.arch.awsutil.regions.Region
 import org.scalacheck.Gen
 
 object AwsGen {
-  val accountId: Gen[String] = Gen.listOfN(12, Gen.numChar).map(_.mkString)
+  val accountId: Gen[String] = Gen.listOfN(12, Gen.numChar).map(_.mkString).suchThat(_.length == 12)
 
   def account(partition: Partition): Gen[Account] = accountId.map(id ⇒ Account(id, partition))
 
