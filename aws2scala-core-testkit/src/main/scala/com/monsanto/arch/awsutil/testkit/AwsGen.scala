@@ -24,4 +24,6 @@ object AwsGen {
   def regionFor(account: Account): Gen[Region] = regionFor(account.partition)
 
   val statementId: Gen[String] = Gen.nonEmptyListOf(Gen.alphaNumChar).map(_.mkString).suchThat(_.nonEmpty)
+
+  val iamName: Gen[String] = UtilGen.stringOf(UtilGen.extendedWordChar, 1, 64).suchThat(_.nonEmpty)
 }

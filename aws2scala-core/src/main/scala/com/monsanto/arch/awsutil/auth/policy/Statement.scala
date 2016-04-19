@@ -3,6 +3,7 @@ package com.monsanto.arch.awsutil.auth.policy
 import java.util.{List ⇒ JList}
 
 import com.amazonaws.auth.{policy ⇒ aws}
+import com.monsanto.arch.awsutil.auth.policy.AwsConverters._
 import com.monsanto.arch.awsutil.util.{AwsEnumeration, AwsEnumerationCompanion}
 
 import scala.collection.JavaConverters._
@@ -16,7 +17,7 @@ private[awsutil] case class Statement(id: Option[String],
   def toAws: aws.Statement = {
     val statement = new aws.Statement(effect.toAws)
     id.foreach(id ⇒ statement.setId(id))
-    statement.setPrincipals(principals.map(_.toAws).asJavaCollection)
+    statement.setPrincipals(principals.map(_.asAws).asJavaCollection)
     statement.setActions(actions.map(_.toAws).asJavaCollection)
     statement.setResources(resources.map(_.toAws).asJavaCollection)
     statement.setConditions(conditions.map(_.toAws).asJava)
@@ -29,7 +30,7 @@ private[awsutil] object Statement {
     def asList[T](jList: JList[T]): List[T] = Option(jList).map(_.asScala.toList).getOrElse(List.empty)
     Statement(
       Option(statement.getId),
-      asList(statement.getPrincipals).map(Principal.fromAws),
+      asList(statement.getPrincipals).map(_.asScala),
       Effect.fromAws(statement.getEffect),
       asList(statement.getActions).map(Action.fromAws),
       asList(statement.getResources).map(Resource.fromAws),
