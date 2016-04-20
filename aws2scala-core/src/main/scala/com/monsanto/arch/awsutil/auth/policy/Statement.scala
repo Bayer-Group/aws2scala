@@ -18,7 +18,7 @@ private[awsutil] case class Statement(id: Option[String],
     val statement = new aws.Statement(effect.toAws)
     id.foreach(id ⇒ statement.setId(id))
     statement.setPrincipals(principals.map(_.asAws).asJavaCollection)
-    statement.setActions(actions.map(_.toAws).asJavaCollection)
+    statement.setActions(actions.map(_.asAws).asJavaCollection)
     statement.setResources(resources.map(_.toAws).asJavaCollection)
     statement.setConditions(conditions.map(_.toAws).asJava)
     statement
@@ -32,7 +32,7 @@ private[awsutil] object Statement {
       Option(statement.getId),
       asList(statement.getPrincipals).map(_.asScala),
       Effect.fromAws(statement.getEffect),
-      asList(statement.getActions).map(Action.fromAws),
+      asList(statement.getActions).map(_.asScala),
       asList(statement.getResources).map(Resource.fromAws),
       asList(statement.getConditions).map(Condition.fromAws))
   }

@@ -115,4 +115,12 @@ object AwsConverters {
       }
     }
   }
+
+  implicit class AwsAction(val action: aws.Action) extends AnyVal {
+    def asScala: Action = Action.toScalaConversions(action)
+  }
+
+  implicit class ScalaAction(val action: Action) extends AnyVal {
+    def asAws: aws.Action = Action.toAwsConversions(action)
+  }
 }

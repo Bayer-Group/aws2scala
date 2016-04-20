@@ -4,13 +4,12 @@ import java.util.concurrent.ExecutorService
 
 import com.amazonaws.auth.AWSCredentialsProvider
 import com.amazonaws.services.sns.AmazonSNSAsyncClient
-import com.monsanto.arch.awsutil.auth.policy.Action
 import com.monsanto.arch.awsutil.auth.policy.action.SNSAction
 import com.monsanto.arch.awsutil.impl.ShutdownHook
 import com.monsanto.arch.awsutil.{AwsClientProvider, AwsSettings}
 
 object SNS extends AwsClientProvider[StreamingSNSClient,AsyncSNSClient] {
-  Action.registerActions(SNSAction.values)
+  SNSAction.registerActions()
 
   override private[awsutil] def streamingClient(settings: AwsSettings,
                                                 credentialsProvider: AWSCredentialsProvider,
