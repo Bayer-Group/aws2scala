@@ -7,6 +7,8 @@ import org.scalatest.FreeSpec
 
 class SNSActionSpec extends FreeSpec with AwsEnumerationBehaviours {
   "an SNSAction object" - {
+    // ensure that actions are registered
+    SNSAction.registerActions()
     behave like anAwsEnumeration(SNSActions.values, SNSAction.values, (_: SNSAction).asAws.asInstanceOf[SNSActions],
       (_: SNSActions).asScala.asInstanceOf[SNSAction])
   }
