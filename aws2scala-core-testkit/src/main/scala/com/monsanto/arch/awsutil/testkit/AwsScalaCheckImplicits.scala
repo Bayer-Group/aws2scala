@@ -1,6 +1,9 @@
 package com.monsanto.arch.awsutil.testkit
 
-import com.monsanto.arch.awsutil.auth.policy.{Policy, Principal, Statement}
+import java.util.Date
+
+import akka.util.ByteString
+import com.monsanto.arch.awsutil.auth.policy.{Condition, Policy, Principal, Statement}
 import com.monsanto.arch.awsutil.partitions.Partition
 import com.monsanto.arch.awsutil.regions.Region
 import com.monsanto.arch.awsutil.{Account, AccountArn, Arn}
@@ -162,6 +165,100 @@ object AwsScalaCheckImplicits {
 
   implicit lazy val arbPrincipalWebIdentityProvider: Arbitrary[Principal.WebIdentityProvider] =
     Arbitrary(Gen.oneOf(Principal.WebIdentityProvider.values))
+
+  implicit lazy val arbCondition: Arbitrary[Condition] =
+    Arbitrary {
+      Gen.oneOf(
+        arbitrary[Condition.ArnCondition],
+        arbitrary[Condition.BinaryCondition],
+        arbitrary[Condition.BooleanCondition],
+        arbitrary[Condition.DateCondition],
+        arbitrary[Condition.IpAddressCondition],
+        arbitrary[Condition.NumericCondition]
+      )
+    }
+
+  implicit lazy val arbArnCondition: Arbitrary[Condition.ArnCondition] =
+    Arbitrary {
+      val arn =
+        for {
+          vendor ← arbitrary[Option[Arn.Namespace]]
+          region ← arbitrary[Option[Region]]
+          namespace ← Gen.option(AwsGen.accountId)
+          relativeId ← Gen.option(Gen.identifier)
+        } yield s"arn:aws:${vendor.getOrElse("*")}:${region.getOrElse("*")}:${namespace.getOrElse("*")}:${relativeId.getOrElse("*")}"
+      for {
+        key ← Gen.oneOf(Gen.const("aws:SourceArn"), Gen.identifier)
+        comparisonType ← arbitrary[Condition.ArnComparisonType]
+        comparisonValues ← UtilGen.nonEmptyListOfSqrtN(arn)
+        ifExists ← arbitrary[Boolean]
+      } yield Condition.ArnCondition(key, comparisonType, comparisonValues, ifExists)
+    }
+
+  implicit lazy val arbBinaryCondition: Arbitrary[Condition.BinaryCondition] =
+    Arbitrary {
+      for {
+        key ← Gen.identifier
+        values ← UtilGen.nonEmptyListOfSqrtN(arbitrary[Array[Byte]].map(ByteString(_)))
+        ifExists ← arbitrary[Boolean]
+      } yield Condition.BinaryCondition(key, values, ifExists)
+    }
+
+  implicit lazy val arbBooleanCondition: Arbitrary[Condition.BooleanCondition] =
+    Arbitrary {
+      for {
+        key ← Gen.identifier
+        value ← arbitrary[Boolean]
+        ifExists ← arbitrary[Boolean]
+      } yield Condition.BooleanCondition(key, value, ifExists)
+    }
+
+  implicit lazy val arbDateCondition: Arbitrary[Condition.DateCondition] =
+    Arbitrary {
+      for {
+        key ← Gen.identifier
+        comparisonType ← arbitrary[Condition.DateComparisonType]
+        values ← UtilGen.nonEmptyListOfSqrtN(arbitrary[Date])
+        ifExists ← arbitrary[Boolean]
+      } yield Condition.DateCondition(key, comparisonType, values, ifExists)
+    }
+
+  implicit lazy val arbIpAddressCondition: Arbitrary[Condition.IpAddressCondition] =
+    Arbitrary {
+      val cidrBlock =
+        for {
+          address ← Gen.listOfN(4, Gen.choose(0, 255)).map(_.mkString("."))
+          size ← Gen.choose(0,32)
+        } yield s"$address/$size"
+      for {
+        key ← Gen.identifier
+        comparisonType ← arbitrary[Condition.IpAddressComparisonType]
+        cidrBlocks ← UtilGen.nonEmptyListOfSqrtN(cidrBlock)
+        ifExists ← arbitrary[Boolean]
+      } yield Condition.IpAddressCondition(key, comparisonType, cidrBlocks, ifExists)
+    }
+
+  implicit lazy val arbNumericCondition: Arbitrary[Condition.NumericCondition] =
+    Arbitrary {
+      for {
+        key ← Gen.identifier
+        comparisonType ← arbitrary[Condition.NumericComparisonType]
+        values ← UtilGen.nonEmptyListOfSqrtN(arbitrary[Double])
+        ifExists ← arbitrary[Boolean]
+      } yield Condition.NumericCondition(key, comparisonType, values, ifExists)
+    }
+
+  implicit lazy val arbArnComparisonType: Arbitrary[Condition.ArnComparisonType] =
+    Arbitrary(Gen.oneOf(Condition.ArnComparisonType.values))
+
+  implicit lazy val arbDateComparisonType: Arbitrary[Condition.DateComparisonType] =
+    Arbitrary(Gen.oneOf(Condition.DateComparisonType.values))
+
+  implicit lazy val arbIpAddressComparisonType: Arbitrary[Condition.IpAddressComparisonType] =
+    Arbitrary(Gen.oneOf(Condition.IpAddressComparisonType.values))
+
+  implicit lazy val arbNumericComparisonType: Arbitrary[Condition.NumericComparisonType] =
+    Arbitrary(Gen.oneOf(Condition.NumericComparisonType.values))
 
   private val iamPath: Gen[Option[String]] = {
     val elementChar: Gen[Char] = Gen.oneOf(((0x21 to 0x2e) ++ (0x30 to 0x7f)).map(_.toChar))

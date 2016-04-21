@@ -1,7 +1,15 @@
 package com.monsanto.arch.awsutil.auth.policy
 
+import java.time.Instant
+import java.util.{Base64, Date}
+
+import akka.util.ByteString
+import com.amazonaws.auth.policy.conditions.{ArnCondition, DateCondition, IpAddressCondition, NumericCondition}
 import com.amazonaws.auth.{policy ⇒ aws}
 import com.monsanto.arch.awsutil.{Account, AccountArn, Arn}
+
+import scala.collection.JavaConverters._
+import scala.util.Try
 
 object AwsConverters {
   implicit class AwsPrincipal(val principal: aws.Principal) extends AnyVal {
@@ -122,5 +130,164 @@ object AwsConverters {
 
   implicit class ScalaAction(val action: Action) extends AnyVal {
     def asAws: aws.Action = Action.toAwsConversions(action)
+  }
+
+  implicit class AwsCondition(val condition: aws.Condition) extends AnyVal {
+    def asScala: Condition = {
+      val key = condition.getConditionKey
+      val values = condition.getValues.asScala.toList
+      val (comparisonType, ifExists) =
+        if (condition.getType.endsWith("IfExists")) {
+          (condition.getType.dropRight(8), true)
+        } else {
+          (condition.getType, false)
+        }
+
+      comparisonType match {
+        case ArnComparisonType(arnComparisonType) ⇒
+          Condition.ArnCondition(key, arnComparisonType, values, ifExists)
+        case "Binary" ⇒
+          Condition.BinaryCondition(key, values.map(v ⇒ ByteString(Base64.getDecoder.decode(v))), ifExists)
+        case "Bool" ⇒
+          values match {
+            case value :: Nil ⇒ Condition.BooleanCondition(key, value.toBoolean, ifExists)
+            case _            ⇒ throw new IllegalArgumentException("A Bool condition should only have one value.")
+          }
+        case DateComparisonType(dateComparisonType) ⇒
+          Condition.DateCondition(key, dateComparisonType, values.map(x ⇒ new Date(Instant.parse(x).toEpochMilli)), ifExists)
+        case IpAddressComparisonType(ipAddressComparisonType) ⇒
+          Condition.IpAddressCondition(key, ipAddressComparisonType, values, ifExists)
+        case NumericComparisonType(numericComparisonType) ⇒
+          Condition.NumericCondition(key, numericComparisonType, values.map(_.toDouble), ifExists)
+      }
+    }
+  }
+
+  private object ArnComparisonType {
+    def unapply(str: String): Option[Condition.ArnComparisonType] =
+      Try(ArnCondition.ArnComparisonType.valueOf(str).asScala).toOption
+  }
+
+  private object DateComparisonType {
+    def unapply(str: String): Option[Condition.DateComparisonType] =
+      Try(DateCondition.DateComparisonType.valueOf(str).asScala).toOption
+  }
+
+  private object IpAddressComparisonType {
+    def unapply(str: String): Option[Condition.IpAddressComparisonType] =
+      Try(IpAddressCondition.IpAddressComparisonType.valueOf(str).asScala).toOption
+  }
+
+  private object NumericComparisonType {
+    def unapply(str: String): Option[Condition.NumericComparisonType] =
+      Try(NumericCondition.NumericComparisonType.valueOf(str).asScala).toOption
+  }
+
+  implicit class ScalaCondition(val condition: Condition) extends AnyVal {
+    def asAws: aws.Condition = {
+      def awsCondition(conditionKey: String, comparisonType: String, comparisonValues: Seq[String], ifExists: Boolean) =
+        new aws.Condition()
+          .withConditionKey(conditionKey)
+          .withType(if (ifExists) s"${comparisonType}IfExists" else comparisonType)
+          .withValues(comparisonValues: _*)
+      condition match {
+        case Condition.ArnCondition(key, comparisonType, values, ifExists) ⇒
+          awsCondition(key, comparisonType.asAws.toString, values, ifExists)
+        case Condition.BinaryCondition(key, values, ifExists) ⇒
+          awsCondition(key, "Binary", values.map(v ⇒ Base64.getEncoder.encodeToString(v.toArray)), ifExists)
+        case Condition.BooleanCondition(key, value, ifExists) ⇒
+          awsCondition(key, "Bool", Seq(value.toString), ifExists)
+        case Condition.DateCondition(key, comparisonType, values, ifExists) ⇒
+          awsCondition(key, comparisonType.asAws.toString, values.map(_.toInstant.toString), ifExists)
+        case Condition.IpAddressCondition(key, comparisonType, cidrBlocks, ifExists) ⇒
+          awsCondition(key, comparisonType.asAws.toString, cidrBlocks, ifExists)
+        case Condition.NumericCondition(key, comparisonType, values, ifExists) ⇒
+          awsCondition(key, comparisonType.asAws.toString, values.map(_.toString), ifExists)
+      }
+    }
+  }
+
+  implicit class ScalaArnConditionComparisonType(val comparisonType: Condition.ArnComparisonType) extends AnyVal {
+    def asAws: ArnCondition.ArnComparisonType =
+      comparisonType match {
+        case Condition.ArnComparisonType.Equals ⇒ ArnCondition.ArnComparisonType.ArnEquals
+        case Condition.ArnComparisonType.NotEquals ⇒ ArnCondition.ArnComparisonType.ArnNotEquals
+        case Condition.ArnComparisonType.Like ⇒ ArnCondition.ArnComparisonType.ArnLike
+        case Condition.ArnComparisonType.NotLike ⇒ ArnCondition.ArnComparisonType.ArnNotLike
+      }
+  }
+
+  implicit class AwsArnConditionComparisonType(val comparisonType: ArnCondition.ArnComparisonType) extends AnyVal {
+    def asScala: Condition.ArnComparisonType =
+      comparisonType match {
+        case ArnCondition.ArnComparisonType.ArnEquals ⇒ Condition.ArnComparisonType.Equals
+        case ArnCondition.ArnComparisonType.ArnNotEquals ⇒ Condition.ArnComparisonType.NotEquals
+        case ArnCondition.ArnComparisonType.ArnLike ⇒ Condition.ArnComparisonType.Like
+        case ArnCondition.ArnComparisonType.ArnNotLike ⇒ Condition.ArnComparisonType.NotLike
+      }
+  }
+
+  implicit class ScalaDateConditionComparisonType(val comparisonType: Condition.DateComparisonType) extends AnyVal {
+    def asAws: DateCondition.DateComparisonType =
+      comparisonType match {
+        case Condition.DateComparisonType.Equals ⇒ DateCondition.DateComparisonType.DateEquals
+        case Condition.DateComparisonType.NotEquals ⇒ DateCondition.DateComparisonType.DateNotEquals
+        case Condition.DateComparisonType.Before ⇒ DateCondition.DateComparisonType.DateLessThan
+        case Condition.DateComparisonType.AtOrBefore ⇒ DateCondition.DateComparisonType.DateLessThanEquals
+        case Condition.DateComparisonType.After ⇒ DateCondition.DateComparisonType.DateGreaterThan
+        case Condition.DateComparisonType.AtOrAfter ⇒ DateCondition.DateComparisonType.DateGreaterThanEquals
+      }
+  }
+
+  implicit class AwsDateConditionComparisonType(val comparisonType: DateCondition.DateComparisonType) extends AnyVal {
+    def asScala: Condition.DateComparisonType =
+      comparisonType match {
+        case DateCondition.DateComparisonType.DateEquals ⇒ Condition.DateComparisonType.Equals
+        case DateCondition.DateComparisonType.DateNotEquals ⇒ Condition.DateComparisonType.NotEquals
+        case DateCondition.DateComparisonType.DateLessThan ⇒ Condition.DateComparisonType.Before
+        case DateCondition.DateComparisonType.DateLessThanEquals ⇒ Condition.DateComparisonType.AtOrBefore
+        case DateCondition.DateComparisonType.DateGreaterThan ⇒ Condition.DateComparisonType.After
+        case DateCondition.DateComparisonType.DateGreaterThanEquals ⇒ Condition.DateComparisonType.AtOrAfter
+      }
+  }
+
+  implicit class ScalaIpAddressConditionComparisonType(val comparisonType: Condition.IpAddressComparisonType) extends AnyVal {
+    def asAws: IpAddressCondition.IpAddressComparisonType =
+      comparisonType match {
+        case Condition.IpAddressComparisonType.IsIn ⇒ IpAddressCondition.IpAddressComparisonType.IpAddress
+        case Condition.IpAddressComparisonType.IsNotIn ⇒ IpAddressCondition.IpAddressComparisonType.NotIpAddress
+      }
+  }
+
+  implicit class AwsIpAddressConditionComparisonType(val comparisonType: IpAddressCondition.IpAddressComparisonType) extends AnyVal {
+    def asScala: Condition.IpAddressComparisonType =
+      comparisonType match {
+        case IpAddressCondition.IpAddressComparisonType.IpAddress⇒ Condition.IpAddressComparisonType.IsIn
+        case IpAddressCondition.IpAddressComparisonType.NotIpAddress ⇒ Condition.IpAddressComparisonType.IsNotIn
+      }
+  }
+
+  implicit class ScalaNumericConditionComparisonType(val comparisonType: Condition.NumericComparisonType) extends AnyVal {
+    def asAws: NumericCondition.NumericComparisonType =
+      comparisonType match {
+        case Condition.NumericComparisonType.Equals ⇒ NumericCondition.NumericComparisonType.NumericEquals
+        case Condition.NumericComparisonType.GreaterThan ⇒ NumericCondition.NumericComparisonType.NumericGreaterThan
+        case Condition.NumericComparisonType.GreaterThanEquals ⇒ NumericCondition.NumericComparisonType.NumericGreaterThanEquals
+        case Condition.NumericComparisonType.LessThan ⇒ NumericCondition.NumericComparisonType.NumericLessThan
+        case Condition.NumericComparisonType.LessThanEquals ⇒ NumericCondition.NumericComparisonType.NumericLessThanEquals
+        case Condition.NumericComparisonType.NotEquals ⇒ NumericCondition.NumericComparisonType.NumericNotEquals
+      }
+  }
+
+  implicit class AwsNumericConditionComparisonType(val comparisonType: NumericCondition.NumericComparisonType) extends AnyVal {
+    def asScala: Condition.NumericComparisonType =
+      comparisonType match {
+        case NumericCondition.NumericComparisonType.NumericEquals ⇒ Condition.NumericComparisonType.Equals
+        case NumericCondition.NumericComparisonType.NumericGreaterThan ⇒ Condition.NumericComparisonType.GreaterThan
+        case NumericCondition.NumericComparisonType.NumericGreaterThanEquals ⇒ Condition.NumericComparisonType.GreaterThanEquals
+        case NumericCondition.NumericComparisonType.NumericLessThan ⇒ Condition.NumericComparisonType.LessThan
+        case NumericCondition.NumericComparisonType.NumericLessThanEquals ⇒ Condition.NumericComparisonType.LessThanEquals
+        case NumericCondition.NumericComparisonType.NumericNotEquals ⇒ Condition.NumericComparisonType.NotEquals
+      }
   }
 }

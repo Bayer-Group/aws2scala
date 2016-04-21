@@ -20,7 +20,7 @@ private[awsutil] case class Statement(id: Option[String],
     statement.setPrincipals(principals.map(_.asAws).asJavaCollection)
     statement.setActions(actions.map(_.asAws).asJavaCollection)
     statement.setResources(resources.map(_.toAws).asJavaCollection)
-    statement.setConditions(conditions.map(_.toAws).asJava)
+    statement.setConditions(conditions.map(_.asAws).asJava)
     statement
   }
 }
@@ -34,7 +34,7 @@ private[awsutil] object Statement {
       Effect.fromAws(statement.getEffect),
       asList(statement.getActions).map(_.asScala),
       asList(statement.getResources).map(Resource.fromAws),
-      asList(statement.getConditions).map(Condition.fromAws))
+      asList(statement.getConditions).map(_.asScala))
   }
 
   sealed abstract class Effect(val toAws: aws.Statement.Effect) extends AwsEnumeration[aws.Statement.Effect]
