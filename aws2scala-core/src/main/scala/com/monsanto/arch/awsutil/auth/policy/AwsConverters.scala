@@ -144,6 +144,13 @@ object AwsConverters {
         }
 
       comparisonType match {
+        case MultipleKeyValueConditionPrefix(op, innerType) ⇒
+          val innerCondition =
+            new aws.Condition()
+              .withConditionKey(key)
+              .withType(if (ifExists) s"${innerType}IfExists" else innerType)
+              .withValues(condition.getValues)
+          Condition.MultipleKeyValueCondition(op, innerCondition.asScala)
         case ArnComparisonType(arnComparisonType) ⇒
           Condition.ArnCondition(key, arnComparisonType, values, ifExists)
         case "Binary" ⇒
@@ -195,6 +202,18 @@ object AwsConverters {
       Try(StringCondition.StringComparisonType.valueOf(str).asScala).toOption
   }
 
+  private object MultipleKeyValueConditionPrefix {
+    def unapply(str: String): Option[(Condition.SetOperation, String)] = {
+      if (str.startsWith("ForAnyValue:")) {
+        Some((Condition.SetOperation.ForAnyValue, str.substring(12)))
+      } else if (str.startsWith("ForAllValues:")) {
+        Some((Condition.SetOperation.ForAllValues, str.substring(13)))
+      } else {
+        None
+      }
+    }
+  }
+
   implicit class ScalaCondition(val condition: Condition) extends AnyVal {
     def asAws: aws.Condition = {
       def awsCondition(conditionKey: String, comparisonType: String, comparisonValues: Seq[String], ifExists: Boolean) =
@@ -219,6 +238,9 @@ object AwsConverters {
           awsCondition(key, comparisonType.asAws.toString, values.map(_.toString), ifExists)
         case Condition.StringCondition(key, comparisonType, values, ifExists) ⇒
           awsCondition(key, comparisonType.asAws.toString, values, ifExists)
+        case Condition.MultipleKeyValueCondition(op, inner) ⇒
+          val innerAws = inner.asAws
+          innerAws.withType(s"$op:${innerAws.getType}")
       }
     }
   }

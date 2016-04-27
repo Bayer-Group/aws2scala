@@ -176,7 +176,8 @@ object AwsScalaCheckImplicits {
         arbitrary[Condition.IpAddressCondition],
         arbitrary[Condition.NullCondition],
         arbitrary[Condition.NumericCondition],
-        arbitrary[Condition.StringCondition]
+        arbitrary[Condition.StringCondition],
+        arbitrary[Condition.MultipleKeyValueCondition]
       )
     }
 
@@ -266,6 +267,25 @@ object AwsScalaCheckImplicits {
         values ← UtilGen.nonEmptyListOfSqrtN(arbitrary[String])
         ifExists ← arbitrary[Boolean]
       } yield Condition.StringCondition(key, comparisonType, values, ifExists)
+    }
+
+  implicit lazy val arbMultipleKeyValueCondition: Arbitrary[Condition.MultipleKeyValueCondition] =
+    Arbitrary {
+      val innerConditionGen =
+        Gen.oneOf(
+          arbitrary[Condition.ArnCondition],
+          arbitrary[Condition.BinaryCondition],
+          arbitrary[Condition.BooleanCondition],
+          arbitrary[Condition.DateCondition],
+          arbitrary[Condition.IpAddressCondition],
+          arbitrary[Condition.NullCondition],
+          arbitrary[Condition.NumericCondition],
+          arbitrary[Condition.StringCondition]
+        )
+      for {
+        innerCondition ← innerConditionGen
+        setOperation ← Gen.oneOf(Condition.SetOperation.ForAnyValue, Condition.SetOperation.ForAllValues)
+      } yield Condition.MultipleKeyValueCondition(setOperation, innerCondition)
     }
 
   implicit lazy val arbArnComparisonType: Arbitrary[Condition.ArnComparisonType] =

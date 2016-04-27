@@ -5,7 +5,13 @@ import java.util.Date
 
 import akka.util.ByteString
 
-sealed trait Condition
+sealed abstract class Condition {
+  def forAllValues: Condition.MultipleKeyValueCondition =
+    Condition.MultipleKeyValueCondition(Condition.SetOperation.ForAllValues, this)
+
+  def forAnyValue: Condition.MultipleKeyValueCondition =
+    Condition.MultipleKeyValueCondition(Condition.SetOperation.ForAnyValue, this)
+}
 
 object Condition {
   /** Allows creation of an ARN condition using the given key.
@@ -320,4 +326,15 @@ object Condition {
   }
 
   case class NullCondition private[Condition] (key: String, value: Boolean) extends Condition
+
+  sealed trait SetOperation
+  object SetOperation {
+    case object ForAllValues extends SetOperation
+    case object ForAnyValue extends SetOperation
+
+    def values: Seq[SetOperation] = Seq(ForAllValues, ForAnyValue)
+  }
+
+  case class MultipleKeyValueCondition private[Condition](op: SetOperation,
+                                                          condition: Condition) extends Condition
 }
