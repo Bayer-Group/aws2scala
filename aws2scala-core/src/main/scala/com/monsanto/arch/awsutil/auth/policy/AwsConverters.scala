@@ -153,6 +153,11 @@ object AwsConverters {
             case value :: Nil ⇒ Condition.BooleanCondition(key, value.toBoolean, ifExists)
             case _            ⇒ throw new IllegalArgumentException("A Bool condition should only have one value.")
           }
+        case "Null" ⇒
+          values match {
+            case value :: Nil ⇒ Condition.NullCondition(key, value.toBoolean)
+            case _            ⇒ throw new IllegalArgumentException("A Null condition should only have one value.")
+          }
         case DateComparisonType(dateComparisonType) ⇒
           Condition.DateCondition(key, dateComparisonType, values.map(x ⇒ new Date(Instant.parse(x).toEpochMilli)), ifExists)
         case IpAddressComparisonType(ipAddressComparisonType) ⇒
@@ -208,6 +213,8 @@ object AwsConverters {
           awsCondition(key, comparisonType.asAws.toString, values.map(_.toInstant.toString), ifExists)
         case Condition.IpAddressCondition(key, comparisonType, cidrBlocks, ifExists) ⇒
           awsCondition(key, comparisonType.asAws.toString, cidrBlocks, ifExists)
+        case Condition.NullCondition(key, value) ⇒
+          awsCondition(key, "Null", Seq(value.toString), ifExists = false)
         case Condition.NumericCondition(key, comparisonType, values, ifExists) ⇒
           awsCondition(key, comparisonType.asAws.toString, values.map(_.toString), ifExists)
         case Condition.StringCondition(key, comparisonType, values, ifExists) ⇒

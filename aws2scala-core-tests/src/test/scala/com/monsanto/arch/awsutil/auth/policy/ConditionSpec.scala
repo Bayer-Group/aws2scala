@@ -232,6 +232,18 @@ class ConditionSpec extends FreeSpec with AwsEnumerationBehaviours {
         }
       }
 
+      "null conditions" in {
+        forAll { condition: Condition.NullCondition ⇒
+          val result =
+            if (condition.value) {
+              Condition.isMissing(condition.key)
+            } else {
+              Condition.isNotNull(condition.key)
+            }
+          result shouldBe condition
+        }
+      }
+
       "numeric conditions" - {
         "specifying ifExists on the key" in {
           forAll { condition: Condition.NumericCondition ⇒
@@ -421,5 +433,15 @@ class ConditionSpec extends FreeSpec with AwsEnumerationBehaviours {
     behave like anAwsEnumeration(
       StringCondition.StringComparisonType.values, Condition.StringComparisonType.values,
       (_: Condition.StringComparisonType).asAws, (_: StringCondition.StringComparisonType).asScala)
+  }
+
+  "Condition.NullCondition should convert to the correct AWS condition" in {
+    forAll { condition: Condition.NullCondition ⇒
+      condition.asAws should have (
+        'conditionKey (condition.key),
+        'type ("Null"),
+        'values (Seq(condition.value.toString).asJava)
+      )
+    }
   }
 }

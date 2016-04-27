@@ -38,6 +38,12 @@ object Condition {
   /** Allows creation of keys supporting string comparison conditions. */
   def string(key: String): StringKey = StringKey(key, ignoreMissing = false)
 
+  /** Creates a condition that will match when the given key does not exist. */
+  def isMissing(key: String): NullCondition = NullCondition(key, value = true)
+
+  /** Creates a condition that checks that the given key exists and its value is not null. */
+  def isNotNull(key: String): NullCondition = NullCondition(key, value = false)
+
   /** This condition indicates the source resource that is modifying another resource. */
   lazy val sourceArn: ArnKey = ArnKey("aws:SourceArn", ignoreMissing = false)
 
@@ -313,5 +319,5 @@ object Condition {
     def ifExists: StringKey = copy(ignoreMissing = true)
   }
 
-  // existence
+  case class NullCondition private[Condition] (key: String, value: Boolean) extends Condition
 }

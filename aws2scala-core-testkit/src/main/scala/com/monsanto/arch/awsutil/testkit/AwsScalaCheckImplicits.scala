@@ -174,6 +174,7 @@ object AwsScalaCheckImplicits {
         arbitrary[Condition.BooleanCondition],
         arbitrary[Condition.DateCondition],
         arbitrary[Condition.IpAddressCondition],
+        arbitrary[Condition.NullCondition],
         arbitrary[Condition.NumericCondition],
         arbitrary[Condition.StringCondition]
       )
@@ -237,6 +238,14 @@ object AwsScalaCheckImplicits {
         cidrBlocks ← UtilGen.nonEmptyListOfSqrtN(cidrBlock)
         ifExists ← arbitrary[Boolean]
       } yield Condition.IpAddressCondition(key, comparisonType, cidrBlocks, ifExists)
+    }
+
+  implicit lazy val arbNullCondition: Arbitrary[Condition.NullCondition] =
+    Arbitrary {
+      for {
+        key ← Gen.identifier
+        value ← arbitrary[Boolean]
+      } yield Condition.NullCondition(key, value)
     }
 
   implicit lazy val arbNumericCondition: Arbitrary[Condition.NumericCondition] =
