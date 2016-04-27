@@ -121,21 +121,32 @@ class ConditionSpec extends FreeSpec with AwsEnumerationBehaviours {
         }
       }
 
-      "boolean conditions" in {
-        forAll { condition: Condition.BooleanCondition ⇒
-          val baseCondition =
-            if (condition.value) {
-              Condition.isTrue(condition.key)
-            } else {
-              Condition.isFalse(condition.key)
-            }
-          val result =
-            if (condition.ignoreMissing) {
-              baseCondition.ifExists
-            } else {
-              baseCondition
-            }
-          result shouldBe condition
+      "boolean conditions" - {
+        "specifying ifExists on the key" in {
+          forAll { condition: Condition.BooleanCondition ⇒
+            val key =
+              if (condition.ignoreMissing) {
+                Condition.boolean(condition.key).ifExists
+              } else {
+                Condition.boolean(condition.key)
+              }
+            val result = if (condition.value) key.isTrue else key.isFalse
+            result shouldBe condition
+          }
+        }
+
+        "specifying ifExists on the condition" in {
+          forAll { condition: Condition.BooleanCondition ⇒
+            val key = Condition.boolean(condition.key)
+            val baseCondition = if (condition.value) key.isTrue else key.isFalse
+            val result =
+              if (condition.ignoreMissing) {
+                baseCondition.ifExists
+              } else {
+                baseCondition
+              }
+            result shouldBe condition
+          }
         }
       }
 

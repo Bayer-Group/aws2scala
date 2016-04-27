@@ -20,17 +20,14 @@ object Condition {
     */
   def arn(key: String): ArnKey = ArnKey(key, ignoreMissing = false)
 
-  /** Creates a condition that matches a binary key value. */
-  def binary(key: String): BinaryKey = BinaryKey(key, ignoreMissing = false)
-
   /** This condition indicates the source resource that is modifying another resource. */
   def sourceArn: ArnKey = ArnKey("aws:SourceArn", ignoreMissing = false)
 
-  /** Creates a condition that checks if the given key is true. */
-  def isTrue(key: String): BooleanCondition = BooleanCondition(key, value = true, ignoreMissing = false)
+  /** Creates a condition that matches a binary key value. */
+  def binary(key: String): BinaryKey = BinaryKey(key, ignoreMissing = false)
 
-  /** Creates a condition that checks if the given key is true. */
-  def isFalse(key: String): BooleanCondition = BooleanCondition(key, value = false, ignoreMissing = false)
+  /** Allows creation of boolean conditions. */
+  def boolean(key: String): BooleanKey = BooleanKey(key, ignoreMissing = false)
 
   /** Allows creation of date conditions using the give key. */
   def date(key: String): DateKey = DateKey(key, ignoreMissing = false)
@@ -113,6 +110,17 @@ object Condition {
   case class BinaryCondition(key: String, values: Seq[ByteString], ignoreMissing: Boolean) extends Condition {
     /** Creates a copy of this condition that will ignore a missing key in a request. */
     def ifExists: BinaryCondition = copy(ignoreMissing = true)
+  }
+
+  case class BooleanKey private[Condition] (key: String, ignoreMissing: Boolean) {
+    /** Creates a condition that checks if the given key is true. */
+    def isTrue: BooleanCondition = BooleanCondition(key, value = true, ignoreMissing)
+
+    /** Creates a condition that checks if the given key is false. */
+    def isFalse: BooleanCondition = BooleanCondition(key, value = false, ignoreMissing)
+
+    /** Makes the resulting condition be ignored if the given key is missing. */
+    def ifExists: BooleanKey = copy(ignoreMissing = true)
   }
 
   case class BooleanCondition(key: String,
