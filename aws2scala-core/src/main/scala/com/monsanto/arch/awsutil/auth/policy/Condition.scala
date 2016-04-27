@@ -210,30 +210,30 @@ object Condition {
   }
 
   case class NumericCondition(key: String,
-                           comparisonType: NumericComparisonType,
-                           values: Seq[Double],
-                           ignoreMissing: Boolean) extends Condition {
+                              comparisonType: NumericComparisonType,
+                              values: Seq[Double],
+                              ignoreMissing: Boolean) extends Condition {
     /** Creates a copy of this condition that will ignore a missing key in a request. */
     def ifExists: NumericCondition = copy(ignoreMissing = true)
   }
 
   case class NumericKey private[Condition] (key: String, ignoreMissing: Boolean) {
-    /** Matches a specific date. */
+    /** Matches if it is any of the given values. */
     def is(values: Double*): NumericCondition = NumericCondition(key, NumericComparisonType.Equals, values, ignoreMissing)
 
-    /** Matching before a specific date and time. */
+    /** Matches if it is less than any of the given values. */
     def isLessThan(values: Double*): NumericCondition = NumericCondition(key, NumericComparisonType.LessThan, values, ignoreMissing)
 
-    /** Matching at or before a specific date and time. */
+    /** Matches if it is less than or equal to any of the given values. */
     def isLessThanOrEqualTo(values: Double*): NumericCondition = NumericCondition(key, NumericComparisonType.LessThanEquals, values, ignoreMissing)
 
-    /** Matching after a specific date and time. */
+    /** Matches if it is greater than any of the given values. */
     def isGreaterThan(values: Double*): NumericCondition = NumericCondition(key, NumericComparisonType.GreaterThan, values, ignoreMissing)
 
-    /** Matching at or after a specific date and time. */
+    /** Matches if it is greater than or equal to any of the given values. */
     def isGreaterThanOrEqualTo(values: Double*): NumericCondition = NumericCondition(key, NumericComparisonType.GreaterThanEquals, values, ignoreMissing)
 
-    /** Negated matching. */
+    /** Matches if it is not any of the given values. */
     def isNot(values: Double*): NumericCondition = NumericCondition(key, NumericComparisonType.NotEquals, values, ignoreMissing)
 
     /** Makes the resulting condition be ignored if the given key is missing. */
