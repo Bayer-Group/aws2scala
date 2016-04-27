@@ -20,9 +20,6 @@ object Condition {
     */
   def arn(key: String): ArnKey = ArnKey(key, ignoreMissing = false)
 
-  /** This condition indicates the source resource that is modifying another resource. */
-  def sourceArn: ArnKey = ArnKey("aws:SourceArn", ignoreMissing = false)
-
   /** Creates a condition that matches a binary key value. */
   def binary(key: String): BinaryKey = BinaryKey(key, ignoreMissing = false)
 
@@ -32,23 +29,26 @@ object Condition {
   /** Allows creation of date conditions using the give key. */
   def date(key: String): DateKey = DateKey(key, ignoreMissing = false)
 
-  /** Allows creation of date conditions using the current time. */
-  def currentTime: DateKey = DateKey("aws:CurrentTime", ignoreMissing = false)
-
-  /** Allows creation of date conditions using the epoch time. */
-  def epochTime: DateKey = DateKey("aws:EpochTime", ignoreMissing = false)
-
   /** Allows creation of IP address conditions using the given key. */
   def ipAddress(key: String): IpAddressKey = IpAddressKey(key, ignoreMissing = false)
-
-  /** Allows creation of IP address conditions using the source IP address of the request. */
-  def sourceIp: IpAddressKey = IpAddressKey("aws:SourceIp", ignoreMissing = false)
 
   /** Allows creation of keys supporting numeric comparison conditions. */
   def numeric(key: String): NumericKey = NumericKey(key, ignoreMissing = false)
 
   /** Allows creation of keys supporting string comparison conditions. */
   def string(key: String): StringKey = StringKey(key, ignoreMissing = false)
+
+  /** This condition indicates the source resource that is modifying another resource. */
+  lazy val sourceArn: ArnKey = ArnKey("aws:SourceArn", ignoreMissing = false)
+
+  /** Allows creation of IP address conditions using the source IP address of the request. */
+  lazy val sourceIp: IpAddressKey = IpAddressKey("aws:SourceIp", ignoreMissing = false)
+
+  /** Allows creation of date conditions using the current time. */
+  lazy val currentTime: DateKey = DateKey("aws:CurrentTime", ignoreMissing = false)
+
+  /** Allows creation of date conditions using the epoch time. */
+  lazy val epochTime: DateKey = DateKey("aws:EpochTime", ignoreMissing = false)
 
   case class ArnKey private[Condition] (key: String, ignoreMissing: Boolean) {
     /** Generates a condition for when the ARN is exactly equal to the given value. */
