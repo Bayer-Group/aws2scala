@@ -275,9 +275,9 @@ object Condition {
   }
 
   case class StringCondition(key: String,
-                              comparisonType: StringComparisonType,
-                              values: Seq[String],
-                              ignoreMissing: Boolean) extends Condition {
+                             comparisonType: StringComparisonType,
+                             values: Seq[String],
+                             ignoreMissing: Boolean) extends Condition {
     /** Creates a copy of this condition that will ignore a missing key in a request. */
     def ifExists: StringCondition = copy(ignoreMissing = true)
   }
