@@ -9,7 +9,7 @@ import com.monsanto.arch.awsutil.auth.policy.AwsConverters._
 import com.monsanto.arch.awsutil.test_support.AwsEnumerationBehaviours
 import com.monsanto.arch.awsutil.testkit.AwsScalaCheckImplicits._
 import org.scalacheck.Arbitrary.arbitrary
-import org.scalacheck.{Arbitrary, Gen}
+import org.scalacheck.Gen
 import org.scalatest.FreeSpec
 import org.scalatest.Matchers._
 import org.scalatest.prop.GeneratorDrivenPropertyChecks._
@@ -265,6 +265,51 @@ class ConditionSpec extends FreeSpec with AwsEnumerationBehaviours {
           }
         }
       }
+
+      "string conditions" - {
+        "specifying ifExists on the key" in {
+          forAll { condition: Condition.StringCondition ⇒
+            val key =
+              if (condition.ignoreMissing) {
+                Condition.string(condition.key).ifExists
+              } else {
+                Condition.string(condition.key)
+              }
+            val result =
+              condition.comparisonType match {
+                case Condition.StringComparisonType.Equals ⇒ key.is(condition.values: _*)
+                case Condition.StringComparisonType.NotEquals ⇒ key.isNot(condition.values: _*)
+                case Condition.StringComparisonType.EqualsIgnoreCase ⇒ key.ignoringCaseIs(condition.values: _*)
+                case Condition.StringComparisonType.NotEqualsIgnoreCase ⇒ key.ignoringCaseIsNot(condition.values: _*)
+                case Condition.StringComparisonType.Like ⇒ key.isLike(condition.values: _*)
+                case Condition.StringComparisonType.NotLike ⇒ key.isNotLike(condition.values: _*)
+              }
+            result shouldBe condition
+          }
+        }
+
+        "specifying ifExists on the condition" in {
+          forAll { condition: Condition.StringCondition ⇒
+            val key = Condition.string(condition.key)
+            val baseCondition =
+              condition.comparisonType match {
+                case Condition.StringComparisonType.Equals ⇒ key.is(condition.values: _*)
+                case Condition.StringComparisonType.NotEquals ⇒ key.isNot(condition.values: _*)
+                case Condition.StringComparisonType.EqualsIgnoreCase ⇒ key.ignoringCaseIs(condition.values: _*)
+                case Condition.StringComparisonType.NotEqualsIgnoreCase ⇒ key.ignoringCaseIsNot(condition.values: _*)
+                case Condition.StringComparisonType.Like ⇒ key.isLike(condition.values: _*)
+                case Condition.StringComparisonType.NotLike ⇒ key.isNotLike(condition.values: _*)
+              }
+            val result =
+              if (condition.ignoreMissing) {
+                baseCondition.ifExists
+              } else {
+                baseCondition
+              }
+            result shouldBe condition
+          }
+        }
+      }
     }
   }
 
@@ -349,5 +394,21 @@ class ConditionSpec extends FreeSpec with AwsEnumerationBehaviours {
     behave like anAwsEnumeration(
       NumericCondition.NumericComparisonType.values, Condition.NumericComparisonType.values,
       (_: Condition.NumericComparisonType).asAws, (_: NumericCondition.NumericComparisonType).asScala)
+  }
+
+  "Condition.StringCondition should convert to the correct AWS condition" in {
+    forAll { condition: Condition.StringCondition ⇒
+      condition.asAws should have (
+        'conditionKey (condition.key),
+        'type (condition.comparisonType.asAws.toString + (if (condition.ignoreMissing)  "IfExists" else "")),
+        'values (condition.values.asJava)
+      )
+    }
+  }
+
+  "Condition.StringComparisonType enumeration" - {
+    behave like anAwsEnumeration(
+      StringCondition.StringComparisonType.values, Condition.StringComparisonType.values,
+      (_: Condition.StringComparisonType).asAws, (_: StringCondition.StringComparisonType).asScala)
   }
 }

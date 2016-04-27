@@ -174,7 +174,8 @@ object AwsScalaCheckImplicits {
         arbitrary[Condition.BooleanCondition],
         arbitrary[Condition.DateCondition],
         arbitrary[Condition.IpAddressCondition],
-        arbitrary[Condition.NumericCondition]
+        arbitrary[Condition.NumericCondition],
+        arbitrary[Condition.StringCondition]
       )
     }
 
@@ -248,6 +249,16 @@ object AwsScalaCheckImplicits {
       } yield Condition.NumericCondition(key, comparisonType, values, ifExists)
     }
 
+  implicit lazy val arbStringCondition: Arbitrary[Condition.StringCondition] =
+    Arbitrary {
+      for {
+        key ← Gen.identifier
+        comparisonType ← arbitrary[Condition.StringComparisonType]
+        values ← UtilGen.nonEmptyListOfSqrtN(arbitrary[String])
+        ifExists ← arbitrary[Boolean]
+      } yield Condition.StringCondition(key, comparisonType, values, ifExists)
+    }
+
   implicit lazy val arbArnComparisonType: Arbitrary[Condition.ArnComparisonType] =
     Arbitrary(Gen.oneOf(Condition.ArnComparisonType.values))
 
@@ -259,6 +270,9 @@ object AwsScalaCheckImplicits {
 
   implicit lazy val arbNumericComparisonType: Arbitrary[Condition.NumericComparisonType] =
     Arbitrary(Gen.oneOf(Condition.NumericComparisonType.values))
+
+  implicit lazy val arbStringComparisonType: Arbitrary[Condition.StringComparisonType] =
+    Arbitrary(Gen.oneOf(Condition.StringComparisonType.values))
 
   private val iamPath: Gen[Option[String]] = {
     val elementChar: Gen[Char] = Gen.oneOf(((0x21 to 0x2e) ++ (0x30 to 0x7f)).map(_.toChar))

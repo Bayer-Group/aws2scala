@@ -4,7 +4,7 @@ import java.time.Instant
 import java.util.{Base64, Date}
 
 import akka.util.ByteString
-import com.amazonaws.auth.policy.conditions.{ArnCondition, DateCondition, IpAddressCondition, NumericCondition}
+import com.amazonaws.auth.policy.conditions._
 import com.amazonaws.auth.{policy ⇒ aws}
 import com.monsanto.arch.awsutil.{Account, AccountArn, Arn}
 
@@ -159,6 +159,8 @@ object AwsConverters {
           Condition.IpAddressCondition(key, ipAddressComparisonType, values, ifExists)
         case NumericComparisonType(numericComparisonType) ⇒
           Condition.NumericCondition(key, numericComparisonType, values.map(_.toDouble), ifExists)
+        case StringComparisonType(stringComparisonType) ⇒
+          Condition.StringCondition(key, stringComparisonType, values, ifExists)
       }
     }
   }
@@ -183,6 +185,11 @@ object AwsConverters {
       Try(NumericCondition.NumericComparisonType.valueOf(str).asScala).toOption
   }
 
+  private object StringComparisonType {
+    def unapply(str: String): Option[Condition.StringComparisonType] =
+      Try(StringCondition.StringComparisonType.valueOf(str).asScala).toOption
+  }
+
   implicit class ScalaCondition(val condition: Condition) extends AnyVal {
     def asAws: aws.Condition = {
       def awsCondition(conditionKey: String, comparisonType: String, comparisonValues: Seq[String], ifExists: Boolean) =
@@ -203,6 +210,8 @@ object AwsConverters {
           awsCondition(key, comparisonType.asAws.toString, cidrBlocks, ifExists)
         case Condition.NumericCondition(key, comparisonType, values, ifExists) ⇒
           awsCondition(key, comparisonType.asAws.toString, values.map(_.toString), ifExists)
+        case Condition.StringCondition(key, comparisonType, values, ifExists) ⇒
+          awsCondition(key, comparisonType.asAws.toString, values, ifExists)
       }
     }
   }
@@ -288,6 +297,30 @@ object AwsConverters {
         case NumericCondition.NumericComparisonType.NumericLessThan ⇒ Condition.NumericComparisonType.LessThan
         case NumericCondition.NumericComparisonType.NumericLessThanEquals ⇒ Condition.NumericComparisonType.LessThanEquals
         case NumericCondition.NumericComparisonType.NumericNotEquals ⇒ Condition.NumericComparisonType.NotEquals
+      }
+  }
+
+  implicit class ScalaStringConditionComparisonType(val comparisonType: Condition.StringComparisonType) extends AnyVal {
+    def asAws: StringCondition.StringComparisonType =
+      comparisonType match {
+        case Condition.StringComparisonType.Equals ⇒ StringCondition.StringComparisonType.StringEquals
+        case Condition.StringComparisonType.NotEquals ⇒ StringCondition.StringComparisonType.StringNotEquals
+        case Condition.StringComparisonType.EqualsIgnoreCase ⇒ StringCondition.StringComparisonType.StringEqualsIgnoreCase
+        case Condition.StringComparisonType.NotEqualsIgnoreCase ⇒ StringCondition.StringComparisonType.StringNotEqualsIgnoreCase
+        case Condition.StringComparisonType.Like ⇒ StringCondition.StringComparisonType.StringLike
+        case Condition.StringComparisonType.NotLike ⇒ StringCondition.StringComparisonType.StringNotLike
+      }
+  }
+
+  implicit class AwsStringConditionComparisonType(val comparisonType: StringCondition.StringComparisonType) extends AnyVal {
+    def asScala: Condition.StringComparisonType =
+      comparisonType match {
+        case StringCondition.StringComparisonType.StringEquals ⇒ Condition.StringComparisonType.Equals
+        case StringCondition.StringComparisonType.StringNotEquals ⇒ Condition.StringComparisonType.NotEquals
+        case StringCondition.StringComparisonType.StringEqualsIgnoreCase ⇒ Condition.StringComparisonType.EqualsIgnoreCase
+        case StringCondition.StringComparisonType.StringNotEqualsIgnoreCase ⇒ Condition.StringComparisonType.NotEqualsIgnoreCase
+        case StringCondition.StringComparisonType.StringLike ⇒ Condition.StringComparisonType.Like
+        case StringCondition.StringComparisonType.StringNotLike ⇒ Condition.StringComparisonType.NotLike
       }
   }
 }

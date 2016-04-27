@@ -50,6 +50,9 @@ object Condition {
   /** Allows creation of keys supporting numeric comparison conditions. */
   def numeric(key: String): NumericKey = NumericKey(key, ignoreMissing = false)
 
+  /** Allows creation of keys supporting string comparison conditions. */
+  def string(key: String): StringKey = StringKey(key, ignoreMissing = false)
+
   case class ArnKey private[Condition] (key: String, ignoreMissing: Boolean) {
     /** Generates a condition for when the ARN is exactly equal to the given value. */
     def is(comparisonValues: String*): ArnCondition =
@@ -239,25 +242,68 @@ object Condition {
 
   trait StringComparisonType
   object StringComparisonType {
-    /** Exact matching, case sensitive. */
+    /** Case-sensitive exact string matching. */
     case object Equals extends StringComparisonType
 
     /** Negated form of [[Equals]]. */
     case object NotEquals extends StringComparisonType
 
-    /** Exact matching, ignoring case. */
+    /** Case-insensitive string matching. */
     case object EqualsIgnoreCase extends StringComparisonType
 
     /** Negated form of [[NotEquals]]. */
     case object NotEqualsIgnoreCase extends StringComparisonType
 
-    /** Case-sensitive matching.  The values can include a multi-character match wildcard (`*`) or a single-character
-      * match wildcard (?) anywhere in the string.
+    /** Loose case-insensitive matching.  The values can include a multi-character match wildcard (`*`) or a
+      * single-character match wildcard (?) anywhere in the string.
       */
     case object Like extends StringComparisonType
+
+    /** Negated form of [[Like]]. */
+    case object NotLike extends StringComparisonType
+
+    def values: Seq[StringComparisonType] =
+      Seq(Equals, NotEquals, EqualsIgnoreCase, NotEqualsIgnoreCase, Like, NotLike)
   }
 
-  // String
+  case class StringCondition(key: String,
+                              comparisonType: StringComparisonType,
+                              values: Seq[String],
+                              ignoreMissing: Boolean) extends Condition {
+    /** Creates a copy of this condition that will ignore a missing key in a request. */
+    def ifExists: StringCondition = copy(ignoreMissing = true)
+  }
+
+  case class StringKey private[Condition] (key: String, ignoreMissing: Boolean) {
+    /** Exactly matches any of the given strings, case-sensitive. */
+    def is(values: String*): StringCondition =
+      StringCondition(key, StringComparisonType.Equals, values, ignoreMissing)
+
+    /** Negated matching. */
+    def isNot(values: String*): StringCondition =
+      StringCondition(key, StringComparisonType.NotEquals, values, ignoreMissing)
+
+    /** Exactly matches any of the given strings, case-insensitive. */
+    def ignoringCaseIs(values: String*): StringCondition =
+      StringCondition(key, StringComparisonType.EqualsIgnoreCase, values, ignoreMissing)
+
+    /** Negated case-insensitive matching. */
+    def ignoringCaseIsNot(values: String*): StringCondition =
+      StringCondition(key, StringComparisonType.NotEqualsIgnoreCase, values, ignoreMissing)
+
+    /** Loosely matches any of the given strings, case-sensitive.  The values can include a multi-character match
+      * wildcard `*` or a single-character match wildcard `?` anywhere in the string.
+      */
+    def isLike(values: String*): StringCondition =
+      StringCondition(key, StringComparisonType.Like, values, ignoreMissing)
+
+    /** Negated loose case-sensitive matching. */
+    def isNotLike(values: String*): StringCondition =
+      StringCondition(key, StringComparisonType.NotLike, values, ignoreMissing)
+
+    /** Makes the resulting condition be ignored if the given key is missing. */
+    def ifExists: StringKey = copy(ignoreMissing = true)
+  }
 
   // existence
 }
