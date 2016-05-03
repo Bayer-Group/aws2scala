@@ -3,7 +3,7 @@ package com.monsanto.arch.awsutil.testkit
 import java.util.Date
 
 import akka.util.ByteString
-import com.monsanto.arch.awsutil.auth.policy.{Condition, Policy, Principal, Statement}
+import com.monsanto.arch.awsutil.auth.policy._
 import com.monsanto.arch.awsutil.partitions.Partition
 import com.monsanto.arch.awsutil.regions.Region
 import com.monsanto.arch.awsutil.{Account, AccountArn, Arn}
@@ -302,6 +302,24 @@ object AwsScalaCheckImplicits {
 
   implicit lazy val arbStringComparisonType: Arbitrary[Condition.StringComparisonType] =
     Arbitrary(Gen.oneOf(Condition.StringComparisonType.values))
+
+  implicit lazy val arbResource: Arbitrary[Resource] =
+    Arbitrary {
+      val arnGen =
+        for {
+          partition ← arbitrary[Partition]
+          account ← Gen.option(AwsGen.accountId).map(_.map(id ⇒ Account(id, partition)))
+          region ← arbitrary[Option[Region]]
+          namespace ← arbitrary[Arn.Namespace]
+          resourceStr ← Gen.identifier
+        } yield new Arn(partition, namespace, region, account) {
+          override val resource = resourceStr
+        }
+
+      Gen.oneOf(
+        arnGen.map(arn ⇒ Resource(arn.value)),
+        Gen.const(Resource("*")))
+    }
 
   private val iamPath: Gen[Option[String]] = {
     val elementChar: Gen[Char] = Gen.oneOf(((0x21 to 0x2e) ++ (0x30 to 0x7f)).map(_.toChar))

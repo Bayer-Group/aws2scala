@@ -19,7 +19,7 @@ private[awsutil] case class Statement(id: Option[String],
     id.foreach(id ⇒ statement.setId(id))
     statement.setPrincipals(principals.map(_.asAws).asJavaCollection)
     statement.setActions(actions.map(_.asAws).asJavaCollection)
-    statement.setResources(resources.map(_.toAws).asJavaCollection)
+    statement.setResources(resources.map(_.asAws).asJavaCollection)
     statement.setConditions(conditions.map(_.asAws).asJava)
     statement
   }
@@ -33,7 +33,7 @@ private[awsutil] object Statement {
       asList(statement.getPrincipals).map(_.asScala),
       Effect.fromAws(statement.getEffect),
       asList(statement.getActions).map(_.asScala),
-      asList(statement.getResources).map(Resource.fromAws),
+      asList(statement.getResources).map(_.asScala),
       asList(statement.getConditions).map(_.asScala))
   }
 

@@ -359,4 +359,12 @@ object AwsConverters {
         case StringCondition.StringComparisonType.StringNotLike ⇒ Condition.StringComparisonType.NotLike
       }
   }
+
+  implicit class AwsResource(val resource: aws.Resource) extends AnyVal {
+    def asScala: Resource = Resource(resource.getId)
+  }
+
+  implicit class ScalaResource(val resource: Resource) extends AnyVal {
+    def asAws: aws.Resource = new aws.Resource(resource.id)
+  }
 }
