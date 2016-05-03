@@ -1,7 +1,7 @@
 package com.monsanto.arch.awsutil.auth.policy
 
 import java.time.Instant
-import java.util.{Base64, Date}
+import java.util.{Base64, Date, List ⇒ JList}
 
 import akka.util.ByteString
 import com.amazonaws.auth.policy.conditions._
@@ -383,4 +383,30 @@ object AwsConverters {
         case Statement.Effect.Deny ⇒ aws.Statement.Effect.Deny
       }
   }
+
+  implicit class AwsStatement(val statement: aws.Statement) extends AnyVal {
+    def asScala: Statement =
+      Statement(
+        Option(statement.getId),
+        asList(statement.getPrincipals).map(_.asScala),
+        statement.getEffect.asScala,
+        asList(statement.getActions).map(_.asScala),
+        asList(statement.getResources).map(_.asScala),
+        asList(statement.getConditions).map(_.asScala))
+  }
+
+  implicit class ScalaStatement(val statement: Statement) extends AnyVal {
+    def asAws: aws.Statement = {
+      val awsStatement = new aws.Statement(statement.effect.asAws)
+      statement.id.foreach(id ⇒ awsStatement.setId(id))
+      awsStatement.setPrincipals(statement.principals.map(_.asAws).asJavaCollection)
+      awsStatement.setActions(statement.actions.map(_.asAws).asJavaCollection)
+      awsStatement.setResources(statement.resources.map(_.asAws).asJavaCollection)
+      awsStatement.setConditions(statement.conditions.map(_.asAws).asJava)
+      awsStatement
+    }
+  }
+
+  private def asList[T](jList: JList[T]): List[T] =
+    Option(jList).map(_.asScala.toList).getOrElse(List.empty)
 }

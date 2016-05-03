@@ -47,20 +47,25 @@ object AwsScalaCheckImplicits {
           .map(Policy(policy.id, _))
     }
 
-  implicit lazy val arbStatement: Arbitrary[Statement] = {
+  implicit lazy val arbStatement: Arbitrary[Statement] =
     Arbitrary {
       for {
-        sid ← Gen.option(AwsGen.statementId)
+        id ← Gen.option(Gen.identifier)
+        principals ← UtilGen.nonEmptyListOfSqrtN(arbitrary[Principal])
         effect ← arbitrary[Statement.Effect]
-      } yield Statement(sid, Seq.empty, effect, Seq.empty, Seq.empty, Seq.empty)
+        actions ← UtilGen.nonEmptyListOfSqrtN(arbitrary[Action])
+        resources ← UtilGen.nonEmptyListOfSqrtN(arbitrary[Resource])
+        conditions ← UtilGen.nonEmptyListOfSqrtN(arbitrary[Condition])
+      } yield Statement(id, principals, effect, actions, resources, conditions)
     }
-  }
 
   implicit lazy val shrinkStatement: Shrink[Statement] =
-    Shrink { s ⇒
-      Shrink.shrink(s.id)
-        .filter(_.forall(_.nonEmpty))
-        .map(Statement(_, s.principals, s.effect, s.actions, s.resources, s.conditions))
+    Shrink { statement ⇒
+      Shrink.shrink(statement.id).filter(_.forall(_.nonEmpty)).map(x ⇒ statement.copy(id = x)) append
+        Shrink.shrink(statement.principals).map(x ⇒ statement.copy(principals = x)) append
+        Shrink.shrink(statement.actions).map(x ⇒ statement.copy(actions = x)) append
+        Shrink.shrink(statement.resources).map(x ⇒ statement.copy(resources = x)) append
+        Shrink.shrink(statement.conditions).map(x ⇒ statement.copy(conditions = x))
     }
 
   implicit lazy val arbStatementEffect: Arbitrary[Statement.Effect] =
@@ -320,6 +325,9 @@ object AwsScalaCheckImplicits {
         arnGen.map(arn ⇒ Resource(arn.value)),
         Gen.const(Resource("*")))
     }
+
+  implicit def arbAction: Arbitrary[Action] =
+    Arbitrary(Gen.oneOf(Action.toAwsConversions.keys.toList))
 
   private val iamPath: Gen[Option[String]] = {
     val elementChar: Gen[Char] = Gen.oneOf(((0x21 to 0x2e) ++ (0x30 to 0x7f)).map(_.toChar))
