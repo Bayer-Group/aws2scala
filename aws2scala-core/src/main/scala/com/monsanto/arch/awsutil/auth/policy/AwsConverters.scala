@@ -367,4 +367,20 @@ object AwsConverters {
   implicit class ScalaResource(val resource: Resource) extends AnyVal {
     def asAws: aws.Resource = new aws.Resource(resource.id)
   }
+
+  implicit class AwsStatementEffect(val effect: aws.Statement.Effect) extends AnyVal {
+    def asScala: Statement.Effect =
+      effect match {
+        case aws.Statement.Effect.Allow ⇒ Statement.Effect.Allow
+        case aws.Statement.Effect.Deny ⇒ Statement.Effect.Deny
+      }
+  }
+
+  implicit class ScalaStatementEffect(val effect: Statement.Effect) extends AnyVal {
+    def asAws: aws.Statement.Effect =
+      effect match {
+        case Statement.Effect.Allow ⇒ aws.Statement.Effect.Allow
+        case Statement.Effect.Deny ⇒ aws.Statement.Effect.Deny
+      }
+  }
 }

@@ -15,7 +15,7 @@ private[awsutil] case class Statement(id: Option[String],
                                       resources: Seq[Resource],
                                       conditions: Seq[Condition]) {
   def toAws: aws.Statement = {
-    val statement = new aws.Statement(effect.toAws)
+    val statement = new aws.Statement(effect.asAws)
     id.foreach(id ⇒ statement.setId(id))
     statement.setPrincipals(principals.map(_.asAws).asJavaCollection)
     statement.setActions(actions.map(_.asAws).asJavaCollection)
@@ -31,16 +31,20 @@ private[awsutil] object Statement {
     Statement(
       Option(statement.getId),
       asList(statement.getPrincipals).map(_.asScala),
-      Effect.fromAws(statement.getEffect),
+      statement.getEffect.asScala,
       asList(statement.getActions).map(_.asScala),
       asList(statement.getResources).map(_.asScala),
       asList(statement.getConditions).map(_.asScala))
   }
 
-  sealed abstract class Effect(val toAws: aws.Statement.Effect) extends AwsEnumeration[aws.Statement.Effect]
-  object Effect extends AwsEnumerationCompanion[Effect, aws.Statement.Effect] {
-    case object Allow extends Effect(aws.Statement.Effect.Allow)
-    case object Deny extends Effect(aws.Statement.Effect.Deny)
-    override val values: Seq[Effect] = Seq(Allow,Deny)
+  /** Enumeration type for statement effects. */
+  sealed trait Effect
+  object Effect {
+    /** Explicitly allow access. */
+    case object Allow extends Effect
+    /** Explicitly deny access. */
+    case object Deny extends Effect
+
+    val values: Seq[Effect] = Seq(Allow,Deny)
   }
 }
