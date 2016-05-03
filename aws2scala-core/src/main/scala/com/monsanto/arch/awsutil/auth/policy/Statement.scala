@@ -4,7 +4,6 @@ import java.util.{List ⇒ JList}
 
 import com.amazonaws.auth.{policy ⇒ aws}
 import com.monsanto.arch.awsutil.auth.policy.AwsConverters._
-import com.monsanto.arch.awsutil.util.{AwsEnumeration, AwsEnumerationCompanion}
 
 import scala.collection.JavaConverters._
 

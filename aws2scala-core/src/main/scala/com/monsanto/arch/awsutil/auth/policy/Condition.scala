@@ -306,7 +306,7 @@ import akka.util.ByteString
   * @see [[http://docs.aws.amazon.com/IAM/latest/UserGuide/reference_policies_elements.html#Condition  IAM Policy Elements Reference: Condition]]
   * @see [[http://docs.aws.amazon.com/IAM/latest/UserGuide/reference_policies_multi-value-conditions.html Creating a Condition That Tests Multiple Key Values (Set Operations)]]
   */
-sealed abstract class Condition
+sealed trait Condition
 
 object Condition {
   /** Allows creation of an ARN condition using the given key. */
