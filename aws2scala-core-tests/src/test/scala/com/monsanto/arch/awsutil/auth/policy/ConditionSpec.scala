@@ -1,7 +1,7 @@
 package com.monsanto.arch.awsutil.auth.policy
 
 import java.nio.ByteBuffer
-import java.util.Base64
+import java.util.{Base64, Date}
 
 import akka.util.ByteString
 import com.amazonaws.auth.policy.conditions._
@@ -9,7 +9,7 @@ import com.monsanto.arch.awsutil.auth.policy.AwsConverters._
 import com.monsanto.arch.awsutil.test_support.AwsEnumerationBehaviours
 import com.monsanto.arch.awsutil.testkit.AwsScalaCheckImplicits._
 import org.scalacheck.Arbitrary.arbitrary
-import org.scalacheck.Gen
+import org.scalacheck.{Arbitrary, Gen}
 import org.scalatest.FreeSpec
 import org.scalatest.Matchers._
 import org.scalatest.prop.GeneratorDrivenPropertyChecks._
@@ -26,15 +26,18 @@ class ConditionSpec extends FreeSpec with AwsEnumerationBehaviours {
 
     "provide convenience keys for" - {
       "source ARNs" in {
-        Condition.sourceArn shouldBe Condition.ArnKey(ConditionFactory.SOURCE_ARN_CONDITION_KEY, ignoreMissing = false)
+        val result = Condition.sourceArn is "foo"
+        result.key shouldBe ConditionFactory.SOURCE_ARN_CONDITION_KEY
       }
 
       "current time" in {
-        Condition.currentTime shouldBe Condition.DateKey(ConditionFactory.CURRENT_TIME_CONDITION_KEY, ignoreMissing = false)
+        val result = Condition.currentTime is new Date()
+        result.key shouldBe ConditionFactory.CURRENT_TIME_CONDITION_KEY
       }
 
       "epoch time" in {
-        Condition.epochTime shouldBe Condition.DateKey(ConditionFactory.EPOCH_TIME_CONDITION_KEY, ignoreMissing = false)
+        val result = Condition.epochTime is new Date()
+        result.key shouldBe ConditionFactory.EPOCH_TIME_CONDITION_KEY
       }
 
       "source IP" in {
@@ -336,14 +339,18 @@ class ConditionSpec extends FreeSpec with AwsEnumerationBehaviours {
     }
   }
 
-  "Condition.ArnCondition should convert to the correct AWS condition" in {
-    forAll { condition: Condition.ArnCondition ⇒
-      condition.asAws should have (
-        'conditionKey (condition.key),
-        'type (condition.comparisonType.asAws.toString + (if (condition.ignoreMissing)  "IfExists" else "")),
-        'values (condition.values.asJava)
-      )
+  "Condition.ArnCondition should" - {
+    "convert to the correct AWS condition" in {
+      forAll { condition: Condition.ArnCondition ⇒
+        condition.asAws should have (
+          'conditionKey (condition.key),
+          'type (condition.comparisonType.asAws.toString + (if (condition.ignoreMissing)  "IfExists" else "")),
+          'values (condition.values.asJava)
+        )
+      }
     }
+
+    behave like multiValueSupportCondition[Condition.ArnCondition]
   }
 
   "Condition.ArnComparisonType enumeration" - {
@@ -351,34 +358,46 @@ class ConditionSpec extends FreeSpec with AwsEnumerationBehaviours {
       (_: Condition.ArnComparisonType).asAws, (_: ArnCondition.ArnComparisonType).asScala)
   }
 
-  "Condition.BinaryCondition should convert to the correct AWS condition" in {
-    forAll { condition: Condition.BinaryCondition ⇒
-      condition.asAws should have (
-        'conditionKey (condition.key),
-        'type (if (condition.ignoreMissing)  "BinaryIfExists" else "Binary"),
-        'values (condition.values.map(v ⇒ Base64.getEncoder.encodeToString(v.toArray)).asJava)
-      )
+  "Condition.BinaryCondition should" - {
+    "convert to the correct AWS condition" in {
+      forAll { condition: Condition.BinaryCondition ⇒
+        condition.asAws should have (
+          'conditionKey (condition.key),
+          'type (if (condition.ignoreMissing)  "BinaryIfExists" else "Binary"),
+          'values (condition.values.map(v ⇒ Base64.getEncoder.encodeToString(v.toArray)).asJava)
+        )
+      }
     }
+
+    behave like multiValueSupportCondition[Condition.BinaryCondition]
   }
 
-  "Condition.BooleanCondition should convert to the correct AWS condition" in {
-    forAll { condition: Condition.BooleanCondition ⇒
-      condition.asAws should have (
-        'conditionKey (condition.key),
-        'type (if (condition.ignoreMissing)  "BoolIfExists" else "Bool"),
-        'values (Seq(condition.value.toString).asJava)
-      )
+  "Condition.BooleanCondition should" - {
+    "convert to the correct AWS condition" in {
+      forAll { condition: Condition.BooleanCondition ⇒
+        condition.asAws should have (
+          'conditionKey (condition.key),
+          'type (if (condition.ignoreMissing)  "BoolIfExists" else "Bool"),
+          'values (Seq(condition.value.toString).asJava)
+        )
+      }
     }
+
+    behave like multiValueSupportCondition[Condition.BooleanCondition]
   }
 
-  "Condition.DateCondition should convert to the correct AWS condition" in {
-    forAll { condition: Condition.DateCondition ⇒
-      condition.asAws should have (
-        'conditionKey (condition.key),
-        'type (condition.comparisonType.asAws.toString + (if (condition.ignoreMissing)  "IfExists" else "")),
-        'values (condition.values.map(_.toInstant.toString).asJava)
-      )
+  "Condition.DateCondition should" - {
+    "convert to the correct AWS condition" in {
+      forAll { condition: Condition.DateCondition ⇒
+        condition.asAws should have (
+          'conditionKey (condition.key),
+          'type (condition.comparisonType.asAws.toString + (if (condition.ignoreMissing)  "IfExists" else "")),
+          'values (condition.values.map(_.toInstant.toString).asJava)
+        )
+      }
     }
+
+    behave like multiValueSupportCondition[Condition.DateCondition]
   }
 
   "Condition.DateComparisonType enumeration" - {
@@ -387,14 +406,18 @@ class ConditionSpec extends FreeSpec with AwsEnumerationBehaviours {
       (_: Condition.DateComparisonType).asAws, (_: DateCondition.DateComparisonType).asScala)
   }
 
-  "Condition.IpAddressCondition should convert to the correct AWS condition" in {
-    forAll { condition: Condition.IpAddressCondition ⇒
-      condition.asAws should have (
-        'conditionKey (condition.key),
-        'type (condition.comparisonType.asAws.toString + (if (condition.ignoreMissing)  "IfExists" else "")),
-        'values (condition.cidrBlocks.asJava)
-      )
+  "Condition.IpAddressCondition should" - {
+    "convert to the correct AWS condition" in {
+      forAll { condition: Condition.IpAddressCondition ⇒
+        condition.asAws should have (
+          'conditionKey (condition.key),
+          'type (condition.comparisonType.asAws.toString + (if (condition.ignoreMissing)  "IfExists" else "")),
+          'values (condition.cidrBlocks.asJava)
+        )
+      }
     }
+
+    behave like multiValueSupportCondition[Condition.IpAddressCondition]
   }
 
   "Condition.IpAddressComparisonType enumeration" - {
@@ -403,14 +426,18 @@ class ConditionSpec extends FreeSpec with AwsEnumerationBehaviours {
       (_: Condition.IpAddressComparisonType).asAws, (_: IpAddressCondition.IpAddressComparisonType).asScala)
   }
 
-  "Condition.NumericCondition should convert to the correct AWS condition" in {
-    forAll { condition: Condition.NumericCondition ⇒
-      condition.asAws should have (
-        'conditionKey (condition.key),
-        'type (condition.comparisonType.asAws.toString + (if (condition.ignoreMissing)  "IfExists" else "")),
-        'values (condition.values.map(_.toString).asJava)
-      )
+  "Condition.NumericCondition should" - {
+    "convert to the correct AWS condition" in {
+      forAll { condition: Condition.NumericCondition ⇒
+        condition.asAws should have (
+          'conditionKey (condition.key),
+          'type (condition.comparisonType.asAws.toString + (if (condition.ignoreMissing)  "IfExists" else "")),
+          'values (condition.values.map(_.toString).asJava)
+        )
+      }
     }
+
+    behave like multiValueSupportCondition[Condition.NumericCondition]
   }
 
   "Condition.NumericComparisonType enumeration" - {
@@ -419,14 +446,18 @@ class ConditionSpec extends FreeSpec with AwsEnumerationBehaviours {
       (_: Condition.NumericComparisonType).asAws, (_: NumericCondition.NumericComparisonType).asScala)
   }
 
-  "Condition.StringCondition should convert to the correct AWS condition" in {
-    forAll { condition: Condition.StringCondition ⇒
-      condition.asAws should have (
-        'conditionKey (condition.key),
-        'type (condition.comparisonType.asAws.toString + (if (condition.ignoreMissing)  "IfExists" else "")),
-        'values (condition.values.asJava)
-      )
+  "Condition.StringCondition should" - {
+    "convert to the correct AWS condition" in {
+      forAll { condition: Condition.StringCondition ⇒
+        condition.asAws should have (
+          'conditionKey (condition.key),
+          'type (condition.comparisonType.asAws.toString + (if (condition.ignoreMissing)  "IfExists" else "")),
+          'values (condition.values.asJava)
+        )
+      }
     }
+
+    behave like multiValueSupportCondition[Condition.StringCondition]
   }
 
   "Condition.StringComparisonType enumeration" - {
@@ -435,14 +466,18 @@ class ConditionSpec extends FreeSpec with AwsEnumerationBehaviours {
       (_: Condition.StringComparisonType).asAws, (_: StringCondition.StringComparisonType).asScala)
   }
 
-  "Condition.NullCondition should convert to the correct AWS condition" in {
-    forAll { condition: Condition.NullCondition ⇒
-      condition.asAws should have (
-        'conditionKey (condition.key),
-        'type ("Null"),
-        'values (Seq(condition.value.toString).asJava)
-      )
+  "Condition.NullCondition should" - {
+    "convert to the correct AWS condition" in {
+      forAll { condition: Condition.NullCondition ⇒
+        condition.asAws should have (
+          'conditionKey (condition.key),
+          'type ("Null"),
+          'values (Seq(condition.value.toString).asJava)
+        )
+      }
     }
+
+    behave like multiValueSupportCondition[Condition.NullCondition]
   }
 
   "Condition.MultiValueCondition should convert to the correct AWS condition" in {
@@ -457,6 +492,27 @@ class ConditionSpec extends FreeSpec with AwsEnumerationBehaviours {
         'type (awsType),
         'values (innerAwsCondition.getValues)
       )
+    }
+  }
+
+  //noinspection UnitMethodIsParameterless
+  private def multiValueSupportCondition[T <: Condition with Condition.MultipleKeyValueSupport: Arbitrary]: Unit = {
+    "support the forAllValues set operation" in {
+      forAll { condition: T ⇒
+        condition.forAllValues shouldBe
+          Condition.MultipleKeyValueCondition(
+            Condition.SetOperation.ForAllValues,
+            condition)
+      }
+    }
+
+    "support the forAnyValue set operation" in {
+      forAll { condition: T ⇒
+        condition.forAnyValue shouldBe
+          Condition.MultipleKeyValueCondition(
+            Condition.SetOperation.ForAnyValue,
+            condition)
+      }
     }
   }
 }

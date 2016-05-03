@@ -150,7 +150,14 @@ object AwsConverters {
               .withConditionKey(key)
               .withType(if (ifExists) s"${innerType}IfExists" else innerType)
               .withValues(condition.getValues)
-          Condition.MultipleKeyValueCondition(op, innerCondition.asScala)
+          innerCondition.asScala match {
+            case inner: Condition with Condition.MultipleKeyValueSupport ⇒
+              Condition.MultipleKeyValueCondition(op, inner)
+            case _ ⇒
+              throw new IllegalArgumentException(
+                s"The condition type $innerType is not supported with the " +
+                  s"set operation $op.")
+          }
         case ArnComparisonType(arnComparisonType) ⇒
           Condition.ArnCondition(key, arnComparisonType, values, ifExists)
         case "Binary" ⇒
