@@ -125,8 +125,14 @@ object AwsConverters {
   }
 
   implicit class AwsAction(val action: aws.Action) extends AnyVal {
-    def asScala: Action = Action.toScalaConversions(action)
+    def asScala: Action = {
+      Action.toScalaConversions.get(action)
+        .orElse(Action.stringToScalaConversion.get(action.getActionName))
+        .getOrElse(NamedAction(action.getActionName))
+    }
   }
+
+  private[policy] case class NamedAction(actionName: String) extends Action
 
   implicit class ScalaAction(val action: Action) extends AnyVal {
     def asAws: aws.Action = Action.toAwsConversions(action)
