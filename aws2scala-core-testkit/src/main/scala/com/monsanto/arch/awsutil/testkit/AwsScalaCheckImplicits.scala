@@ -32,7 +32,7 @@ object AwsScalaCheckImplicits {
     Arbitrary {
       for {
         id ← idGen
-        statements ← Gen.nonEmptyListOf(arbitrary[Statement])
+        statements ← UtilGen.nonEmptyListOfSqrtN(arbitrary[Statement])
       } yield Policy(id, statements)
     }
   }
@@ -194,7 +194,7 @@ object AwsScalaCheckImplicits {
           region ← arbitrary[Option[Region]]
           namespace ← Gen.option(AwsGen.accountId)
           relativeId ← Gen.option(Gen.identifier)
-        } yield s"arn:aws:${vendor.getOrElse("*")}:${region.getOrElse("*")}:${namespace.getOrElse("*")}:${relativeId.getOrElse("*")}"
+        } yield s"arn:aws:${vendor.getOrElse("*")}:${region.map(_.name).getOrElse("*")}:${namespace.getOrElse("*")}:${relativeId.getOrElse("*")}"
       for {
         key ← Gen.oneOf(Gen.const("aws:SourceArn"), Gen.identifier)
         comparisonType ← arbitrary[Condition.ArnComparisonType]
