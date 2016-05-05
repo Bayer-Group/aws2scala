@@ -3,7 +3,7 @@ import UnidocKeys._
 
 // dependency versions
 val akka = "2.4.4"
-val aws = "1.10.64"
+val aws = "1.10.75"
 val scalaCheck = "org.scalacheck"     %% "scalacheck"                          % "1.12.5"
 val scalaTest  = "org.scalatest"      %% "scalatest"                           % "2.2.6"
 val sprayJson  = "io.spray"           %% "spray-json"                          % "1.3.2"

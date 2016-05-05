@@ -782,4 +782,7 @@ class FakeAmazonEC2Async extends AmazonEC2Async {
   override def describeInstanceStatusAsync(asyncHandler: AsyncHandler[DescribeInstanceStatusRequest, DescribeInstanceStatusResult]): Future[DescribeInstanceStatusResult] = ???
   override def describeSpotPriceHistoryAsync(): Future[DescribeSpotPriceHistoryResult] = ???
   override def describeSpotPriceHistoryAsync(asyncHandler: AsyncHandler[DescribeSpotPriceHistoryRequest, DescribeSpotPriceHistoryResult]): Future[DescribeSpotPriceHistoryResult] = ???
+  override def modifyVpcPeeringConnectionOptionsAsync(modifyVpcPeeringConnectionOptionsRequest: ModifyVpcPeeringConnectionOptionsRequest): Future[ModifyVpcPeeringConnectionOptionsResult] = ???
+  override def modifyVpcPeeringConnectionOptionsAsync(modifyVpcPeeringConnectionOptionsRequest: ModifyVpcPeeringConnectionOptionsRequest, asyncHandler: AsyncHandler[ModifyVpcPeeringConnectionOptionsRequest, ModifyVpcPeeringConnectionOptionsResult]): Future[ModifyVpcPeeringConnectionOptionsResult] = ???
+  override def modifyVpcPeeringConnectionOptions(modifyVpcPeeringConnectionOptionsRequest: ModifyVpcPeeringConnectionOptionsRequest): ModifyVpcPeeringConnectionOptionsResult = ???
 }
