@@ -2,12 +2,12 @@ import java.util.Date
 import UnidocKeys._
 
 // dependency versions
-val akka = "2.4.2"
+val akka = "2.4.4"
 val aws = "1.10.64"
 val scalaCheck = "org.scalacheck"     %% "scalacheck"                          % "1.12.5"
 val scalaTest  = "org.scalatest"      %% "scalatest"                           % "2.2.6"
 val sprayJson  = "io.spray"           %% "spray-json"                          % "1.3.2"
-val cftg       = "com.monsanto.arch"  %% "cloud-formation-template-generator"  % "3.3.0"
+val cftg       = "com.monsanto.arch"  %% "cloud-formation-template-generator"  % "3.3.3"
 
 val compileOnlyOptions = Seq(
   "-deprecation",
@@ -87,7 +87,7 @@ lazy val noPublishingSettings = Seq(
 
 val commonDependencies = Seq(
   "com.typesafe.akka"           %% "akka-stream"    % akka,
-  "com.typesafe.scala-logging"  %% "scala-logging"  % "3.1.0",
+  "com.typesafe.scala-logging"  %% "scala-logging"  % "3.4.0",
   awsDependency("core")
 )
 
@@ -105,7 +105,7 @@ lazy val testSupport = Project("aws2scala-test-support", file("aws2scala-test-su
       scalaCheck,
       "org.scalamock"      %% "scalamock-scalatest-support"  % "3.2.2",
       scalaTest,
-      "ch.qos.logback"      % "logback-classic"              % "1.1.6"
+      "ch.qos.logback"      % "logback-classic"              % "1.1.7"
     ) ++ commonDependencies
   )
 
