@@ -324,6 +324,37 @@ lazy val snsTests = Project("aws2scala-sns-tests", file("aws2scala-sns-tests"))
     description := "Tests for aws2scala-sns"
   )
 
+lazy val sqs = Project("aws2scala-sqs", file("aws2scala-sqs"))
+  .dependsOn(core)
+  .settings(
+    commonSettings,
+    bintrayPublishingSettings,
+    description := "Client for Amazon Simple Queue Service (SQS)",
+    libraryDependencies += awsDependency("sqs")
+  )
+
+lazy val sqsTestkit = Project("aws2scala-sqs-testkit", file("aws2scala-sqs-testkit"))
+  .dependsOn(sqs, coreTestkit)
+  .settings(
+    commonSettings,
+    bintrayPublishingSettings,
+    description := "Test utility library for aws2scala-sqs",
+    libraryDependencies ++= Seq(scalaCheck)
+  )
+
+lazy val sqsTests = Project("aws2scala-sqs-tests", file("aws2scala-sqs-tests"))
+  .dependsOn(
+    sqs             % "test",
+    sqsTestkit      % "test",
+    coreTestSupport % "test",
+    testSupport     % "test->test"
+  )
+  .settings(
+    commonSettings,
+    noPublishingSettings,
+    description := "Tests for aws2scala-sqs"
+  )
+
 lazy val sts = Project("aws2scala-sts", file("aws2scala-sts"))
   .dependsOn(core)
   .settings(
@@ -356,7 +387,7 @@ lazy val stsTests = Project("aws2scala-sts-tests", file("aws2scala-sts-tests"))
   )
 
 lazy val integrationTests = Project("aws2scala-integration-tests", file("aws2scala-integration-tests"))
-  .dependsOn(core, testSupport, cloudFormation, ec2, iam, kms, rds, s3, sns, sts)
+  .dependsOn(core, testSupport, cloudFormation, ec2, iam, kms, rds, s3, sns, sqs, sts)
   .configs(IntegrationTest)
   .settings(
     commonSettings,
@@ -380,6 +411,7 @@ lazy val aws2scala = (project in file("."))
     rds,
     s3, s3Testkit, s3Tests,
     sns, snsTestkit, snsTests,
+    sqs, sqsTestkit, sqsTests,
     sts, stsTestkit, stsTests,
     integrationTests)
   .settings(
