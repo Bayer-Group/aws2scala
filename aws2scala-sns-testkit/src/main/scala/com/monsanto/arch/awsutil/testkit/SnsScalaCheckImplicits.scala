@@ -12,6 +12,8 @@ import org.scalacheck.{Arbitrary, Gen, Shrink}
 import scala.util.Try
 
 object SnsScalaCheckImplicits {
+  SNSAction.registerActions()
+
   implicit lazy val arbAddPermissionRequest: Arbitrary[AddPermissionRequest] =
     Arbitrary {
       for {

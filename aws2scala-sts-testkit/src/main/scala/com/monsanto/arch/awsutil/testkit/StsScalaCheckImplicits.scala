@@ -4,6 +4,7 @@ import java.util.Date
 
 import com.monsanto.arch.awsutil.Account
 import com.monsanto.arch.awsutil.auth.policy.Policy
+import com.monsanto.arch.awsutil.auth.policy.action.SecurityTokenServiceAction
 import com.monsanto.arch.awsutil.identitymanagement.model.{Name, RoleArn}
 import com.monsanto.arch.awsutil.securitytoken.model._
 import com.monsanto.arch.awsutil.testkit.AwsScalaCheckImplicits._
@@ -14,6 +15,8 @@ import org.scalacheck.{Arbitrary, Gen, Shrink}
 import scala.concurrent.duration.DurationInt
 
 object StsScalaCheckImplicits {
+  SecurityTokenServiceAction.registerActions()
+
   implicit lazy val arbAssumeRoleRequest: Arbitrary[AssumeRoleRequest] = {
     Arbitrary {
       for {
@@ -23,18 +26,18 @@ object StsScalaCheckImplicits {
         externalId ← Gen.option(StsGen.externalId)
         policy ← arbitrary[Option[Policy]]
         mfa ← arbitrary[Option[AssumeRoleRequest.MFA]]
-      } yield AssumeRoleRequest(roleArn, roleSessionName, duration, externalId, policy.map(_.toString), mfa)
+      } yield AssumeRoleRequest(roleArn, roleSessionName, duration, externalId, policy.map(_.toJson), mfa)
     }
   }
 
   implicit lazy val shrinkAssumeRoleRequest: Shrink[AssumeRoleRequest] =
     Shrink { request ⇒
-      val policy = request.policy.map(p ⇒ Policy.fromString(p))
+      val policy = request.policy.map(p ⇒ Policy.fromJson(p))
       Shrink.shrink(RoleArn(request.roleArn)).map(x ⇒ request.copy(roleArn = x.value)) append
         Shrink.shrink(request.roleSessionName).filter(_.length > 1).map(x ⇒ request.copy(roleSessionName = x)) append
         Shrink.shrink(request.duration).map(x ⇒ request.copy(duration = x)) append
         Shrink.shrink(request.externalId).filter(_.forall(_.length > 1)).map(x ⇒ request.copy(externalId = x)) append
-        Shrink.shrink(policy).map(p ⇒ request.copy(policy = p.map(_.toString))) append
+        Shrink.shrink(policy).map(p ⇒ request.copy(policy = p.map(_.toJson))) append
         Shrink.shrink(request.mfa).map(m ⇒ request.copy(mfa = m))
     }
 

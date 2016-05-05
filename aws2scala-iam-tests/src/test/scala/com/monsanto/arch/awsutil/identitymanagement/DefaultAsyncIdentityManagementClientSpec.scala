@@ -24,7 +24,7 @@ class DefaultAsyncIdentityManagementClientSpec extends FreeSpec with MockFactory
           arbitrary[Name] → "roleName",
           arbitrary[Policy] → "policy"
         ) { (roleNameObj, policyObj) ⇒
-          val policy = policyObj.toString
+          val policy = policyObj.toJson
           val roleName = roleNameObj.value
           val streaming = mock[StreamingIdentityManagementClient]("streaming")
           val async = new DefaultAsyncIdentityManagementClient(streaming)

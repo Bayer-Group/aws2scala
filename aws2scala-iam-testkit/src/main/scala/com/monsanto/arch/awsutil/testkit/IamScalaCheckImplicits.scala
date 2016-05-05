@@ -5,12 +5,15 @@ import java.util.Date
 import com.amazonaws.auth.{policy ⇒ aws}
 import com.monsanto.arch.awsutil.Account
 import com.monsanto.arch.awsutil.auth.policy.Policy
+import com.monsanto.arch.awsutil.auth.policy.action.IdentityManagementAction
 import com.monsanto.arch.awsutil.identitymanagement.model._
 import com.monsanto.arch.awsutil.testkit.AwsScalaCheckImplicits._
 import org.scalacheck.Arbitrary._
 import org.scalacheck.{Arbitrary, Gen, Shrink}
 
 object IamScalaCheckImplicits {
+  IdentityManagementAction.registerActions()
+
   implicit lazy val arbAttachRolePolicyRequest: Arbitrary[AttachRolePolicyRequest] =
     Arbitrary {
       for {
@@ -37,9 +40,9 @@ object IamScalaCheckImplicits {
   implicit lazy val shrinkCreateRoleRequest: Shrink[CreateRoleRequest] =
     Shrink { request ⇒
       Shrink.shrink(Name(request.name)).map(name ⇒ request.copy(name = name.value)) append
-        Shrink.shrink(Policy.fromString(request.assumeRolePolicy))
-          .filterNot(p ⇒ p.toString == request.assumeRolePolicy)
-          .map(policy ⇒ request.copy(assumeRolePolicy = policy.toString)) append
+        Shrink.shrink(Policy.fromJson(request.assumeRolePolicy))
+          .filterNot(p ⇒ p.toJson == request.assumeRolePolicy)
+          .map(policy ⇒ request.copy(assumeRolePolicy = policy.toJson)) append
         Shrink.shrink(request.path.map(Path.apply)).map(path ⇒ request.copy(path = path.map(_.value)))
     }
 
@@ -119,9 +122,9 @@ object IamScalaCheckImplicits {
         Shrink.shrink(path)
           .map(path ⇒ role.copy(arn = RoleArn(account, name, path).value, path = path.toString))
       val shrunkByPolicy =
-        Shrink.shrink(Policy.fromAws(aws.Policy.fromJson(role.assumeRolePolicyDocument)))
-          .filterNot(p ⇒ p.toString == role.assumeRolePolicyDocument)
-          .map(policy ⇒ role.copy(assumeRolePolicyDocument = policy.toString))
+        Shrink.shrink(Policy.fromJson(role.assumeRolePolicyDocument))
+          .filterNot(p ⇒ p.toJson == role.assumeRolePolicyDocument)
+          .map(policy ⇒ role.copy(assumeRolePolicyDocument = policy.toJson))
       shrunkByName append shrunkByPath append shrunkByPolicy
     }
   }

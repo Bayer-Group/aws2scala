@@ -32,7 +32,7 @@ object TopicAttributes {
   def apply(map: Map[String,String]): TopicAttributes = {
     val arn = TopicArn(map("TopicArn"))
     val displayName = map("DisplayName")
-    val policy = Policy.fromString(map("Policy"))
+    val policy = Policy.fromJson(map("Policy"))
     val subscriptionsPending = map("SubscriptionsPending").toInt
     val subscriptionsConfirmed = map("SubscriptionsConfirmed").toInt
     val subscriptionsDeleted = map("SubscriptionsDeleted").toInt

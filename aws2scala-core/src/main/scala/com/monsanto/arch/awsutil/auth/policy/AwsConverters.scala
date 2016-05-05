@@ -1,7 +1,8 @@
 package com.monsanto.arch.awsutil.auth.policy
 
 import java.time.Instant
-import java.util.{Base64, Date, List ⇒ JList}
+import java.util
+import java.util.{Base64, Date}
 
 import akka.util.ByteString
 import com.amazonaws.auth.policy.conditions._
@@ -413,6 +414,22 @@ object AwsConverters {
     }
   }
 
-  private def asList[T](jList: JList[T]): List[T] =
-    Option(jList).map(_.asScala.toList).getOrElse(List.empty)
+  implicit class AwsPolicy(val policy: aws.Policy) extends AnyVal {
+    def asScala: Policy =
+      Policy(
+        Option(policy.getId),
+        asList(policy.getStatements).map(_.asScala))
+  }
+
+  implicit class ScalaPolicy(val policy: Policy) extends AnyVal {
+    def asAws: aws.Policy = {
+      val awsPolicy = new aws.Policy()
+      policy.id.foreach(id ⇒ awsPolicy.setId(id))
+      awsPolicy.setStatements(policy.statements.map(_.asAws).asJavaCollection)
+      awsPolicy
+    }
+  }
+
+  private def asList[T](collection: util.Collection[T]): List[T] =
+    Option(collection).map(_.asScala.toList).getOrElse(List.empty)
 }
