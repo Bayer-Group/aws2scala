@@ -300,7 +300,7 @@ import akka.util.ByteString
   *   // these attributes.
   *   Condition.string("dynamodb:requestedAttributes")
   *     .isLike("ID", "PostDateTime")
-  *     .forAllValues
+  *     .forAnyValue
   * }}}
   *
   * @see [[http://docs.aws.amazon.com/IAM/latest/UserGuide/reference_policies_elements.html#Condition  IAM Policy Elements Reference: Condition]]
