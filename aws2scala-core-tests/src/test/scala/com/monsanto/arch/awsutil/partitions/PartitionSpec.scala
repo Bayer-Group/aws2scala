@@ -16,7 +16,7 @@ class PartitionSpec extends FreeSpec {
 
     "can be round-tripped via its string representation" in {
       forAll(partitions) { p ⇒
-        Partition.fromString(p.toString) shouldBe Some(p)
+        Partition.unapply(p.id) shouldBe Some(p)
       }
     }
   }

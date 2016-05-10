@@ -27,7 +27,7 @@ private[awsutil] abstract class Arn(_partition: Partition,
   /** The service-dependent content identifying the resource. */
   def resource: String
 
-  final def value: String = s"arn:${_partition}:${_namespace}:${_region.map(_.name).getOrElse("")}:${_account.getOrElse("")}:$resource"
+  final def value: String = s"arn:${_partition.id}:${_namespace}:${_region.map(_.name).getOrElse("")}:${_account.getOrElse("")}:$resource"
 
   override def toString = value
 }
