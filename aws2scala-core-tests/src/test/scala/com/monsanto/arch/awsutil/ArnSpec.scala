@@ -48,7 +48,7 @@ class ArnSpec extends FreeSpec {
           override def resource: String = aResource
         }
 
-        arn.value shouldBe s"arn:${partition.id}:${namespace.id}:${region.map(_.toAws.getName).getOrElse("")}" +
+        arn.value shouldBe s"arn:${partition.id}:${namespace.id}:${region.map(_.name).getOrElse("")}" +
           s":${account.map(_.id).getOrElse("")}:$aResource"
       }
     }

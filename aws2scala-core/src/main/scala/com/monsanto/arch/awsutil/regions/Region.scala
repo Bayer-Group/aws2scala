@@ -1,57 +1,50 @@
 package com.monsanto.arch.awsutil.regions
 
-import com.amazonaws.{regions ⇒ aws}
 import com.monsanto.arch.awsutil.partitions.Partition
-import com.monsanto.arch.awsutil.util.{AwsEnumeration, AwsEnumerationCompanion}
 
-private[awsutil] abstract class Region(val toAws: aws.Regions,
-                                       val partition: Partition) extends AwsEnumeration[aws.Regions] {
-  private val awsRegion = aws.Region.getRegion(toAws)
+sealed abstract class Region(val name: String, val partition: Partition)
 
-  def name: String = awsRegion.getName
-}
-
-private[awsutil] object Region extends AwsEnumerationCompanion[Region, aws.Regions] {
+object Region {
   /** The AWS GovCloud. */
-  case object GovCloud extends Region(aws.Regions.GovCloud, Partition.GovCloud)
+  case object GovCloud extends Region("us-gov-west-1", Partition.GovCloud)
 
   /** US East (N. Virginia). */
-  case object US_EAST_1 extends Region(aws.Regions.US_EAST_1, Partition.Aws)
+  case object US_EAST_1 extends Region("us-east-1", Partition.Aws)
 
   /** US West (Oregon). */
-  case object US_WEST_1 extends Region(aws.Regions.US_WEST_1, Partition.Aws)
+  case object US_WEST_1 extends Region("us-west-1", Partition.Aws)
 
   /** US West (N. California). */
-  case object US_WEST_2 extends Region(aws.Regions.US_WEST_2, Partition.Aws)
+  case object US_WEST_2 extends Region("us-west-2", Partition.Aws)
 
   /** EU West (Ireland). */
-  case object EU_WEST_1 extends Region(aws.Regions.EU_WEST_1, Partition.Aws)
+  case object EU_WEST_1 extends Region("eu-west-1", Partition.Aws)
 
   /** EU Central (Frankfurt). */
-  case object EU_CENTRAL_1 extends Region(aws.Regions.EU_CENTRAL_1, Partition.Aws)
+  case object EU_CENTRAL_1 extends Region("eu-central-1", Partition.Aws)
 
   /** Asia Pacific (Singapore). */
-  case object AP_SOUTHEAST_1 extends Region(aws.Regions.AP_SOUTHEAST_1, Partition.Aws)
+  case object AP_SOUTHEAST_1 extends Region("ap-southeast-1", Partition.Aws)
 
   /** Asia Pacific (Sydney). */
-  case object AP_SOUTHEAST_2 extends Region(aws.Regions.AP_SOUTHEAST_2, Partition.Aws)
+  case object AP_SOUTHEAST_2 extends Region("ap-southeast-2", Partition.Aws)
 
   /** Asia Pacific (Tokyo). */
-  case object AP_NORTHEAST_1 extends Region(aws.Regions.AP_NORTHEAST_1, Partition.Aws)
+  case object AP_NORTHEAST_1 extends Region("ap-northeast-1", Partition.Aws)
 
   /** Asia Pacific (Seoul). */
-  case object AP_NORTHEAST_2 extends Region(aws.Regions.AP_NORTHEAST_2, Partition.Aws)
+  case object AP_NORTHEAST_2 extends Region("ap-northeast-2", Partition.Aws)
 
   /** South America (Sao Paulo). */
-  case object SA_EAST_1 extends Region(aws.Regions.SA_EAST_1, Partition.Aws)
+  case object SA_EAST_1 extends Region("sa-east-1", Partition.Aws)
 
   /** China (Beijing). */
-  case object CN_NORTH_1 extends Region(aws.Regions.CN_NORTH_1, Partition.China)
+  case object CN_NORTH_1 extends Region("cn-north-1", Partition.China)
 
   /** All valid values for the enumeration. */
-  override def values: Seq[Region] = Seq(GovCloud, US_EAST_1, US_WEST_1, US_WEST_2, EU_WEST_1, EU_CENTRAL_1,
+  val values: Seq[Region] = Seq(GovCloud, US_EAST_1, US_WEST_1, US_WEST_2, EU_WEST_1, EU_CENTRAL_1,
     AP_SOUTHEAST_1, AP_SOUTHEAST_2, AP_NORTHEAST_1, AP_NORTHEAST_2, SA_EAST_1, CN_NORTH_1)
 
-  /** Gets a region from its name. */
-  def fromName(name: String): Option[Region] = values.find(_.name == name)
+  /** Extracts a region from its name. */
+  def unapply(str: String): Option[Region] = values.find(_.name == str)
 }

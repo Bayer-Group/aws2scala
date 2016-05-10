@@ -36,9 +36,9 @@ private[awsutil] object Arn {
   def unapply(arn: String): Option[(Partition, Arn.Namespace, Option[Region], Option[Account], String)] = {
     arn match {
       case ArnRegex(Partition(partition), Arn.Namespace(namespace), region, "", resource) ⇒
-        Some((partition, namespace, Region.fromName(region), None, resource))
+        Some((partition, namespace, Region.unapply(region), None, resource))
       case ArnRegex(Partition(partition), Arn.Namespace(namespace), region, accountId, resource) ⇒
-        Some((partition, namespace, Region.fromName(region), Some(Account(accountId, partition)), resource))
+        Some((partition, namespace, Region.unapply(region), Some(Account(accountId, partition)), resource))
       case _ ⇒ None
     }
   }
