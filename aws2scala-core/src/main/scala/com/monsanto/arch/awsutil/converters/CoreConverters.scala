@@ -32,7 +32,7 @@ object CoreConverters {
           Principal.service(id)
         case ("Federated", "*") ⇒
           Principal.allWebProviders
-        case ("Federated", Principal.WebIdentityProvider.fromId(webIdentityProvider)) ⇒
+        case ("Federated", Principal.WebIdentityProvider.fromProvider(webIdentityProvider)) ⇒
           Principal.webProvider(webIdentityProvider)
         case ("Federated", Arn(samlProviderArn: SamlProviderArn)) ⇒
           Principal.SamlProviderPrincipal(samlProviderArn)
@@ -412,6 +412,26 @@ object CoreConverters {
         case Principal.Service.AWSCloudHSM             ⇒ policy.Principal.Services.AWSCloudHSM
         case Principal.Service.AWSDataPipeline         ⇒ policy.Principal.Services.AWSDataPipeline
         case Principal.Service.AWSOpsWorks             ⇒ policy.Principal.Services.AWSOpsWorks
+      }
+  }
+
+  implicit class AwsPrincipalWebIdentityProvider(val service: policy.Principal.WebIdentityProviders) extends AnyVal {
+    def asScala: Principal.WebIdentityProvider =
+      service match {
+        case policy.Principal.WebIdentityProviders.AllProviders ⇒ Principal.WebIdentityProvider.AllProviders
+        case policy.Principal.WebIdentityProviders.Amazon       ⇒ Principal.WebIdentityProvider.Amazon
+        case policy.Principal.WebIdentityProviders.Facebook     ⇒ Principal.WebIdentityProvider.Facebook
+        case policy.Principal.WebIdentityProviders.Google       ⇒ Principal.WebIdentityProvider.Google
+      }
+  }
+
+  implicit class ScalaPrincipalWebIdentityProvider(val service: Principal.WebIdentityProvider) extends AnyVal {
+    def asAws: policy.Principal.WebIdentityProviders =
+      service match {
+        case Principal.WebIdentityProvider.AllProviders ⇒ policy.Principal.WebIdentityProviders.AllProviders
+        case Principal.WebIdentityProvider.Amazon       ⇒ policy.Principal.WebIdentityProviders.Amazon
+        case Principal.WebIdentityProvider.Facebook     ⇒ policy.Principal.WebIdentityProviders.Facebook
+        case Principal.WebIdentityProvider.Google       ⇒ policy.Principal.WebIdentityProviders.Google
       }
   }
 

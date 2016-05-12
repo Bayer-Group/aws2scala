@@ -94,20 +94,18 @@ object Principal {
     }
   }
 
-  sealed abstract class WebIdentityProvider(val toAws: aws.Principal.WebIdentityProviders) extends AwsEnumeration[aws.Principal.WebIdentityProviders] {
-    def id: String = toAws.getWebIdentityProvider
-  }
+  sealed abstract class WebIdentityProvider(val provider: String)
 
-  object WebIdentityProvider extends AwsEnumerationCompanion[WebIdentityProvider,aws.Principal.WebIdentityProviders] {
-    case object AllProviders extends WebIdentityProvider(aws.Principal.WebIdentityProviders.AllProviders)
-    case object Amazon extends WebIdentityProvider(aws.Principal.WebIdentityProviders.Amazon)
-    case object Facebook extends WebIdentityProvider(aws.Principal.WebIdentityProviders.Facebook)
-    case object Google extends WebIdentityProvider(aws.Principal.WebIdentityProviders.Google)
+  object WebIdentityProvider {
+    case object AllProviders extends WebIdentityProvider("*")
+    case object Amazon extends WebIdentityProvider("www.amazon.com")
+    case object Facebook extends WebIdentityProvider("graph.facebook.com")
+    case object Google extends WebIdentityProvider("accounts.google.com")
 
-    override def values: Seq[WebIdentityProvider] = Seq(AllProviders, Amazon, Facebook, Google)
+    val values: Seq[WebIdentityProvider] = Seq(AllProviders, Amazon, Facebook, Google)
 
-    object fromId {
-      def unapply(id: String): Option[WebIdentityProvider] = values.find(_.id.equalsIgnoreCase(id))
+    object fromProvider {
+      def unapply(name: String): Option[WebIdentityProvider] = values.find(_.provider.equalsIgnoreCase(name))
     }
   }
 
@@ -133,7 +131,7 @@ object Principal {
 
   private[awsutil] case class WebProviderPrincipal(webIdentityProvider: WebIdentityProvider) extends Principal {
     override val provider = "Federated"
-    override val id = webIdentityProvider.id
+    override val id = webIdentityProvider.provider
   }
 
   private[awsutil] case class SamlProviderPrincipal(samlProviderArn: SamlProviderArn) extends Principal {

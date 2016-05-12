@@ -103,7 +103,7 @@ class PrincipalSpec extends FreeSpec with AwsEnumerationBehaviours {
         forAllIn(webIdentityProviders) { provider ⇒
           Principal.webProvider(provider) should have (
             'provider ("Federated"),
-            'id (provider.id)
+            'id (provider.provider)
           )
         }
       }
@@ -154,17 +154,21 @@ class PrincipalSpec extends FreeSpec with AwsEnumerationBehaviours {
     }
 
     "has a WebIdentityProvider enumeration" - {
-      behave like anAwsEnumeration(Principal.WebIdentityProvider)
+      behave like anAwsEnumeration(
+        aws.Principal.WebIdentityProviders.values,
+        Principal.WebIdentityProvider.values,
+        (_: Principal.WebIdentityProvider).asAws,
+        (_: aws.Principal.WebIdentityProviders).asScala)
 
       "with id values" in {
         forAllIn(webIdentityProviders) { provider ⇒
-          provider.id shouldBe provider.toAws.getWebIdentityProvider
+          provider.provider shouldBe provider.asAws.getWebIdentityProvider
         }
       }
 
       "with a fromId" in {
         forAllIn(webIdentityProviders) { provider ⇒
-          Principal.WebIdentityProvider.fromId.unapply(provider.id) shouldBe Some(provider)
+          Principal.WebIdentityProvider.fromProvider.unapply(provider.provider) shouldBe Some(provider)
         }
       }
     }
