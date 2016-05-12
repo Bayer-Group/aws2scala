@@ -391,6 +391,30 @@ object CoreConverters {
     def asAws: regions.Regions = regions.Regions.fromName(region.name)
   }
 
+  implicit class AwsPrincipalService(val service: policy.Principal.Services) extends AnyVal {
+    def asScala: Principal.Service =
+      service match {
+        case policy.Principal.Services.AllServices             ⇒ Principal.Service.AllServices
+        case policy.Principal.Services.AmazonEC2               ⇒ Principal.Service.AmazonEC2
+        case policy.Principal.Services.AmazonElasticTranscoder ⇒ Principal.Service.AmazonElasticTranscoder
+        case policy.Principal.Services.AWSCloudHSM             ⇒ Principal.Service.AWSCloudHSM
+        case policy.Principal.Services.AWSDataPipeline         ⇒ Principal.Service.AWSDataPipeline
+        case policy.Principal.Services.AWSOpsWorks             ⇒ Principal.Service.AWSOpsWorks
+      }
+  }
+
+  implicit class ScalaPrincipalService(val service: Principal.Service) extends AnyVal {
+    def asAws: policy.Principal.Services =
+      service match {
+        case Principal.Service.AllServices             ⇒ policy.Principal.Services.AllServices
+        case Principal.Service.AmazonEC2               ⇒ policy.Principal.Services.AmazonEC2
+        case Principal.Service.AmazonElasticTranscoder ⇒ policy.Principal.Services.AmazonElasticTranscoder
+        case Principal.Service.AWSCloudHSM             ⇒ policy.Principal.Services.AWSCloudHSM
+        case Principal.Service.AWSDataPipeline         ⇒ policy.Principal.Services.AWSDataPipeline
+        case Principal.Service.AWSOpsWorks             ⇒ policy.Principal.Services.AWSOpsWorks
+      }
+  }
+
   private def asList[T](collection: util.Collection[T]): List[T] =
     Option(collection).map(_.asScala.toList).getOrElse(List.empty)
 }

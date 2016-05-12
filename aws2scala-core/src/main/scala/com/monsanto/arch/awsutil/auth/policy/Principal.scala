@@ -75,20 +75,18 @@ object Principal {
     */
   def stsAssumedRole(assumedRoleArn: AssumedRoleArn): Principal = StsAssumedRolePrincipal(assumedRoleArn)
 
-  sealed abstract class Service(val toAws: aws.Principal.Services) extends AwsEnumeration[aws.Principal.Services] {
-    def id = toAws.getServiceId
-  }
+  sealed abstract class Service(val id: String)
 
-  object Service extends AwsEnumerationCompanion[Service, aws.Principal.Services] {
-    case object AllServices extends Service(aws.Principal.Services.AllServices)
-    case object AmazonEC2 extends Service(aws.Principal.Services.AmazonEC2)
-    case object AmazonElasticTranscoder extends Service(aws.Principal.Services.AmazonElasticTranscoder)
-    case object AWSCloudHSM extends Service(aws.Principal.Services.AWSCloudHSM)
-    case object AWSDataPipeline extends Service(aws.Principal.Services.AWSDataPipeline)
-    case object AWSOpsWorks extends Service(aws.Principal.Services.AWSOpsWorks)
+  object Service {
+    case object AllServices extends Service("*")
+    case object AmazonEC2 extends Service("ec2.amazonaws.com")
+    case object AmazonElasticTranscoder extends Service("elastictranscoder.amazonaws.com")
+    case object AWSCloudHSM extends Service("cloudhsm.amazonaws.com")
+    case object AWSDataPipeline extends Service("datapipeline.amazonaws.com")
+    case object AWSOpsWorks extends Service("opsworks.amazonaws.com")
 
     /** All valid values for the enumeration. */
-    override def values: Seq[Service] =
+    val values: Seq[Service] =
       Seq(AllServices, AmazonEC2, AmazonElasticTranscoder, AWSCloudHSM, AWSDataPipeline, AWSOpsWorks)
 
     object fromId {

@@ -134,11 +134,15 @@ class PrincipalSpec extends FreeSpec with AwsEnumerationBehaviours {
     }
 
     "has a Service enumeration" - {
-      behave like anAwsEnumeration(Principal.Service)
+      behave like anAwsEnumeration(
+        aws.Principal.Services.values,
+        Principal.Service.values,
+        (_ : Principal.Service).asAws,
+        (_: aws.Principal.Services).asScala)
 
       "with id values" in {
         forAllIn(services) { service ⇒
-          service.id shouldBe service.toAws.getServiceId
+          service.id shouldBe service.asAws.getServiceId
         }
       }
 
