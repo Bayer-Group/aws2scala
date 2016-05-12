@@ -26,13 +26,13 @@ class PlatformEndpointArnSpec extends FreeSpec {
         val applicationArn = arn.applicationName
         val endpointId = arn.endpointId
 
-        arn.value shouldBe s"arn:$partition:sns:$region:$account:endpoint/$platform/$applicationArn/$endpointId"
+        arn.arnString shouldBe s"arn:$partition:sns:$region:$account:endpoint/$platform/$applicationArn/$endpointId"
       }
     }
 
     "can round-trip via an ARN" in {
       forAll { arn: PlatformEndpointArn ⇒
-        PlatformEndpointArn(arn.value) shouldBe arn
+        PlatformEndpointArn(arn.arnString) shouldBe arn
       }
     }
 

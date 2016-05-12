@@ -1,46 +1,41 @@
 package com.monsanto.arch.awsutil.identitymanagement.model
 
-import com.monsanto.arch.awsutil.Account
-import com.monsanto.arch.awsutil.testkit.AwsScalaCheckImplicits._
+import com.monsanto.arch.awsutil.identitymanagement.IdentityManagement
 import com.monsanto.arch.awsutil.testkit.IamScalaCheckImplicits._
-import org.scalacheck.Arbitrary.arbitrary
 import org.scalatest.FreeSpec
 import org.scalatest.Matchers._
 import org.scalatest.prop.GeneratorDrivenPropertyChecks._
 
 class PolicyArnSpec extends FreeSpec {
+  IdentityManagement.init()
+
   "a PolicyArn should" - {
     "provide the correct resource" in {
-      forAll(
-        arbitrary[Account] → "account",
-        arbitrary[Name] → "policyName",
-        arbitrary[Path] → "path"
-      ) { (account, policyName, path) ⇒
-        val arn = PolicyArn(account, policyName, path)
-        arn.resource shouldBe s"policy$path$policyName"
+      forAll { arn: PolicyArn ⇒
+        arn.resource shouldBe s"policy${arn.path.pathString}${arn.name}"
       }
     }
 
     "produce the correct ARN" in {
-      forAll(
-        arbitrary[Account] → "account",
-        arbitrary[Name] → "policyName",
-        arbitrary[Path] → "path"
-      ) { (account, policyName, path) ⇒
-        val arn = PolicyArn(account, policyName, path)
-        arn.value shouldBe s"arn:${account.partition}:iam::$account:policy$path$policyName"
+      forAll { arn: PolicyArn ⇒
+        val partition = arn.account.partition.id
+        val accountId = arn.account.id
+        val path = arn.path.pathString
+        val policyName = arn.name
+
+        arn.arnString shouldBe s"arn:$partition:iam::$accountId:policy$path$policyName"
       }
     }
 
     "can round-trip via an ARN" in {
       forAll { arn: PolicyArn ⇒
-        PolicyArn(arn.value) shouldBe arn
+        PolicyArn(arn.arnString) shouldBe arn
       }
     }
 
     "will fail to parse an invalid ARN" in {
       an [IllegalArgumentException] shouldBe thrownBy {
-        UserArn("arn:foo")
+        PolicyArn("arn:aws:iam::111222333444:root")
       }
     }
   }

@@ -2,6 +2,8 @@ package com.monsanto.arch.awsutil.auth.policy
 
 import com.amazonaws.auth.{policy ⇒ aws}
 import com.monsanto.arch.awsutil.Account
+import com.monsanto.arch.awsutil.identitymanagement.model.{RoleArn, SamlProviderArn, UserArn}
+import com.monsanto.arch.awsutil.securitytoken.model.AssumedRoleArn
 import com.monsanto.arch.awsutil.util.{AwsEnumeration, AwsEnumerationCompanion}
 
 /** A principal specifies the user (IAM user, federated user, or assumed-role user), AWS account, AWS service, or other
@@ -17,7 +19,7 @@ import com.monsanto.arch.awsutil.util.{AwsEnumeration, AwsEnumerationCompanion}
   *  - [[Principal.webProvider]] to match federated users from a specific service
   *  - [[Principal.samlProvider]] to match federated users from a SAML provider
   *  - [[Principal.iamRole]] to match an IAM role
-  *  - [[Principal.iamAssumedRole]] to match a specific assumed-role user
+  *  - [[Principal.stsAssumedRole]] to match a specific assumed-role user
   *  - [[Principal.service]] to match an AWS service
   */
 sealed trait Principal {
@@ -40,43 +42,38 @@ object Principal {
   /** Principal that includes all users, including anonymous users. */
   val allUsers: Principal = AllUsers
 
-  /** Principal a principal for the given AWS account. */
-  def account(account: String): Principal = AccountPrincipal(Account(account))
+  /** Returns a principal for the given AWS account. */
+  def account(account: Account): Principal = AccountPrincipal(account)
 
-  /** Principal a principal for the given AWS service. */
+  /** Returns a principal for the given AWS service. */
   def service(service: Service): Principal = ServicePrincipal(service)
 
-  /** Principal a principal for federated users authenticated by the given provider. */
+  /** Returns a principal for federated users authenticated by the given provider. */
   def webProvider(webIdentityProvider: WebIdentityProvider): Principal = WebProviderPrincipal(webIdentityProvider)
 
-  /** Returns a principal for users from a SAML idenity provider.
+  /** Returns a principal for users from a SAML identity provider.
     *
-    * @param account the AWS account number of the SAML identity provider
-    * @param name the name of the SAML identity provider
+    * @param samlProviderArn the ARN of the SAML provider for which to generate a principal
     */
-  def samlProvider(account: String, name: String): Principal = SamlProviderPrincipal(Account(account), name)
+  def samlProvider(samlProviderArn: SamlProviderArn): Principal = SamlProviderPrincipal(samlProviderArn)
 
-  /** Returns a principal for the IAM user in the given account.
+  /** Returns a principal for the given IAM user.
     *
-    * @param account the AWS account number to which the IAM user belongs (without hyphens)
-    * @param user the case-sensitive IAM user name for the principal
+    * @param userArn the ARN of the user for which to generate a principal
     */
-  def iamUser(account: String, user: String): Principal = IamUserPrincipal(Account(account), user, None)
+  def iamUser(userArn: UserArn): Principal = IamUserPrincipal(userArn)
 
-  /** Returns a principal for the IAM role in the given account.
+  /** Returns a principal for the given IAM role.
     *
-    * @param account the AWS account number to which the IAM role belongs (without hyphens)
-    * @param roleName the name of the IAM role for the principal
+    * @param roleArn the ARN of the role for which to generate a principal
     */
-  def iamRole(account: String, roleName: String): Principal = IamRolePrincipal(Account(account), roleName, None)
+  def iamRole(roleArn: RoleArn): Principal = IamRolePrincipal(roleArn)
 
   /** Returns a principal for a specific IAM assumed-role user.
     *
-    * @param account the AWS account number to which the IAM assumed role belongs (without hyphens)
-    * @param roleName the name of the IAM role for the principal
-    * @param sessionName the name of the assumed role session of the principal
+    * @param assumedRoleArn the ARN of the assumed role session for which to generate a principal
     */
-  def iamAssumedRole(account: String, roleName: String, sessionName: String): Principal = IamAssumedRolePrincipal(Account(account), roleName, sessionName)
+  def stsAssumedRole(assumedRoleArn: AssumedRoleArn): Principal = StsAssumedRolePrincipal(assumedRoleArn)
 
   sealed abstract class Service(val toAws: aws.Principal.Services) extends AwsEnumeration[aws.Principal.Services] {
     def id = toAws.getServiceId
@@ -94,7 +91,7 @@ object Principal {
     override def values: Seq[Service] =
       Seq(AllServices, AmazonEC2, AmazonElasticTranscoder, AWSCloudHSM, AWSDataPipeline, AWSOpsWorks)
 
-    object ById {
+    object fromId {
       def unapply(id: String): Option[Service] = values.find(_.id.equalsIgnoreCase(id))
     }
   }
@@ -111,7 +108,7 @@ object Principal {
 
     override def values: Seq[WebIdentityProvider] = Seq(AllProviders, Amazon, Facebook, Google)
 
-    object ById {
+    object fromId {
       def unapply(id: String): Option[WebIdentityProvider] = values.find(_.id.equalsIgnoreCase(id))
     }
   }
@@ -128,7 +125,7 @@ object Principal {
 
   private[awsutil] case class AccountPrincipal(account: Account) extends Principal {
     override val provider = "AWS"
-    override val id = account.arn.value
+    override val id = account.arn.arnString
   }
 
   private[awsutil] case class ServicePrincipal(service: Service) extends Principal {
@@ -141,23 +138,23 @@ object Principal {
     override val id = webIdentityProvider.id
   }
 
-  private[awsutil] case class SamlProviderPrincipal(account: Account, name: String) extends Principal {
+  private[awsutil] case class SamlProviderPrincipal(samlProviderArn: SamlProviderArn) extends Principal {
     override val provider = "Federated"
-    override val id = s"arn:${account.partition}:iam::${account.id}:saml-provider/$name"
+    override val id = samlProviderArn.arnString
   }
 
-  private[awsutil] case class IamUserPrincipal(account: Account, name: String, path: Option[String]) extends Principal {
+  private[awsutil] case class IamUserPrincipal(userArn: UserArn) extends Principal {
     override val provider = "AWS"
-    override val id = s"arn:${account.partition}:iam::${account.id}:user${path.getOrElse("/")}$name"
+    override val id = userArn.arnString
   }
 
-  private[awsutil] case class IamRolePrincipal(account: Account, name: String, path: Option[String]) extends Principal {
+  private[awsutil] case class IamRolePrincipal(roleArn: RoleArn) extends Principal {
     override val provider = "AWS"
-    override val id = s"arn:${account.partition}:iam::${account.id}:role${path.getOrElse("/")}$name"
+    override val id = roleArn.arnString
   }
 
-  private[awsutil] case class IamAssumedRolePrincipal(account: Account, roleName: String, sessionName: String) extends Principal {
+  private[awsutil] case class StsAssumedRolePrincipal(assumedRoleArn: AssumedRoleArn) extends Principal {
     override val provider = "AWS"
-    override val id = s"arn:${account.partition}:iam::${account.id}:assumed-role/$roleName/$sessionName"
+    override val id = assumedRoleArn.arnString
   }
 }

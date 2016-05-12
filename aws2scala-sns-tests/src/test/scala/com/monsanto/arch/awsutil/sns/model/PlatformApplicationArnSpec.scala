@@ -22,13 +22,13 @@ class PlatformApplicationArnSpec extends FreeSpec {
         val account = arn.account.id
         val platform = arn.platform.name
         val name = arn.name
-        arn.value shouldBe s"arn:$partition:sns:$region:$account:app/$platform/$name"
+        arn.arnString shouldBe s"arn:$partition:sns:$region:$account:app/$platform/$name"
       }
     }
 
     "can round-trip via an ARN" in {
       forAll { arn: PlatformApplicationArn ⇒
-        PlatformApplicationArn(arn.value) shouldBe arn
+        PlatformApplicationArn(arn.arnString) shouldBe arn
       }
     }
 

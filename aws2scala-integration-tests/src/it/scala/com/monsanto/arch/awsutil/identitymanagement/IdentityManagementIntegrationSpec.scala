@@ -37,7 +37,7 @@ class IdentityManagementIntegrationSpec extends FreeSpec with AwsIntegrationSpec
     "create a role" in {
       val roleName = s"TestRole-$testId"
       val result = async.createRole(roleName, assumeRolePolicy(testUser), testPath).futureValue
-      result.arn shouldBe s"arn:aws:iam::${testUser.account}:role$testPath$roleName"
+      result.arn shouldBe s"arn:aws:iam::${testUser.account.id}:role$testPath$roleName"
 
       logger.info(s"Created role ${result.name} with ARN ${result.arn}")
 
@@ -93,7 +93,7 @@ class IdentityManagementIntegrationSpec extends FreeSpec with AwsIntegrationSpec
   def assumeRolePolicy(user: User): String = {
     val statement = new Statement(Statement.Effect.Allow)
     statement.setActions(Seq[Action](SecurityTokenServiceActions.AssumeRole).asJavaCollection)
-    statement.setPrincipals(new Principal(user.account))
+    statement.setPrincipals(new Principal(user.account.id))
 
     val policy = new Policy()
     policy.setStatements(Seq(statement).asJavaCollection)

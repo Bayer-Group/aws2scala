@@ -6,7 +6,7 @@ import com.monsanto.arch.awsutil.Account
 import com.monsanto.arch.awsutil.ec2.model._
 import com.monsanto.arch.awsutil.identitymanagement.model.InstanceProfileArn
 import com.monsanto.arch.awsutil.regions.Region
-import com.monsanto.arch.awsutil.testkit.AwsScalaCheckImplicits._
+import com.monsanto.arch.awsutil.testkit.CoreScalaCheckImplicits._
 import com.monsanto.arch.awsutil.testkit.IamScalaCheckImplicits._
 import org.scalacheck.Arbitrary.arbitrary
 import org.scalacheck.{Arbitrary, Gen, Shrink}
@@ -86,13 +86,13 @@ object Ec2ScalaCheckImplicits {
     Arbitrary {
       for {
         id ← IamGen.instanceProfileId
-        arn ← arbitrary[InstanceProfileArn].map(_.value)
+        arn ← arbitrary[InstanceProfileArn].map(_.arnString)
       } yield IamInstanceProfile(id, arn)
     }
 
   implicit lazy val shrinkIamInstanceProfile: Shrink[IamInstanceProfile] =
     Shrink { profile ⇒
-      Shrink.shrink(InstanceProfileArn.fromArn(profile.arn).get).map(arn ⇒ profile.copy(arn = arn.value))
+      Shrink.shrink(InstanceProfileArn(profile.arn)).map(arn ⇒ profile.copy(arn = arn.arnString))
     }
 
   implicit lazy val arbInstance: Arbitrary[Instance] = {
@@ -389,7 +389,7 @@ object Ec2ScalaCheckImplicits {
       for {
         reservationId ← Ec2Gen.instanceId
         owner ← arbitrary[Account]
-        requester ← Gen.option(AwsGen.account(owner.partition))
+        requester ← Gen.option(CoreGen.account(owner.partition))
         securityGroups ← UtilGen.listOfSqrtN(arbitrary[GroupIdentifier])
         instances ← UtilGen.nonEmptyListOfSqrtN(arbitrary[Instance])
       } yield Reservation(reservationId, owner.id, requester.map(_.id), securityGroups, instances)

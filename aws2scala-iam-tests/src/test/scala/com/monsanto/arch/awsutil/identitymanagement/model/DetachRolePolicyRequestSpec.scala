@@ -15,7 +15,7 @@ class DetachRolePolicyRequestSpec extends FreeSpec {
         arbitrary[Name] → "roleName"
       ) { (policyArn, roleName) ⇒
         val request = new aws.DetachRolePolicyRequest()
-          .withPolicyArn(policyArn.value)
+          .withPolicyArn(policyArn.arnString)
           .withRoleName(roleName.value)
 
         DetachRolePolicyRequest.fromAws(request).toAws shouldBe request

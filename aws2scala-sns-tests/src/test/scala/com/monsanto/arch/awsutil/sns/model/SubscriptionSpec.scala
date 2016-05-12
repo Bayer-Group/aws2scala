@@ -21,13 +21,13 @@ class SubscriptionSpec extends FreeSpec with Materialised with MockFactory with 
           val subscription = Subscription(attributes.asMap)
 
           subscription should have (
-            'arn (attributes.arn.value),
+            'arn (attributes.arn.arnString),
             'confirmationWasAuthenticated (attributes.confirmationWasAuthenticated),
             'deliveryPolicy (attributes.deliveryPolicy.map(_.toJson.compactPrint)),
             'effectiveDeliveryPolicy (attributes.effectiveDeliveryPolicy.map(_.toJson.compactPrint)),
             'endpoint (attributes.endpoint),
-            'owner (attributes.arn.owner.id),
-            'topicArn (attributes.arn.value.replaceAll(":[^:]+$", ""))
+            'owner (attributes.arn.account.id),
+            'topicArn (attributes.arn.arnString.replaceAll(":[^:]+$", ""))
           )
         }
       }

@@ -2,9 +2,9 @@ package com.monsanto.arch.awsutil.testkit
 
 import com.monsanto.arch.awsutil.auth.policy.action.SNSAction
 import com.monsanto.arch.awsutil.identitymanagement.model.RoleArn
-import com.monsanto.arch.awsutil.sns.model._
-import com.monsanto.arch.awsutil.testkit.AwsScalaCheckImplicits._
-import com.monsanto.arch.awsutil.testkit.IamScalaCheckImplicits._
+import com.monsanto.arch.awsutil.sns.SNS
+import com.monsanto.arch.awsutil.sns.model.{SNS ⇒ _, _}
+import com.monsanto.arch.awsutil.testkit.CoreScalaCheckImplicits._
 import com.monsanto.arch.awsutil.{Account, Arn}
 import org.scalacheck.Arbitrary.arbitrary
 import org.scalacheck.{Arbitrary, Gen, Shrink}
@@ -12,23 +12,23 @@ import org.scalacheck.{Arbitrary, Gen, Shrink}
 import scala.util.Try
 
 object SnsScalaCheckImplicits {
-  SNSAction.registerActions()
+  SNS.init()
 
   implicit lazy val arbAddPermissionRequest: Arbitrary[AddPermissionRequest] =
     Arbitrary {
       for {
         topicArn ← arbitrary[TopicArn]
-        label ← AwsGen.statementId
+        label ← CoreGen.statementId
         accounts ← UtilGen.nonEmptyListOfSqrtN(arbitrary[Account]).map(_.map(_.id))
         actions ← UtilGen.nonEmptyListOfSqrtN(arbitrary[SNSAction])
-      } yield AddPermissionRequest(topicArn.value, label, accounts, actions)
+      } yield AddPermissionRequest(topicArn.arnString, label, accounts, actions)
     }
 
   implicit lazy val shrinkAddPermissionRequest: Shrink[AddPermissionRequest] =
     Shrink { request ⇒
       val arn = TopicArn(request.topicArn)
       val accounts = request.accounts.map(id ⇒ Account(id, arn.partition))
-      Shrink.shrink(arn).map(x ⇒ request.copy(topicArn = x.value)) append
+      Shrink.shrink(arn).map(x ⇒ request.copy(topicArn = x.arnString)) append
         Shrink.shrink(request.label).filter(_.nonEmpty).map(x ⇒ request.copy(label = x)) append
         Shrink.shrink(accounts).filter(_.nonEmpty).map(x ⇒ request.copy(accounts = x.map(_.id))) append
         Shrink.shrink(request.actions).filter(_.nonEmpty).map(x ⇒ request.copy(actions = x))
@@ -68,7 +68,7 @@ object SnsScalaCheckImplicits {
       for {
         arn ← arbitrary[PlatformApplicationArn]
         attributes ← SnsGen.platformApplicationAttributes(arn)
-      } yield PlatformApplication(arn.value, attributes)
+      } yield PlatformApplication(arn.arnString, attributes)
     }
 
   implicit lazy val shrinkPlatformApplication: Shrink[PlatformApplication] =
@@ -79,12 +79,12 @@ object SnsScalaCheckImplicits {
         Shrink.shrink(maybeArn)
           .collect {
             case None ⇒ application.attributes - key
-            case Some(arn) ⇒ application.attributes.updated(key, arn.value)
+            case Some(arn) ⇒ application.attributes.updated(key, arn.arnString)
           }
           .map(attrs ⇒ application.copy(attributes = attrs))
       }
 
-      Shrink.shrink(applicationArn).map(x ⇒ application.copy(arn = x.value)) append
+      Shrink.shrink(applicationArn).map(x ⇒ application.copy(arn = x.arnString)) append
         shrinkArn("EventEndpointCreated", application.eventEndpointCreated.map(TopicArn(_))) append
         shrinkArn("EventEndpointDeleted", application.eventEndpointDeleted.map(TopicArn(_))) append
         shrinkArn("EventEndpointUpdated", application.eventEndpointUpdated.map(TopicArn(_))) append
@@ -104,7 +104,7 @@ object SnsScalaCheckImplicits {
     Arbitrary {
       for {
         account ← arbitrary[Account]
-        region ← AwsGen.regionFor(account)
+        region ← CoreGen.regionFor(account)
         platform ← arbitrary[Platform]
         name ← SnsGen.platformApplicationName
       } yield PlatformApplicationArn(account, region, platform, name)
@@ -120,19 +120,19 @@ object SnsScalaCheckImplicits {
       for {
         arn ← arbitrary[PlatformEndpointArn]
         attributes ← SnsGen.platformEndpointAttributes
-      } yield PlatformEndpoint(arn.value, attributes)
+      } yield PlatformEndpoint(arn.arnString, attributes)
     }
 
   implicit lazy val shrinkPlatformEndpoint: Shrink[PlatformEndpoint] =
     Shrink { endpoint ⇒
-      Shrink.shrink(PlatformEndpointArn(endpoint.arn)).map(arn ⇒ endpoint.copy(arn = arn.value))
+      Shrink.shrink(PlatformEndpointArn(endpoint.arn)).map(arn ⇒ endpoint.copy(arn = arn.arnString))
     }
 
   implicit lazy val arbPlatformEndpointArn: Arbitrary[PlatformEndpointArn] =
     Arbitrary {
       for {
         account ← arbitrary[Account]
-        region ← AwsGen.regionFor(account)
+        region ← CoreGen.regionFor(account)
         platform ← arbitrary[Platform]
         applicationName ← SnsGen.platformApplicationName
         endpointId ← Gen.uuid.map(_.toString)
@@ -154,7 +154,7 @@ object SnsScalaCheckImplicits {
         attributes ← arbitrary[Map[String,MessageAttributeValue]]
         subject ← Gen.option(UtilGen.nonEmptyString)
         structure ← Gen.option(Gen.const("json"))
-      } yield PublishRequest(target.value, message, subject, structure, attributes)
+      } yield PublishRequest(target.arnString, message, subject, structure, attributes)
     }
 
   implicit lazy val shrinkPublishRequest: Shrink[PublishRequest] =
@@ -164,8 +164,8 @@ object SnsScalaCheckImplicits {
           case _: IllegalArgumentException ⇒ Try(PlatformEndpointArn(request.targetArn))
         }.get
         arn match {
-          case arn: TopicArn ⇒ Shrink.shrink(arn).map(x ⇒ request.copy(targetArn = x.value))
-          case arn: PlatformEndpointArn ⇒ Shrink.shrink(arn).map(x ⇒ request.copy(targetArn = x.value))
+          case arn: TopicArn ⇒ Shrink.shrink(arn).map(x ⇒ request.copy(targetArn = x.arnString))
+          case arn: PlatformEndpointArn ⇒ Shrink.shrink(arn).map(x ⇒ request.copy(targetArn = x.arnString))
         }
       }
       val shrunkMessage = Shrink.shrink(request.message).filter(_.nonEmpty).map(x ⇒ request.copy(message = x))
@@ -184,14 +184,14 @@ object SnsScalaCheckImplicits {
     Arbitrary {
       for {
         topicArn ← arbitrary[TopicArn]
-        label ← AwsGen.statementId
-      } yield RemovePermissionRequest(topicArn.value, label)
+        label ← CoreGen.statementId
+      } yield RemovePermissionRequest(topicArn.arnString, label)
     }
 
   implicit lazy val shrinkRemovePermissionRequest: Shrink[RemovePermissionRequest] =
     Shrink { request ⇒
       val arn = TopicArn(request.topicArn)
-      Shrink.shrink(arn).map(x ⇒ request.copy(topicArn = x.value)) append
+      Shrink.shrink(arn).map(x ⇒ request.copy(topicArn = x.arnString)) append
         Shrink.shrink(request.label).filter(_.nonEmpty).map(x ⇒ request.copy(label = x))
     }
 
@@ -216,7 +216,7 @@ object SnsScalaCheckImplicits {
     Arbitrary {
       for {
         owner ← arbitrary[Account]
-        region ← AwsGen.regionFor(owner)
+        region ← CoreGen.regionFor(owner)
         topicName ← SnsGen.topicName
         subscriptionId ← Gen.uuid.map(_.toString)
       } yield SubscriptionArn(owner, region, topicName, subscriptionId)
@@ -224,14 +224,14 @@ object SnsScalaCheckImplicits {
 
   implicit lazy val shrinkSubscriptionArn: Shrink[SubscriptionArn] =
     Shrink { arn ⇒
-      Shrink.shrink(arn.applicationName).filter(_.nonEmpty).map(x ⇒ arn.copy(applicationName = x))
+      Shrink.shrink(arn.topicName).filter(_.nonEmpty).map(x ⇒ arn.copy(topicName = x))
     }
 
   implicit lazy val arbSubscriptionEndpointApplication: Arbitrary[SubscriptionEndpoint.ApplicationEndpoint] =
     Arbitrary {
       for {
         arn ← arbitrary[PlatformEndpointArn]
-      } yield Protocol.Application(arn.value)
+      } yield Protocol.Application(arn.arnString)
     }
 
   implicit lazy val arbSubscriptionEndpointEmail: Arbitrary[SubscriptionEndpoint.EmailEndpoint] =
@@ -258,13 +258,13 @@ object SnsScalaCheckImplicits {
     Arbitrary {
       for {
         account ← arbitrary[Account]
-        region ← AwsGen.regionFor(account)
+        region ← CoreGen.regionFor(account)
         name ← Gen.identifier
       } yield {
         val arn = new Arn(Arn.Namespace.Lambda, Some(region), account) {
           override val resource = s"function:$name"
         }
-        Protocol.Lambda(arn.value)
+        Protocol.Lambda(arn.arnString)
       }
     }
 
@@ -279,13 +279,13 @@ object SnsScalaCheckImplicits {
     Arbitrary {
       for {
         account ← arbitrary[Account]
-        region ← AwsGen.regionFor(account)
+        region ← CoreGen.regionFor(account)
         name ← Gen.identifier
       } yield {
         val arn = new Arn(Arn.Namespace.AmazonSQS, Some(region), account) {
           override val resource = name
         }
-        Protocol.SQS(arn.value)
+        Protocol.SQS(arn.arnString)
       }
     }
 
@@ -309,15 +309,15 @@ object SnsScalaCheckImplicits {
         for {
           topicArn ← arbitrary[TopicArn]
           endpoint ← arbitrary[SubscriptionEndpoint]
-        } yield SubscriptionSummary(None, topicArn.value, endpoint, topicArn.owner.id)
+        } yield SubscriptionSummary(None, topicArn.arnString, endpoint, topicArn.account.id)
       val confirmed =
         for {
           topicArn ← arbitrary[TopicArn]
           subscriptionId ← Gen.uuid.map(_.toString)
           endpoint ← arbitrary[SubscriptionEndpoint]
         } yield {
-          val arn = SubscriptionArn(topicArn.owner, topicArn.region, topicArn.name, subscriptionId).value
-          SubscriptionSummary(Some(arn), topicArn.value, endpoint, topicArn.owner.id)
+          val arn = SubscriptionArn(topicArn.account, topicArn.region, topicArn.name, subscriptionId).arnString
+          SubscriptionSummary(Some(arn), topicArn.arnString, endpoint, topicArn.account.id)
         }
 
       Gen.frequency(
@@ -342,7 +342,7 @@ object SnsScalaCheckImplicits {
     Arbitrary {
       for {
         owner ← arbitrary[Account]
-        region ← AwsGen.regionFor(owner)
+        region ← CoreGen.regionFor(owner)
         topicName ← SnsGen.topicName
       } yield TopicArn(owner, region, topicName)
     }

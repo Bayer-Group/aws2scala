@@ -2,10 +2,10 @@ package com.monsanto.arch.awsutil
 
 import com.monsanto.arch.awsutil.partitions.Partition
 import com.monsanto.arch.awsutil.regions.Region
-import com.monsanto.arch.awsutil.testkit.AwsScalaCheckImplicits._
-import com.monsanto.arch.awsutil.testkit.{AwsGen, UtilGen}
+import com.monsanto.arch.awsutil.testkit.CoreScalaCheckImplicits._
+import com.monsanto.arch.awsutil.testkit.{CoreGen, UtilGen}
 import org.scalacheck.Arbitrary.arbitrary
-import org.scalacheck.Gen
+import org.scalacheck.{Arbitrary, Gen, Shrink}
 import org.scalatest.FreeSpec
 import org.scalatest.Matchers._
 import org.scalatest.prop.GeneratorDrivenPropertyChecks.{whenever ⇒ _, _}
@@ -13,80 +13,70 @@ import org.scalatest.prop.TableDrivenPropertyChecks.{forAll ⇒ forAllIn, _}
 
 class ArnSpec extends FreeSpec {
   "an Arn should" - {
-    val resourceGen = UtilGen.stringOf(UtilGen.asciiChar, 1, 1024).suchThat(_.nonEmpty)
-    "have the correct properties" in {
-      forAll(
-        arbitrary[Partition] → "partition",
-        arbitrary[Arn.Namespace] → "namespace",
-        arbitrary[Option[Region]] → "region",
-        arbitrary[Option[Account]] → "account",
-        resourceGen → "resource"
-      ) { (partition, namespace, region, account, aResource) ⇒
-        val arn = new Arn(partition, namespace, region, account) {
-          override def resource: String = aResource
-        }
+    case class TestArn(testPartition: Partition,
+                       testNamespace: Arn.Namespace,
+                       testRegion: Option[Region],
+                       testAccount: Option[Account],
+                       testResource: String) extends Arn(testPartition, testNamespace, testRegion, testAccount) {
+      override def resource = testResource
+    }
+    implicit val arbTestArn: Arbitrary[TestArn] =
+      Arbitrary {
+        for {
+          partition ← arbitrary[Partition]
+          namespace ← arbitrary[Arn.Namespace]
+          region ← arbitrary[Option[Region]]
+          account ← Gen.option(CoreGen.accountId).map(_.map(id ⇒ Account(id, partition)))
+          resource ← UtilGen.stringOf(UtilGen.asciiChar, 1, 1024).suchThat(_.nonEmpty)
+        } yield TestArn(partition, namespace, region, account, resource)
+      }
 
+    implicit val shrinkTestArn: Shrink[TestArn] =
+      Shrink { arn ⇒
+        Shrink.shrink(arn.testResource).filter(_.nonEmpty).map(x ⇒ arn.copy(testResource = x))
+      }
+
+    "have the correct properties" in {
+      forAll { arn: TestArn ⇒
         arn should have (
-          'partition (partition),
-          'namespace (namespace),
-          'regionOption (region),
-          'accountOption (account),
-          'resource (aResource)
+          'partition (arn.testPartition),
+          'namespace (arn.testNamespace),
+          'regionOption (arn.testRegion),
+          'accountOption (arn.testAccount),
+          'resource (arn.testResource)
         )
       }
     }
 
     "produce the correct ARN string" in {
-      forAll(
-        arbitrary[Partition] → "partition",
-        arbitrary[Arn.Namespace] → "namespace",
-        arbitrary[Option[Region]] → "region",
-        arbitrary[Option[Account]] → "account",
-        resourceGen → "resource"
-      ) { (partition, namespace, region, account, aResource) ⇒
-        val arn = new Arn(partition, namespace, region, account) {
-          override def resource: String = aResource
-        }
+      forAll { arn: TestArn ⇒
+        val partition = arn.testPartition.id
+        val namespace = arn.testNamespace.id
+        val region = arn.testRegion.map(_.name).getOrElse("")
+        val account = arn.testAccount.map(_.id).getOrElse("")
+        val resource = arn.testResource
 
-        arn.value shouldBe s"arn:${partition.id}:${namespace.id}:${region.map(_.name).getOrElse("")}" +
-          s":${account.map(_.id).getOrElse("")}:$aResource"
+        arn.arnString shouldBe s"arn:$partition:$namespace:$region:$account:$resource"
       }
     }
 
-    "have a string representation that is the same as the ARN string" in {
-      forAll(
-        arbitrary[Partition] → "partition",
-        arbitrary[Arn.Namespace] → "namespace",
-        arbitrary[Option[Region]] → "region",
-        arbitrary[Option[Account]] → "account",
-        resourceGen → "resource"
-      ) { (partition, namespace, region, account, aResource) ⇒
-        val arn = new Arn(partition, namespace, region, account) {
-          override def resource: String = aResource
+    "have an extractor that returns" - {
+      "a generic result when no applicable partial function has been registered" in {
+        forAll { arn: TestArn ⇒
+          Arn.unapply(arn.arnString) shouldBe
+            Some(Arn.GenericArn(arn.testPartition, arn.testNamespace, arn.testRegion, arn.testAccount, arn.testResource))
         }
-
-        arn.toString shouldBe arn.value
       }
-    }
 
-    "have an extractor" in {
-      val partitionAndAccount: Gen[(Partition, Option[Account])] =
-        for {
-          partition ← arbitrary[Partition]
-          account ← Gen.option(AwsGen.account(partition))
-        } yield (partition, account)
-      forAll(
-        partitionAndAccount → "partitionAndAccount",
-        arbitrary[Arn.Namespace] → "namespace",
-        arbitrary[Option[Region]] → "region",
-        resourceGen → "resource"
-      ) { (partitionAndAccount, namespace, region, aResource) ⇒
-        val (partition, account) = partitionAndAccount
-        val arn = new Arn(partition, namespace, region, account) {
-          override def resource: String = aResource
+      "a specfic result once a partial function has been registered" in {
+        val testMatcher: PartialFunction[Arn.ArnParts, TestArn] = {
+          case (partition, namespace, region, account, resource) ⇒ TestArn(partition, namespace, region, account, resource)
         }
+        Arn.registerArnMatchers(testMatcher)
 
-        arn.value should matchPattern { case Arn(`partition`, `namespace`, `region`, `account`, `aResource`) ⇒ }
+        forAll { arn: TestArn ⇒
+          Arn.unapply(arn.arnString) shouldBe Some(arn)
+        }
       }
     }
   }
@@ -94,15 +84,9 @@ class ArnSpec extends FreeSpec {
   "the Arn.Namespace enumeration values" - {
     val namespaces = Table("Namespace", Arn.Namespace.values: _*)
 
-    "have string representations equivalent to their ID" in {
-      forAllIn(namespaces) { namespace ⇒
-        namespace.toString shouldBe namespace.id
-      }
-    }
-
     "can generally be round-tripped by their string representation" in {
       forAllIn(namespaces) { namespace ⇒
-        Arn.Namespace.fromString(namespace.toString) shouldBe Some(namespace)
+        namespace.id should matchPattern { case Arn.Namespace.fromId(x) if x == namespace ⇒ }
       }
     }
   }

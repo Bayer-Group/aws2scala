@@ -1,7 +1,7 @@
 package com.monsanto.arch.awsutil.sns.model
 
 import com.monsanto.arch.awsutil.auth.policy.Policy
-import com.monsanto.arch.awsutil.testkit.AwsScalaCheckImplicits._
+import com.monsanto.arch.awsutil.testkit.CoreScalaCheckImplicits._
 import com.monsanto.arch.awsutil.testkit.SnsScalaCheckImplicits._
 import org.scalacheck.{Arbitrary, Gen, Shrink}
 import spray.json.{pimpAny, pimpString}
@@ -16,9 +16,9 @@ case class TopicAttributes(arn: TopicArn,
                            effectiveDeliveryPolicy: TopicDeliveryPolicy) {
   def asMap: Map[String,String] =
     Map(
-      "TopicArn" → arn.value,
+      "TopicArn" → arn.arnString,
       "DisplayName" → displayName,
-      "Owner" → arn.owner.id,
+      "Owner" → arn.account.id,
       "Policy" → policy.toString,
       "SubscriptionsPending" → subscriptionsPending.toString,
       "SubscriptionsConfirmed" → subscriptionsConfirmed.toString,

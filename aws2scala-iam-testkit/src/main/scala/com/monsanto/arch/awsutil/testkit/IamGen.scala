@@ -5,7 +5,7 @@ import java.util.Date
 import com.monsanto.arch.awsutil.Account
 import com.monsanto.arch.awsutil.auth.policy.Policy
 import com.monsanto.arch.awsutil.identitymanagement.model._
-import com.monsanto.arch.awsutil.testkit.AwsScalaCheckImplicits._
+import com.monsanto.arch.awsutil.testkit.CoreScalaCheckImplicits._
 import com.monsanto.arch.awsutil.testkit.IamScalaCheckImplicits._
 import org.scalacheck.Arbitrary.arbitrary
 import org.scalacheck.Gen
@@ -16,8 +16,8 @@ object IamGen {
       account ← arbitrary[Account]
       id ← arbitrary[RoleId]
     } yield {
-      val arn = RoleArn(account,roleName, path)
-      Role(arn.value, roleName.value, path.value, id.value, assumeRolePolicyDocument.toString, new Date)
+      val arn = RoleArn(account, roleName.value, path)
+      Role(arn.arnString, roleName.value, path.pathString, id.value, assumeRolePolicyDocument.toString, new Date)
     }
 
   val instanceProfileId: Gen[String] = id("AIP")

@@ -11,7 +11,7 @@ class AttachedPolicySpec extends FreeSpec {
     "from its AWS equivalent" in {
       forAll { (arn: PolicyArn, name: Name) ⇒
         val aws = new AwsAttachedPolicy()
-          .withPolicyArn(arn.value)
+          .withPolicyArn(arn.arnString)
           .withPolicyName(name.value)
 
         AttachedPolicy.fromAws(aws).toAws shouldBe aws
@@ -20,7 +20,7 @@ class AttachedPolicySpec extends FreeSpec {
 
     "via its AWS equivalent" in {
       forAll { (arn: PolicyArn, name: Name) ⇒
-        val attachedPolicy = AttachedPolicy(arn.value, name.value)
+        val attachedPolicy = AttachedPolicy(arn.arnString, name.value)
 
         AttachedPolicy.fromAws(attachedPolicy.toAws) shouldBe attachedPolicy
       }

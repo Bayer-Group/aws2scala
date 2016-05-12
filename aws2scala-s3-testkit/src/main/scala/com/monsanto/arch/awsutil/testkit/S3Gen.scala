@@ -7,6 +7,7 @@ object S3Gen {
   /** Generates an arbitrary bucket name. */
   val bucketName: Gen[String] =
     UtilGen.stringOf(Gen.oneOf(('a' to 'z') ++ ('0' to '9') :+ '-' :+ '.'), 3, 63)
+      .retryUntil(Bucket.validName)
       .suchThat(Bucket.validName)
 
   /** Generates a canonical ID for an AWS account. */

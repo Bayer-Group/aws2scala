@@ -11,7 +11,7 @@ class AttachRolePolicyRequestSpec extends FreeSpec {
     "from its AWS equivalent" in {
       forAll { (policyArn: PolicyArn, roleName: Name) ⇒
         val aws = new AwsAttachRolePolicyRequest()
-          .withPolicyArn(policyArn.value)
+          .withPolicyArn(policyArn.arnString)
           .withRoleName(roleName.value)
 
         AttachRolePolicyRequest.fromAws(aws).toAws shouldBe aws

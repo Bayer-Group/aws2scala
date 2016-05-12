@@ -38,8 +38,8 @@ class PublishRequestSpec extends FreeSpec {
           SnsGen.targetArn → "targetArn",
           UtilGen.nonEmptyString → "message"
         ) { (targetArn, message) ⇒
-          PublishRequest(targetArn.value, message) shouldBe
-            PublishRequest(targetArn.value, message, None, None, Map.empty)
+          PublishRequest(targetArn.arnString, message) shouldBe
+            PublishRequest(targetArn.arnString, message, None, None, Map.empty)
         }
       }
 
@@ -49,8 +49,8 @@ class PublishRequestSpec extends FreeSpec {
           UtilGen.nonEmptyString → "message",
           UtilGen.nonEmptyString → "subject"
         ) { (targetArn, message, subject) ⇒
-          PublishRequest(targetArn.value, message, subject) shouldBe
-            PublishRequest(targetArn.value, message, Some(subject), None, Map.empty)
+          PublishRequest(targetArn.arnString, message, subject) shouldBe
+            PublishRequest(targetArn.arnString, message, Some(subject), None, Map.empty)
         }
       }
 
@@ -60,8 +60,8 @@ class PublishRequestSpec extends FreeSpec {
           UtilGen.nonEmptyString → "message",
           arbitrary[Map[String,MessageAttributeValue]] → "attributes"
         ) { (targetArn, message, attributes) ⇒
-          PublishRequest(targetArn.value, message, attributes) shouldBe
-            PublishRequest(targetArn.value, message, None, None, attributes)
+          PublishRequest(targetArn.arnString, message, attributes) shouldBe
+            PublishRequest(targetArn.arnString, message, None, None, attributes)
         }
       }
 
@@ -72,8 +72,8 @@ class PublishRequestSpec extends FreeSpec {
           UtilGen.nonEmptyString → "subject",
           arbitrary[Map[String,MessageAttributeValue]] → "attributes"
         ) { (targetArn, message, subject, attributes) ⇒
-          PublishRequest(targetArn.value, message, subject, attributes) shouldBe
-            PublishRequest(targetArn.value, message, Some(subject), None, attributes)
+          PublishRequest(targetArn.arnString, message, subject, attributes) shouldBe
+            PublishRequest(targetArn.arnString, message, Some(subject), None, attributes)
         }
       }
 
@@ -82,8 +82,8 @@ class PublishRequestSpec extends FreeSpec {
           SnsGen.targetArn → "targetArn",
           SnsGen.messageMap → "messageMap"
         ) { (targetArn, messageMap) ⇒
-          PublishRequest(targetArn.value, messageMap) shouldBe
-            PublishRequest(targetArn.value, messageMap.asJson, None, Some("json"), Map.empty)
+          PublishRequest(targetArn.arnString, messageMap) shouldBe
+            PublishRequest(targetArn.arnString, messageMap.asJson, None, Some("json"), Map.empty)
         }
       }
 
@@ -93,8 +93,8 @@ class PublishRequestSpec extends FreeSpec {
           SnsGen.messageMap → "messageMap",
           UtilGen.nonEmptyString → "subject"
         ) { (targetArn, messageMap, subject) ⇒
-          PublishRequest(targetArn.value, messageMap, subject) shouldBe
-            PublishRequest(targetArn.value, messageMap.asJson, Some(subject), Some("json"), Map.empty)
+          PublishRequest(targetArn.arnString, messageMap, subject) shouldBe
+            PublishRequest(targetArn.arnString, messageMap.asJson, Some(subject), Some("json"), Map.empty)
         }
       }
 
@@ -104,8 +104,8 @@ class PublishRequestSpec extends FreeSpec {
           SnsGen.messageMap → "messageMap",
           arbitrary[Map[String,MessageAttributeValue]] → "attributes"
         ) { (targetArn, messageMap, attributes) ⇒
-          PublishRequest(targetArn.value, messageMap, attributes) shouldBe
-            PublishRequest(targetArn.value, messageMap.asJson, None, Some("json"), attributes)
+          PublishRequest(targetArn.arnString, messageMap, attributes) shouldBe
+            PublishRequest(targetArn.arnString, messageMap.asJson, None, Some("json"), attributes)
         }
       }
 
@@ -116,8 +116,8 @@ class PublishRequestSpec extends FreeSpec {
           UtilGen.nonEmptyString → "subject",
           arbitrary[Map[String,MessageAttributeValue]] → "attributes"
         ) { (targetArn, messageMap, subject, attributes) ⇒
-          PublishRequest(targetArn.value, messageMap, subject, attributes) shouldBe
-            PublishRequest(targetArn.value, messageMap.asJson, Some(subject), Some("json"), attributes)
+          PublishRequest(targetArn.arnString, messageMap, subject, attributes) shouldBe
+            PublishRequest(targetArn.arnString, messageMap.asJson, Some(subject), Some("json"), attributes)
         }
       }
 

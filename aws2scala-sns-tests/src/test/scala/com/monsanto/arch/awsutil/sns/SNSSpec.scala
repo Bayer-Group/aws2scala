@@ -1,7 +1,7 @@
 package com.monsanto.arch.awsutil.sns
 
-import com.monsanto.arch.awsutil.auth.policy.AwsConverters._
 import com.monsanto.arch.awsutil.auth.policy.action.SNSAction
+import com.monsanto.arch.awsutil.converters.CoreConverters._
 import com.monsanto.arch.awsutil.test_support.AwsClientProviderBehaviours
 import org.scalamock.scalatest.MockFactory
 import org.scalatest.FreeSpec

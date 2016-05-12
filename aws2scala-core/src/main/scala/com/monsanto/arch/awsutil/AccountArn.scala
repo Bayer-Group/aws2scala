@@ -1,21 +1,19 @@
 package com.monsanto.arch.awsutil
 
-import com.monsanto.arch.awsutil.partitions.Partition
-
-private[awsutil] case class AccountArn(account: Account) extends Arn(account.partition, Arn.Namespace.IAM, None, Some(account)) {
+/** Represents the ARN of the given account. */
+case class AccountArn(account: Account) extends Arn(account.partition, Arn.Namespace.IAM, None, Some(account)) {
   override val resource = "root"
 }
 
-private[awsutil] object AccountArn {
-  /** Extracts an [[AccountArn]] instance from a string. */
-  object FromString {
-    def unapply(arn: String): Option[AccountArn] = {
-      arn match {
-        case AccountArnRegex(Partition(p), id) ⇒ Some(AccountArn(Account(id, p)))
-        case _ ⇒ None
-      }
+object AccountArn {
+  /** Builds an account ARN object from the given ARN string. */
+  def apply(arnString: String): AccountArn =
+    arnString match {
+      case Arn(accountArn: AccountArn) ⇒ accountArn
+      case _ ⇒ throw new IllegalArgumentException(s"‘$arnString’ is not a valid account ARN.")
     }
 
-    private val AccountArnRegex = "arn:([^:]+):iam::([^:]+):root".r
+  private[awsutil] val accountArnPF: PartialFunction[Arn.ArnParts, AccountArn] = {
+    case (_, Arn.Namespace.IAM, None, Some(account), "root") ⇒ AccountArn(account)
   }
 }

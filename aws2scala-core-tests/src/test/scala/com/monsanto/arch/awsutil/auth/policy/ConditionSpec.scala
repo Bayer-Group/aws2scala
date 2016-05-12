@@ -5,9 +5,9 @@ import java.util.{Base64, Date}
 
 import akka.util.ByteString
 import com.amazonaws.auth.policy.conditions._
-import com.monsanto.arch.awsutil.auth.policy.AwsConverters._
+import com.monsanto.arch.awsutil.converters.CoreConverters._
 import com.monsanto.arch.awsutil.test_support.AwsEnumerationBehaviours
-import com.monsanto.arch.awsutil.testkit.AwsScalaCheckImplicits._
+import com.monsanto.arch.awsutil.testkit.CoreScalaCheckImplicits._
 import org.scalacheck.Arbitrary.arbitrary
 import org.scalacheck.{Arbitrary, Gen}
 import org.scalatest.FreeSpec

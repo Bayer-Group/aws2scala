@@ -1,7 +1,7 @@
 package com.monsanto.arch.awsutil.auth.policy
 
-import com.monsanto.arch.awsutil.auth.policy.AwsConverters._
-import com.monsanto.arch.awsutil.testkit.AwsScalaCheckImplicits._
+import com.monsanto.arch.awsutil.converters.CoreConverters._
+import com.monsanto.arch.awsutil.testkit.CoreScalaCheckImplicits._
 import org.scalatest.FreeSpec
 import org.scalatest.Matchers._
 import org.scalatest.prop.GeneratorDrivenPropertyChecks._

@@ -3,9 +3,9 @@ package com.monsanto.arch.awsutil.identitymanagement.model
 import java.util.Date
 
 import com.amazonaws.services.identitymanagement.{model ⇒ aws}
-import com.monsanto.arch.awsutil.testkit.AwsScalaCheckImplicits._
+import com.monsanto.arch.awsutil.Account
+import com.monsanto.arch.awsutil.testkit.CoreScalaCheckImplicits._
 import com.monsanto.arch.awsutil.testkit.IamScalaCheckImplicits._
-import com.monsanto.arch.awsutil.{Account, Arn}
 import org.scalacheck.Arbitrary.arbitrary
 import org.scalatest.FreeSpec
 import org.scalatest.Matchers._
@@ -23,7 +23,7 @@ class UserSpec extends FreeSpec {
           arbitrary[Date] → "created",
           arbitrary[Option[Date]] → "passwordLastUsed"
         ) { (account, name, path, id, created, passwordLastUsed) ⇒
-          val awsUser = new aws.User(path.value, name.value, id.value, UserArn(account, name, path).value, created)
+          val awsUser = new aws.User(path.pathString, name.value, id.value, UserArn(account, name.value, path).arnString, created)
           passwordLastUsed.foreach(d ⇒ awsUser.setPasswordLastUsed(d))
 
           User.fromAws(awsUser).toAws shouldBe awsUser
@@ -39,8 +39,8 @@ class UserSpec extends FreeSpec {
 
     "can provide its account ID" in {
       forAll { user: User ⇒
-        val Arn(_, _, _, Some(account), _) = user.arn
-        user.account shouldBe account.id
+        val UserArn(account, _, _) = UserArn(user.arn)
+        user.account shouldBe account
       }
     }
   }

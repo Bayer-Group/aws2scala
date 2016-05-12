@@ -29,10 +29,10 @@ class DefaultSNSClientSpec extends FreeSpec with MockFactory with AwsMockUtils w
         withFixture { f ⇒
           (f.sns.createTopicAsync(_: aws.CreateTopicRequest, _: AsyncHandler[aws.CreateTopicRequest,aws.CreateTopicResult]))
             .expects(whereRequest(_.getName == name))
-            .withAwsSuccess(new aws.CreateTopicResult().withTopicArn(topicArn.value))
+            .withAwsSuccess(new aws.CreateTopicResult().withTopicArn(topicArn.arnString))
 
           val result = f.async.createTopic(name).futureValue
-          result shouldBe topicArn.value
+          result shouldBe topicArn.arnString
         }
       }
     }
@@ -54,12 +54,12 @@ class DefaultSNSClientSpec extends FreeSpec with MockFactory with AwsMockUtils w
                 if (i + 1 != listings.size) {
                   result.setNextToken((i + 1).toString)
                 }
-                result.withTopics(listing.map(arn ⇒ new aws.Topic().withTopicArn(arn.value)).asJavaCollection)
+                result.withTopics(listing.map(arn ⇒ new aws.Topic().withTopicArn(arn.arnString)).asJavaCollection)
               }
           }
 
           val result = f.async.listTopics().futureValue
-          result shouldBe topics.map(_.value)
+          result shouldBe topics.map(_.arnString)
         }
       }
     }
@@ -68,10 +68,10 @@ class DefaultSNSClientSpec extends FreeSpec with MockFactory with AwsMockUtils w
       forAll { topicArn: TopicArn ⇒
         withFixture { f ⇒
           (f.sns.deleteTopicAsync(_: aws.DeleteTopicRequest, _: AsyncHandler[aws.DeleteTopicRequest,Void]))
-            .expects(whereRequest(_.getTopicArn == topicArn.value))
+            .expects(whereRequest(_.getTopicArn == topicArn.arnString))
             .withVoidAwsSuccess()
 
-          val result = f.async.deleteTopic(topicArn.value).futureValue
+          val result = f.async.deleteTopic(topicArn.arnString).futureValue
           result shouldBe Done
         }
       }
@@ -111,13 +111,13 @@ class DefaultSNSClientSpec extends FreeSpec with MockFactory with AwsMockUtils w
           withFixture { f ⇒
             (f.sns.setTopicAttributesAsync(_: aws.SetTopicAttributesRequest, _: AsyncHandler[aws.SetTopicAttributesRequest,Void]))
               .expects(whereRequest(r ⇒
-                r.getTopicArn == topicArn.value &&
+                r.getTopicArn == topicArn.arnString &&
                   r.getAttributeName == "DeliveryPolicy" &&
                   r.getAttributeValue == deliveryPolicy
               ))
               .withVoidAwsSuccess()
 
-            val result = f.async.setTopicAttribute(topicArn.value, "DeliveryPolicy", deliveryPolicy).futureValue
+            val result = f.async.setTopicAttribute(topicArn.arnString, "DeliveryPolicy", deliveryPolicy).futureValue
             result shouldBe Done
           }
         }
@@ -129,13 +129,13 @@ class DefaultSNSClientSpec extends FreeSpec with MockFactory with AwsMockUtils w
           withFixture { f ⇒
             (f.sns.setTopicAttributesAsync(_: aws.SetTopicAttributesRequest, _: AsyncHandler[aws.SetTopicAttributesRequest,Void]))
               .expects(whereRequest(r ⇒
-                r.getTopicArn == topicArn.value &&
+                r.getTopicArn == topicArn.arnString &&
                   r.getAttributeName == "DeliveryPolicy" &&
                   r.getAttributeValue == maybeDeliveryPolicy.orNull
               ))
               .withVoidAwsSuccess()
 
-            val result = f.async.setTopicAttribute(topicArn.value, "DeliveryPolicy", maybeDeliveryPolicy).futureValue
+            val result = f.async.setTopicAttribute(topicArn.arnString, "DeliveryPolicy", maybeDeliveryPolicy).futureValue
             result shouldBe Done
           }
         }
@@ -203,7 +203,7 @@ class DefaultSNSClientSpec extends FreeSpec with MockFactory with AwsMockUtils w
             listings.zipWithIndex.foreach { case (listing, i) ⇒
               (f.sns.listSubscriptionsByTopicAsync(_: aws.ListSubscriptionsByTopicRequest, _: AsyncHandler[aws.ListSubscriptionsByTopicRequest,aws.ListSubscriptionsByTopicResult]))
                 .expects(whereRequest { r ⇒
-                  r.getTopicArn == topicArn.value &&
+                  r.getTopicArn == topicArn.arnString &&
                     (
                       Option(r.getNextToken) match {
                         case None        ⇒ i == 0
@@ -220,7 +220,7 @@ class DefaultSNSClientSpec extends FreeSpec with MockFactory with AwsMockUtils w
                 }
             }
 
-            val result = f.async.listSubscriptions(topicArn.value).futureValue
+            val result = f.async.listSubscriptions(topicArn.arnString).futureValue
             result shouldBe subscriptionSummaries
           }
         }
@@ -272,14 +272,14 @@ class DefaultSNSClientSpec extends FreeSpec with MockFactory with AwsMockUtils w
           arbitrary[SubscriptionArn] → "subscriptionArn",
           SnsGen.confirmationToken → "token"
         ) { (subscriptionArn, token) ⇒
-          val topicArn = TopicArn(subscriptionArn.owner, subscriptionArn.region, subscriptionArn.applicationName)
+          val topicArn = TopicArn(subscriptionArn.account, subscriptionArn.region, subscriptionArn.topicName)
           withFixture { f ⇒
             (f.sns.confirmSubscriptionAsync(_: aws.ConfirmSubscriptionRequest, _: AsyncHandler[aws.ConfirmSubscriptionRequest,aws.ConfirmSubscriptionResult]))
-              .expects(whereRequest(r ⇒ r.getTopicArn == topicArn.value && r.getToken == token && r.getAuthenticateOnUnsubscribe == null))
-              .withAwsSuccess(new aws.ConfirmSubscriptionResult().withSubscriptionArn(subscriptionArn.value))
+              .expects(whereRequest(r ⇒ r.getTopicArn == topicArn.arnString && r.getToken == token && r.getAuthenticateOnUnsubscribe == null))
+              .withAwsSuccess(new aws.ConfirmSubscriptionResult().withSubscriptionArn(subscriptionArn.arnString))
 
-            val result = f.async.confirmSubscription(topicArn.value, token).futureValue
-            result shouldBe subscriptionArn.value
+            val result = f.async.confirmSubscription(topicArn.arnString, token).futureValue
+            result shouldBe subscriptionArn.arnString
           }
         }
       }
@@ -290,14 +290,14 @@ class DefaultSNSClientSpec extends FreeSpec with MockFactory with AwsMockUtils w
           SnsGen.confirmationToken → "token",
           arbitrary[Boolean] → "authoOnUnsub"
         ) { (subscriptionArn, token, authOnUnsub) ⇒
-          val topicArn = TopicArn(subscriptionArn.owner, subscriptionArn.region, subscriptionArn.applicationName)
+          val topicArn = TopicArn(subscriptionArn.account, subscriptionArn.region, subscriptionArn.topicName)
           withFixture { f ⇒
             (f.sns.confirmSubscriptionAsync(_: aws.ConfirmSubscriptionRequest, _: AsyncHandler[aws.ConfirmSubscriptionRequest,aws.ConfirmSubscriptionResult]))
-              .expects(whereRequest(r ⇒ r.getTopicArn == topicArn.value && r.getToken == token && r.getAuthenticateOnUnsubscribe == authOnUnsub.toString))
-              .withAwsSuccess(new aws.ConfirmSubscriptionResult().withSubscriptionArn(subscriptionArn.value))
+              .expects(whereRequest(r ⇒ r.getTopicArn == topicArn.arnString && r.getToken == token && r.getAuthenticateOnUnsubscribe == authOnUnsub.toString))
+              .withAwsSuccess(new aws.ConfirmSubscriptionResult().withSubscriptionArn(subscriptionArn.arnString))
 
-            val result = f.async.confirmSubscription(topicArn.value, token, authOnUnsub).futureValue
-            result shouldBe subscriptionArn.value
+            val result = f.async.confirmSubscription(topicArn.arnString, token, authOnUnsub).futureValue
+            result shouldBe subscriptionArn.arnString
           }
         }
       }
@@ -346,13 +346,13 @@ class DefaultSNSClientSpec extends FreeSpec with MockFactory with AwsMockUtils w
           withFixture { f ⇒
             (f.sns.setSubscriptionAttributesAsync(_: aws.SetSubscriptionAttributesRequest, _: AsyncHandler[aws.SetSubscriptionAttributesRequest,Void]))
               .expects(whereRequest(r ⇒
-                r.getSubscriptionArn == subscriptionArn.value &&
+                r.getSubscriptionArn == subscriptionArn.arnString &&
                   r.getAttributeName == "DeliveryPolicy" &&
                   r.getAttributeValue == deliveryPolicy
               ))
               .withVoidAwsSuccess()
 
-            val result = f.async.setSubscriptionAttribute(subscriptionArn.value, "DeliveryPolicy", deliveryPolicy).futureValue
+            val result = f.async.setSubscriptionAttribute(subscriptionArn.arnString, "DeliveryPolicy", deliveryPolicy).futureValue
             result shouldBe Done
           }
         }
@@ -364,13 +364,13 @@ class DefaultSNSClientSpec extends FreeSpec with MockFactory with AwsMockUtils w
           withFixture { f ⇒
             (f.sns.setSubscriptionAttributesAsync(_: aws.SetSubscriptionAttributesRequest, _: AsyncHandler[aws.SetSubscriptionAttributesRequest,Void]))
               .expects(whereRequest(r ⇒
-                r.getSubscriptionArn == subscriptionArn.value &&
+                r.getSubscriptionArn == subscriptionArn.arnString &&
                   r.getAttributeName == "DeliveryPolicy" &&
                   r.getAttributeValue == maybeDeliveryPolicy.orNull
               ))
               .withVoidAwsSuccess()
 
-            val result = f.async.setSubscriptionAttribute(subscriptionArn.value, "DeliveryPolicy", maybeDeliveryPolicy).futureValue
+            val result = f.async.setSubscriptionAttribute(subscriptionArn.arnString, "DeliveryPolicy", maybeDeliveryPolicy).futureValue
             result shouldBe Done
           }
         }
@@ -381,10 +381,10 @@ class DefaultSNSClientSpec extends FreeSpec with MockFactory with AwsMockUtils w
       forAll { subscriptionArn: SubscriptionArn ⇒
         withFixture { f ⇒
           (f.sns.unsubscribeAsync(_: aws.UnsubscribeRequest, _: AsyncHandler[aws.UnsubscribeRequest,Void]))
-            .expects(whereRequest(_.getSubscriptionArn == subscriptionArn.value))
+            .expects(whereRequest(_.getSubscriptionArn == subscriptionArn.arnString))
             .withVoidAwsSuccess()
 
-          val result = f.async.unsubscribe(subscriptionArn.value).futureValue
+          val result = f.async.unsubscribe(subscriptionArn.arnString).futureValue
           result shouldBe Done
         }
       }
@@ -469,11 +469,11 @@ class DefaultSNSClientSpec extends FreeSpec with MockFactory with AwsMockUtils w
           withFixture { f ⇒
             (f.sns.setPlatformApplicationAttributesAsync(_: aws.SetPlatformApplicationAttributesRequest, _: AsyncHandler[aws.SetPlatformApplicationAttributesRequest, Void]))
               .expects(whereRequest(r ⇒
-                r.getPlatformApplicationArn == arn.value &&
+                r.getPlatformApplicationArn == arn.arnString &&
                   r.getAttributes.asScala == attributes))
               .withVoidAwsSuccess()
 
-            val result = f.async.setPlatformApplicationAttributes(arn.value, attributes).futureValue
+            val result = f.async.setPlatformApplicationAttributes(arn.arnString, attributes).futureValue
             result shouldBe Done
           }
         }
@@ -484,11 +484,11 @@ class DefaultSNSClientSpec extends FreeSpec with MockFactory with AwsMockUtils w
           withFixture { f ⇒
             (f.sns.setPlatformApplicationAttributesAsync(_: aws.SetPlatformApplicationAttributesRequest, _: AsyncHandler[aws.SetPlatformApplicationAttributesRequest, Void]))
               .expects(whereRequest(r ⇒
-                r.getPlatformApplicationArn == arn.value &&
+                r.getPlatformApplicationArn == arn.arnString &&
                   r.getAttributes.asScala == Map(name → value)))
               .withVoidAwsSuccess()
 
-            val result = f.async.setPlatformApplicationAttribute(arn.value, name, value).futureValue
+            val result = f.async.setPlatformApplicationAttribute(arn.arnString, name, value).futureValue
             result shouldBe Done
           }
         }
@@ -499,11 +499,11 @@ class DefaultSNSClientSpec extends FreeSpec with MockFactory with AwsMockUtils w
           withFixture { f ⇒
             (f.sns.setPlatformApplicationAttributesAsync(_: aws.SetPlatformApplicationAttributesRequest, _: AsyncHandler[aws.SetPlatformApplicationAttributesRequest, Void]))
               .expects(whereRequest(r ⇒
-                r.getPlatformApplicationArn == arn.value &&
+                r.getPlatformApplicationArn == arn.arnString &&
                   r.getAttributes.asScala == Map(name → value.getOrElse(""))))
               .withVoidAwsSuccess()
 
-            val result = f.async.setPlatformApplicationAttribute(arn.value, name, value).futureValue
+            val result = f.async.setPlatformApplicationAttribute(arn.arnString, name, value).futureValue
             result shouldBe Done
           }
         }
@@ -514,10 +514,10 @@ class DefaultSNSClientSpec extends FreeSpec with MockFactory with AwsMockUtils w
       forAll { arn: PlatformApplicationArn ⇒
         withFixture { f ⇒
           (f.sns.deletePlatformApplicationAsync(_: aws.DeletePlatformApplicationRequest, _: AsyncHandler[aws.DeletePlatformApplicationRequest, Void]))
-            .expects(whereRequest(_.getPlatformApplicationArn == arn.value))
+            .expects(whereRequest(_.getPlatformApplicationArn == arn.arnString))
             .withVoidAwsSuccess()
 
-          val result = f.async.deletePlatformApplication(arn.value).futureValue
+          val result = f.async.deletePlatformApplication(arn.arnString).futureValue
           result shouldBe Done
         }
       }
@@ -559,7 +559,7 @@ class DefaultSNSClientSpec extends FreeSpec with MockFactory with AwsMockUtils w
       "using only a token" in {
         forAll { (endpointArn: PlatformEndpointArn, token: String) ⇒
           val applicationArn = PlatformApplicationArn(endpointArn.account, endpointArn.region, endpointArn.platform,
-            endpointArn.applicationName).value
+            endpointArn.applicationName).arnString
           withFixture { f ⇒
             (f.sns.createPlatformEndpointAsync(_: aws.CreatePlatformEndpointRequest, _: AsyncHandler[aws.CreatePlatformEndpointRequest,aws.CreatePlatformEndpointResult]))
               .expects(whereRequest(r ⇒
@@ -567,10 +567,10 @@ class DefaultSNSClientSpec extends FreeSpec with MockFactory with AwsMockUtils w
                 r.getToken == token &&
                 r.getCustomUserData == null &&
                 r.getAttributes.isEmpty))
-              .withAwsSuccess(new aws.CreatePlatformEndpointResult().withEndpointArn(endpointArn.value))
+              .withAwsSuccess(new aws.CreatePlatformEndpointResult().withEndpointArn(endpointArn.arnString))
 
             val result = f.async.createPlatformEndpoint(applicationArn, token).futureValue
-            result shouldBe endpointArn.value
+            result shouldBe endpointArn.arnString
           }
         }
       }
@@ -578,7 +578,7 @@ class DefaultSNSClientSpec extends FreeSpec with MockFactory with AwsMockUtils w
       "using a token and user data" in {
         forAll { (endpointArn: PlatformEndpointArn, token: String, userData: String) ⇒
           val applicationArn = PlatformApplicationArn(endpointArn.account, endpointArn.region, endpointArn.platform,
-            endpointArn.applicationName).value
+            endpointArn.applicationName).arnString
           withFixture { f ⇒
             (f.sns.createPlatformEndpointAsync(_: aws.CreatePlatformEndpointRequest, _: AsyncHandler[aws.CreatePlatformEndpointRequest,aws.CreatePlatformEndpointResult]))
               .expects(whereRequest(r ⇒
@@ -586,10 +586,10 @@ class DefaultSNSClientSpec extends FreeSpec with MockFactory with AwsMockUtils w
                   r.getToken == token &&
                   r.getCustomUserData == userData &&
                   r.getAttributes.isEmpty))
-              .withAwsSuccess(new aws.CreatePlatformEndpointResult().withEndpointArn(endpointArn.value))
+              .withAwsSuccess(new aws.CreatePlatformEndpointResult().withEndpointArn(endpointArn.arnString))
 
             val result = f.async.createPlatformEndpoint(applicationArn, token, userData).futureValue
-            result shouldBe endpointArn.value
+            result shouldBe endpointArn.arnString
           }
         }
       }
@@ -597,7 +597,7 @@ class DefaultSNSClientSpec extends FreeSpec with MockFactory with AwsMockUtils w
       "using a token and attributes" in {
         forAll { (endpointArn: PlatformEndpointArn, token: String, attributes: Map[String,String]) ⇒
           val applicationArn = PlatformApplicationArn(endpointArn.account, endpointArn.region, endpointArn.platform,
-            endpointArn.applicationName).value
+            endpointArn.applicationName).arnString
           withFixture { f ⇒
             (f.sns.createPlatformEndpointAsync(_: aws.CreatePlatformEndpointRequest, _: AsyncHandler[aws.CreatePlatformEndpointRequest,aws.CreatePlatformEndpointResult]))
               .expects(whereRequest(r ⇒
@@ -605,10 +605,10 @@ class DefaultSNSClientSpec extends FreeSpec with MockFactory with AwsMockUtils w
                   r.getToken == token &&
                   r.getCustomUserData == null &&
                   r.getAttributes.asScala == attributes))
-              .withAwsSuccess(new aws.CreatePlatformEndpointResult().withEndpointArn(endpointArn.value))
+              .withAwsSuccess(new aws.CreatePlatformEndpointResult().withEndpointArn(endpointArn.arnString))
 
             val result = f.async.createPlatformEndpoint(applicationArn, token, attributes).futureValue
-            result shouldBe endpointArn.value
+            result shouldBe endpointArn.arnString
           }
         }
       }
@@ -616,7 +616,7 @@ class DefaultSNSClientSpec extends FreeSpec with MockFactory with AwsMockUtils w
       "using a token, attributes, and user data" in {
         forAll { (endpointArn: PlatformEndpointArn, token: String, userData: String, attributes: Map[String,String]) ⇒
           val applicationArn = PlatformApplicationArn(endpointArn.account, endpointArn.region, endpointArn.platform,
-            endpointArn.applicationName).value
+            endpointArn.applicationName).arnString
           withFixture { f ⇒
             (f.sns.createPlatformEndpointAsync(_: aws.CreatePlatformEndpointRequest, _: AsyncHandler[aws.CreatePlatformEndpointRequest,aws.CreatePlatformEndpointResult]))
               .expects(whereRequest(r ⇒
@@ -624,10 +624,10 @@ class DefaultSNSClientSpec extends FreeSpec with MockFactory with AwsMockUtils w
                   r.getToken == token &&
                   r.getCustomUserData == userData &&
                   r.getAttributes.asScala == attributes))
-              .withAwsSuccess(new aws.CreatePlatformEndpointResult().withEndpointArn(endpointArn.value))
+              .withAwsSuccess(new aws.CreatePlatformEndpointResult().withEndpointArn(endpointArn.arnString))
 
             val result = f.async.createPlatformEndpoint(applicationArn, token, userData, attributes).futureValue
-            result shouldBe endpointArn.value
+            result shouldBe endpointArn.arnString
           }
         }
       }
@@ -671,11 +671,11 @@ class DefaultSNSClientSpec extends FreeSpec with MockFactory with AwsMockUtils w
           withFixture { f ⇒
             (f.sns.setEndpointAttributesAsync(_: aws.SetEndpointAttributesRequest, _: AsyncHandler[aws.SetEndpointAttributesRequest,Void]))
               .expects(whereRequest(r ⇒
-                r.getEndpointArn == endpointArn.value &&
+                r.getEndpointArn == endpointArn.arnString &&
                   r.getAttributes.asScala == Map(attributeName → attributeValue)))
               .withVoidAwsSuccess()
 
-            val result = f.async.setPlatformEndpointAttributes(endpointArn.value, attributeName, attributeValue).futureValue
+            val result = f.async.setPlatformEndpointAttributes(endpointArn.arnString, attributeName, attributeValue).futureValue
             result shouldBe Done
           }
         }
@@ -686,11 +686,11 @@ class DefaultSNSClientSpec extends FreeSpec with MockFactory with AwsMockUtils w
           withFixture { f ⇒
             (f.sns.setEndpointAttributesAsync(_: aws.SetEndpointAttributesRequest, _: AsyncHandler[aws.SetEndpointAttributesRequest,Void]))
               .expects(whereRequest(r ⇒
-                r.getEndpointArn == endpointArn.value &&
+                r.getEndpointArn == endpointArn.arnString &&
                   r.getAttributes.asScala == Map(attributeName → attributeValue.getOrElse(""))))
               .withVoidAwsSuccess()
 
-            val result = f.async.setPlatformEndpointAttributes(endpointArn.value, attributeName, attributeValue).futureValue
+            val result = f.async.setPlatformEndpointAttributes(endpointArn.arnString, attributeName, attributeValue).futureValue
             result shouldBe Done
           }
         }
@@ -701,11 +701,11 @@ class DefaultSNSClientSpec extends FreeSpec with MockFactory with AwsMockUtils w
           withFixture { f ⇒
             (f.sns.setEndpointAttributesAsync(_: aws.SetEndpointAttributesRequest, _: AsyncHandler[aws.SetEndpointAttributesRequest,Void]))
               .expects(whereRequest(r ⇒
-                r.getEndpointArn == endpointArn.value &&
+                r.getEndpointArn == endpointArn.arnString &&
                   r.getAttributes.asScala == attributes))
               .withVoidAwsSuccess()
 
-            val result = f.async.setPlatformEndpointAttributes(endpointArn.value, attributes).futureValue
+            val result = f.async.setPlatformEndpointAttributes(endpointArn.arnString, attributes).futureValue
             result shouldBe Done
           }
         }
@@ -716,10 +716,10 @@ class DefaultSNSClientSpec extends FreeSpec with MockFactory with AwsMockUtils w
       forAll { arn: PlatformEndpointArn ⇒
         withFixture { f ⇒
           (f.sns.deleteEndpointAsync(_: aws.DeleteEndpointRequest, _: AsyncHandler[aws.DeleteEndpointRequest,Void]))
-            .expects(whereRequest(r ⇒ r.getEndpointArn == arn.value))
+            .expects(whereRequest(r ⇒ r.getEndpointArn == arn.arnString))
             .withVoidAwsSuccess()
 
-          val result = f.async.deletePlatformEndpoint(arn.value).futureValue
+          val result = f.async.deletePlatformEndpoint(arn.arnString).futureValue
           result shouldBe Done
         }
       }
@@ -747,7 +747,7 @@ class DefaultSNSClientSpec extends FreeSpec with MockFactory with AwsMockUtils w
               }
           }
 
-          val result = f.async.listPlatformEndpoints(applicationArn.value).futureValue
+          val result = f.async.listPlatformEndpoints(applicationArn.arnString).futureValue
           result shouldBe endpoints
         }
       }
@@ -765,7 +765,7 @@ class DefaultSNSClientSpec extends FreeSpec with MockFactory with AwsMockUtils w
               (f.sns.publishAsync(_: aws.PublishRequest, _: AsyncHandler[aws.PublishRequest,aws.PublishResult]))
                 .expects(whereRequest { r ⇒
                   r.getTopicArn shouldBe null
-                  r.getTargetArn shouldBe targetArn.value
+                  r.getTargetArn shouldBe targetArn.arnString
                   r.getMessage shouldBe message
                   r.getMessageStructure shouldBe null
                   r.getSubject shouldBe null
@@ -774,7 +774,7 @@ class DefaultSNSClientSpec extends FreeSpec with MockFactory with AwsMockUtils w
                 })
                 .withAwsSuccess(new aws.PublishResult().withMessageId(messageId))
 
-              val result = f.async.publish(targetArn.value, message).futureValue
+              val result = f.async.publish(targetArn.arnString, message).futureValue
               result shouldBe messageId
             }
           }
@@ -791,7 +791,7 @@ class DefaultSNSClientSpec extends FreeSpec with MockFactory with AwsMockUtils w
               (f.sns.publishAsync(_: aws.PublishRequest, _: AsyncHandler[aws.PublishRequest,aws.PublishResult]))
                 .expects(whereRequest { r ⇒
                   r.getTopicArn shouldBe null
-                  r.getTargetArn shouldBe targetArn.value
+                  r.getTargetArn shouldBe targetArn.arnString
                   r.getMessage shouldBe message
                   r.getMessageStructure shouldBe null
                   r.getSubject shouldBe subject
@@ -800,7 +800,7 @@ class DefaultSNSClientSpec extends FreeSpec with MockFactory with AwsMockUtils w
                 })
                 .withAwsSuccess(new aws.PublishResult().withMessageId(messageId))
 
-              val result = f.async.publish(targetArn.value, message, subject).futureValue
+              val result = f.async.publish(targetArn.arnString, message, subject).futureValue
               result shouldBe messageId
             }
           }
@@ -817,7 +817,7 @@ class DefaultSNSClientSpec extends FreeSpec with MockFactory with AwsMockUtils w
               (f.sns.publishAsync(_: aws.PublishRequest, _: AsyncHandler[aws.PublishRequest,aws.PublishResult]))
                 .expects(whereRequest { r ⇒
                   r.getTopicArn shouldBe null
-                  r.getTargetArn shouldBe targetArn.value
+                  r.getTargetArn shouldBe targetArn.arnString
                   r.getMessage shouldBe message
                   r.getMessageStructure shouldBe null
                   r.getSubject shouldBe null
@@ -826,7 +826,7 @@ class DefaultSNSClientSpec extends FreeSpec with MockFactory with AwsMockUtils w
                 })
                 .withAwsSuccess(new aws.PublishResult().withMessageId(messageId))
 
-              val result = f.async.publish(targetArn.value, message, attributes).futureValue
+              val result = f.async.publish(targetArn.arnString, message, attributes).futureValue
               result shouldBe messageId
             }
           }
@@ -844,7 +844,7 @@ class DefaultSNSClientSpec extends FreeSpec with MockFactory with AwsMockUtils w
               (f.sns.publishAsync(_: aws.PublishRequest, _: AsyncHandler[aws.PublishRequest,aws.PublishResult]))
                 .expects(whereRequest { r ⇒
                   r.getTopicArn shouldBe null
-                  r.getTargetArn shouldBe targetArn.value
+                  r.getTargetArn shouldBe targetArn.arnString
                   r.getMessage shouldBe message
                   r.getMessageStructure shouldBe null
                   r.getSubject shouldBe subject
@@ -853,7 +853,7 @@ class DefaultSNSClientSpec extends FreeSpec with MockFactory with AwsMockUtils w
                 })
                 .withAwsSuccess(new aws.PublishResult().withMessageId(messageId))
 
-              val result = f.async.publish(targetArn.value, message, subject, attributes).futureValue
+              val result = f.async.publish(targetArn.arnString, message, subject, attributes).futureValue
               result shouldBe messageId
             }
           }
@@ -871,7 +871,7 @@ class DefaultSNSClientSpec extends FreeSpec with MockFactory with AwsMockUtils w
               (f.sns.publishAsync(_: aws.PublishRequest, _: AsyncHandler[aws.PublishRequest,aws.PublishResult]))
                 .expects(whereRequest { r ⇒
                   r.getTopicArn shouldBe null
-                  r.getTargetArn shouldBe targetArn.value
+                  r.getTargetArn shouldBe targetArn.arnString
                   JsonParser(r.getMessage) shouldBe JsObject(message.mapValues(JsString(_)))
                   r.getMessageStructure shouldBe "json"
                   r.getSubject shouldBe null
@@ -880,7 +880,7 @@ class DefaultSNSClientSpec extends FreeSpec with MockFactory with AwsMockUtils w
                 })
                 .withAwsSuccess(new aws.PublishResult().withMessageId(messageId))
 
-              val result = f.async.publish(targetArn.value, message).futureValue
+              val result = f.async.publish(targetArn.arnString, message).futureValue
               result shouldBe messageId
             }
           }
@@ -897,7 +897,7 @@ class DefaultSNSClientSpec extends FreeSpec with MockFactory with AwsMockUtils w
               (f.sns.publishAsync(_: aws.PublishRequest, _: AsyncHandler[aws.PublishRequest,aws.PublishResult]))
                 .expects(whereRequest { r ⇒
                   r.getTopicArn shouldBe null
-                  r.getTargetArn shouldBe targetArn.value
+                  r.getTargetArn shouldBe targetArn.arnString
                   JsonParser(r.getMessage) shouldBe JsObject(message.mapValues(JsString(_)))
                   r.getMessageStructure shouldBe "json"
                   r.getSubject shouldBe subject
@@ -906,7 +906,7 @@ class DefaultSNSClientSpec extends FreeSpec with MockFactory with AwsMockUtils w
                 })
                 .withAwsSuccess(new aws.PublishResult().withMessageId(messageId))
 
-              val result = f.async.publish(targetArn.value, message, subject).futureValue
+              val result = f.async.publish(targetArn.arnString, message, subject).futureValue
               result shouldBe messageId
             }
           }
@@ -923,7 +923,7 @@ class DefaultSNSClientSpec extends FreeSpec with MockFactory with AwsMockUtils w
               (f.sns.publishAsync(_: aws.PublishRequest, _: AsyncHandler[aws.PublishRequest,aws.PublishResult]))
                 .expects(whereRequest { r ⇒
                   r.getTopicArn shouldBe null
-                  r.getTargetArn shouldBe targetArn.value
+                  r.getTargetArn shouldBe targetArn.arnString
                   JsonParser(r.getMessage) shouldBe JsObject(message.mapValues(JsString(_)))
                   r.getMessageStructure shouldBe "json"
                   r.getSubject shouldBe null
@@ -932,7 +932,7 @@ class DefaultSNSClientSpec extends FreeSpec with MockFactory with AwsMockUtils w
                 })
                 .withAwsSuccess(new aws.PublishResult().withMessageId(messageId))
 
-              val result = f.async.publish(targetArn.value, message, attributes).futureValue
+              val result = f.async.publish(targetArn.arnString, message, attributes).futureValue
               result shouldBe messageId
             }
           }
@@ -950,7 +950,7 @@ class DefaultSNSClientSpec extends FreeSpec with MockFactory with AwsMockUtils w
               (f.sns.publishAsync(_: aws.PublishRequest, _: AsyncHandler[aws.PublishRequest,aws.PublishResult]))
                 .expects(whereRequest { r ⇒
                   r.getTopicArn shouldBe null
-                  r.getTargetArn shouldBe targetArn.value
+                  r.getTargetArn shouldBe targetArn.arnString
                   JsonParser(r.getMessage) shouldBe JsObject(message.mapValues(JsString(_)))
                   r.getMessageStructure shouldBe "json"
                   r.getSubject shouldBe subject
@@ -959,7 +959,7 @@ class DefaultSNSClientSpec extends FreeSpec with MockFactory with AwsMockUtils w
                 })
                 .withAwsSuccess(new aws.PublishResult().withMessageId(messageId))
 
-              val result = f.async.publish(targetArn.value, message, subject, attributes).futureValue
+              val result = f.async.publish(targetArn.arnString, message, subject, attributes).futureValue
               result shouldBe messageId
             }
           }

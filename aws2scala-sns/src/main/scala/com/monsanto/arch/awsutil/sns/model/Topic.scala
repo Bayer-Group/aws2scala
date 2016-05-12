@@ -267,7 +267,8 @@ object Topic {
       .toMat(Sink.head)(Keep.right)
 
   def apply(topicArn: String)(implicit sns: StreamingSNSClient, m: Materializer): Future[Topic] = {
-    val arn = TopicArn(topicArn).value
+    // though this looks superfluous, it does impose a check that the topic ARN can parse
+    val arn = TopicArn(topicArn).arnString
     Source.single(arn).runWith(toTopic)
   }
 }

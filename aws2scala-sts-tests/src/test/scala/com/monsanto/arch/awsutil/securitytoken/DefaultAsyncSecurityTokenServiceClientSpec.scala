@@ -5,9 +5,9 @@ import com.monsanto.arch.awsutil.securitytoken.model.AssumeRoleRequest
 import com.monsanto.arch.awsutil.test_support.AdaptableScalaFutures._
 import com.monsanto.arch.awsutil.test_support.Samplers._
 import com.monsanto.arch.awsutil.test_support.{FlowMockUtils, Materialised}
-import com.monsanto.arch.awsutil.testkit.IamScalaCheckImplicits._
-import com.monsanto.arch.awsutil.testkit.StsGen
+import com.monsanto.arch.awsutil.testkit.CoreScalaCheckImplicits._
 import com.monsanto.arch.awsutil.testkit.StsScalaCheckImplicits._
+import com.monsanto.arch.awsutil.testkit.{CoreGen, StsGen}
 import org.scalacheck.Arbitrary.arbitrary
 import org.scalamock.scalatest.MockFactory
 import org.scalatest.FreeSpec
@@ -19,8 +19,8 @@ class DefaultAsyncSecurityTokenServiceClientSpec extends FreeSpec with MockFacto
     "assume roles" - {
       "using the simplified two-argument method" in {
         forAll(
-          arbitrary[RoleArn].map(_.value) → "roleArn",
-          StsGen.roleSessionName → "sessionName"
+          arbitrary[RoleArn].map(_.arnString) → "roleArn",
+          CoreGen.assumedRoleSessionName → "sessionName"
         ) { (roleArn, sessionName) ⇒
           val streaming = mock[StreamingSecurityTokenServiceClient]("streaming")
           val async = new DefaultAsyncSecurityTokenServiceClient(streaming)
@@ -40,8 +40,8 @@ class DefaultAsyncSecurityTokenServiceClientSpec extends FreeSpec with MockFacto
 
       "using the simplified three-argument method" in {
         forAll(
-          arbitrary[RoleArn].map(_.value) → "roleArn",
-          StsGen.roleSessionName → "sessionName",
+          arbitrary[RoleArn].map(_.arnString) → "roleArn",
+          CoreGen.assumedRoleSessionName → "sessionName",
           StsGen.externalId → "externalId"
         ) { (roleArn, sessionName, externalId) ⇒
           val streaming = mock[StreamingSecurityTokenServiceClient]("streaming")

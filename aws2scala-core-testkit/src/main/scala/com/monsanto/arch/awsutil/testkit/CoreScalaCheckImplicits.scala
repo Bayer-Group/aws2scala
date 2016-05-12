@@ -4,24 +4,27 @@ import java.util.Date
 
 import akka.util.ByteString
 import com.monsanto.arch.awsutil.auth.policy._
+import com.monsanto.arch.awsutil.identitymanagement.model.{Path, RoleArn, SamlProviderArn, UserArn}
 import com.monsanto.arch.awsutil.partitions.Partition
 import com.monsanto.arch.awsutil.regions.Region
+import com.monsanto.arch.awsutil.securitytoken.model.AssumedRoleArn
 import com.monsanto.arch.awsutil.{Account, AccountArn, Arn}
 import org.scalacheck.Arbitrary.arbitrary
 import org.scalacheck.{Arbitrary, Gen, Shrink}
 
-object AwsScalaCheckImplicits {
+/** Provides ScalaCheck support for core ''aws2scala'' objects. */
+object CoreScalaCheckImplicits {
   implicit lazy val arbPartition: Arbitrary[Partition] = Arbitrary(Gen.oneOf(Partition.values))
 
   implicit lazy val arbAccount: Arbitrary[Account] =
     Arbitrary{
       for {
         partition ← arbitrary[Partition]
-        id ← AwsGen.accountId
+        id ← CoreGen.accountId
       } yield Account(id, partition)
     }
 
-  implicit lazy val arbAccountArn: Arbitrary[AccountArn] = Arbitrary(Gen.resultOf(AccountArn.apply _))
+  implicit lazy val arbAccountArn: Arbitrary[AccountArn] = Arbitrary(Gen.resultOf(AccountArn.apply(_: Account)))
 
   implicit lazy val arbArnNamespace: Arbitrary[Arn.Namespace] = Arbitrary(Gen.oneOf(Arn.Namespace.values))
 
@@ -82,7 +85,7 @@ object AwsScalaCheckImplicits {
         arbitrary[Principal.SamlProviderPrincipal],
         arbitrary[Principal.IamUserPrincipal],
         arbitrary[Principal.IamRolePrincipal],
-        arbitrary[Principal.IamAssumedRolePrincipal])
+        arbitrary[Principal.StsAssumedRolePrincipal])
     }
 
   implicit lazy val arbAccountPrincipal: Arbitrary[Principal.AccountPrincipal] =
@@ -95,73 +98,35 @@ object AwsScalaCheckImplicits {
     Arbitrary(Gen.resultOf(Principal.WebProviderPrincipal.apply _))
 
   implicit lazy val arbSamlProviderPrincipal: Arbitrary[Principal.SamlProviderPrincipal] =
-    Arbitrary {
-      for {
-        account ← arbitrary[Account]
-        name ← AwsGen.iamName
-      } yield Principal.SamlProviderPrincipal(account, name)
-    }
+    Arbitrary(Gen.resultOf(Principal.SamlProviderPrincipal(_: SamlProviderArn)))
 
   implicit lazy val shrinkSamlProviderPrincipal: Shrink[Principal.SamlProviderPrincipal] =
-    Shrink { principal ⇒
-      Shrink.shrink(principal.account).map(x ⇒ principal.copy(account = x)) append
-        Shrink.shrink(principal.name).filter(_.nonEmpty).map(n ⇒ principal.copy(name = n))
-    }
+    Shrink.xmap(Principal.SamlProviderPrincipal.apply, Principal.SamlProviderPrincipal.unapply(_).get)
 
   implicit lazy val arbIamUserPrincipal: Arbitrary[Principal.IamUserPrincipal] =
-    Arbitrary {
-      for {
-        account ← arbitrary[Account]
-        user ← AwsGen.iamName
-        path ←  iamPath
-      } yield Principal.IamUserPrincipal(account, user, path)
-    }
+    Arbitrary(Gen.resultOf(Principal.IamUserPrincipal.apply _))
 
   implicit lazy val shrinkIamUserPrincipal: Shrink[Principal.IamUserPrincipal] =
-    Shrink { principal ⇒
-      Shrink.shrink(principal.account).map(x ⇒ principal.copy(account = x)) append
-        Shrink.shrink(principal.name).filter(_.nonEmpty).map(x ⇒ principal.copy(name = x)) append
-        shrinkIamPath(principal.path).map(x ⇒ principal.copy(path = x))
-    }
+    Shrink.xmap(Principal.IamUserPrincipal.apply, Principal.IamUserPrincipal.unapply(_).get)
 
   implicit lazy val arbIamRolePrincipal: Arbitrary[Principal.IamRolePrincipal] =
-    Arbitrary {
-      for {
-        account ← arbitrary[Account]
-        user ← AwsGen.iamName
-        path ←  iamPath
-      } yield Principal.IamRolePrincipal(account, user, path)
-    }
+    Arbitrary(Gen.resultOf(Principal.IamRolePrincipal.apply _))
 
   implicit lazy val shrinkIamRolePrincipal: Shrink[Principal.IamRolePrincipal] =
-    Shrink { principal ⇒
-      Shrink.shrink(principal.account).map(x ⇒ principal.copy(account = x)) append
-        Shrink.shrink(principal.name).filter(_.nonEmpty).map(x ⇒ principal.copy(name = x)) append
-        shrinkIamPath(principal.path).map(x ⇒ principal.copy(path = x))
-    }
+    Shrink.xmap(Principal.IamRolePrincipal.apply, Principal.IamRolePrincipal.unapply(_).get)
 
-  implicit lazy val arbIamAssumedRolePrincipal: Arbitrary[Principal.IamAssumedRolePrincipal] =
-    Arbitrary {
-      for {
-        account ← arbitrary[Account]
-        roleName ← AwsGen.iamName
-        sessionName ←  AwsGen.iamName
-      } yield Principal.IamAssumedRolePrincipal(account, roleName, sessionName)
-    }
+  implicit lazy val arbIamAssumedRolePrincipal: Arbitrary[Principal.StsAssumedRolePrincipal] =
+    Arbitrary(Gen.resultOf(Principal.StsAssumedRolePrincipal.apply _))
 
-  implicit lazy val shrinkIamAssumedRolePrincipal: Shrink[Principal.IamAssumedRolePrincipal] =
-    Shrink { principal ⇒
-      Shrink.shrink(principal.account).map(x ⇒ principal.copy(account = x)) append
-        Shrink.shrink(principal.roleName).filter(_.nonEmpty).map(x ⇒ principal.copy(roleName = x)) append
-        Shrink.shrink(principal.sessionName).filter(_.nonEmpty).map(x ⇒ principal.copy(sessionName = x))
-    }
+  implicit lazy val shrinkIamAssumedRolePrincipal: Shrink[Principal.StsAssumedRolePrincipal] =
+    Shrink.xmap(Principal.StsAssumedRolePrincipal.apply, Principal.StsAssumedRolePrincipal.unapply(_).get)
 
   implicit lazy val shrinkPrincipal: Shrink[Principal] =
     Shrink {
       case samlProvider: Principal.SamlProviderPrincipal ⇒ Shrink.shrink(samlProvider)
       case userPrincipal: Principal.IamUserPrincipal ⇒ Shrink.shrink(userPrincipal)
       case rolePrincipal: Principal.IamRolePrincipal ⇒ Shrink.shrink(rolePrincipal)
-      case assumedRolePrincipal: Principal.IamAssumedRolePrincipal ⇒ Shrink.shrink(assumedRolePrincipal)
+      case assumedRolePrincipal: Principal.StsAssumedRolePrincipal ⇒ Shrink.shrink(assumedRolePrincipal)
       case _ ⇒ Stream.empty
     }
 
@@ -192,7 +157,7 @@ object AwsScalaCheckImplicits {
         for {
           vendor ← arbitrary[Option[Arn.Namespace]]
           region ← arbitrary[Option[Region]]
-          namespace ← Gen.option(AwsGen.accountId)
+          namespace ← Gen.option(CoreGen.accountId)
           relativeId ← Gen.option(Gen.identifier)
         } yield s"arn:aws:${vendor.getOrElse("*")}:${region.map(_.name).getOrElse("*")}:${namespace.getOrElse("*")}:${relativeId.getOrElse("*")}"
       for {
@@ -313,7 +278,7 @@ object AwsScalaCheckImplicits {
       val arnGen =
         for {
           partition ← arbitrary[Partition]
-          account ← Gen.option(AwsGen.accountId).map(_.map(id ⇒ Account(id, partition)))
+          account ← Gen.option(CoreGen.accountId).map(_.map(id ⇒ Account(id, partition)))
           region ← arbitrary[Option[Region]]
           namespace ← arbitrary[Arn.Namespace]
           resourceStr ← Gen.identifier
@@ -322,34 +287,91 @@ object AwsScalaCheckImplicits {
         }
 
       Gen.oneOf(
-        arnGen.map(arn ⇒ Resource(arn.value)),
+        arnGen.map(arn ⇒ Resource(arn.arnString)),
         Gen.const(Resource("*")))
     }
 
   implicit def arbAction: Arbitrary[Action] =
     Arbitrary(Gen.oneOf(Action.toAwsConversions.keys.toList))
 
-  private val iamPath: Gen[Option[String]] = {
+  implicit lazy val arbPath: Arbitrary[Path] = {
     val elementChar: Gen[Char] = Gen.oneOf(((0x21 to 0x2e) ++ (0x30 to 0x7f)).map(_.toChar))
     val element = UtilGen.stringOf(elementChar, 1, 512)
-    Gen.option(UtilGen.nonEmptyListOfSqrtN(element).map(_.mkString("/","/","/")))
+    Arbitrary {
+      Gen.sized { n ⇒
+        val max = Math.sqrt(n).toInt
+        for {
+          n ← Gen.choose(0, max)
+          elements ← Gen.listOfN(n, element)
+        } yield Path(elements)
+      }
+    }
   }
 
-  private def shrinkIamPath(maybePath: Option[String]): Stream[Option[String]] =
-    maybePath match {
-      case Some(path) ⇒
-        path.split("/").toList match {
-          case Nil ⇒ Stream.empty
-          case "" :: elements ⇒
-            Shrink.shrink(elements)
-              .filter(_.forall(_.nonEmpty))
-              .map { elements ⇒
-                if (elements.isEmpty) None
-                else Some(elements.mkString("/","/","/"))
-              }
-          case _ ⇒ throw new IllegalStateException("This should not happen")
-        }
-      case None ⇒
-        Stream.empty
+  implicit lazy val shrinkPath: Shrink[Path] =
+    Shrink { path ⇒
+      Shrink.shrink(path.elements).filter(_.forall(_.nonEmpty)).map(Path.apply)
+    }
+
+  implicit lazy val arbSamlProviderArn: Arbitrary[SamlProviderArn] =
+    Arbitrary {
+      for {
+        account ← arbitrary[Account]
+        name ← CoreGen.samlProviderName
+      } yield SamlProviderArn(account, name)
+    }
+
+  implicit lazy val shrinkSamlProviderArn: Shrink[SamlProviderArn] =
+    Shrink { arn ⇒
+      Shrink.shrink(arn.account).map(x ⇒ arn.copy(account = x)) append
+        Shrink.shrink(arn.name).filter(_.nonEmpty).map(x ⇒ arn.copy(name = x))
+    }
+
+  implicit lazy val arbUserArn: Arbitrary[UserArn] =
+    Arbitrary {
+      for {
+        account ← arbitrary[Account]
+        name ← CoreGen.iamName
+        path ← arbitrary[Path]
+      } yield UserArn(account, name, path)
+    }
+
+  implicit lazy val shrinkUserArn: Shrink[UserArn] =
+    Shrink { arn ⇒
+      Shrink.shrink(arn.account).map(x ⇒ arn.copy(account = x)) append
+        Shrink.shrink(arn.name).filter(_.nonEmpty).map(x ⇒ arn.copy(name = x)) append
+        Shrink.shrink(arn.path).map(x ⇒ arn.copy(path = x))
+    }
+
+  implicit lazy val arbRoleArn: Arbitrary[RoleArn] =
+    Arbitrary {
+      for {
+        account ← arbitrary[Account]
+        name ← CoreGen.iamName
+        path ← arbitrary[Path]
+      } yield RoleArn(account, name, path)
+    }
+
+  implicit lazy val shrinkRoleArn: Shrink[RoleArn] =
+    Shrink { arn ⇒
+      Shrink.shrink(arn.account).map(x ⇒ arn.copy(account = x)) append
+        Shrink.shrink(arn.name).filter(_.nonEmpty).map(x ⇒ arn.copy(name = x)) append
+        Shrink.shrink(arn.path).map(x ⇒ arn.copy(path = x))
+    }
+
+  implicit lazy val arbAssumedRoleArn: Arbitrary[AssumedRoleArn] =
+    Arbitrary {
+      for {
+        account ← arbitrary[Account]
+        roleName ← CoreGen.iamName
+        sessionName ← CoreGen.assumedRoleSessionName
+      } yield AssumedRoleArn(account, roleName, sessionName)
+    }
+
+  implicit lazy val shrinkAssumedRoleArn: Shrink[AssumedRoleArn] =
+    Shrink { arn ⇒
+      Shrink.shrink(arn.account).map(x ⇒ arn.copy(account = x)) append
+        Shrink.shrink(arn.roleName).filter(_.nonEmpty).map(x ⇒ arn.copy(roleName = x)) append
+        Shrink.shrink(arn.sessionName).filter(_.length > 1).map(x ⇒ arn.copy(sessionName = x))
     }
 }

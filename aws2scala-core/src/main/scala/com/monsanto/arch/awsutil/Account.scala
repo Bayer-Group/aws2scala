@@ -2,14 +2,14 @@ package com.monsanto.arch.awsutil
 
 import com.monsanto.arch.awsutil.partitions.Partition
 
-private[awsutil] case class Account(id: String, partition: Partition) {
+/** Represents an AWS account.
+  *
+  * @param id the AWS account ID, which must be a 12-digit string with no hyphens
+  * @param partition the partition to which the account belongs, defaults to the global AWS partition
+  */
+case class Account(id: String, partition: Partition = Partition.Aws) {
   require(id.matches("^[0-9]{12}$"), "An AWS account ID must be a 12-digit string.")
 
-  override def toString = id
-
+  /** Returns the ARN that corresponds to this account. */
   def arn: AccountArn = AccountArn(this)
-}
-
-private[awsutil] object Account {
-  def apply(id: String): Account = Account(id, Partition.Aws)
 }

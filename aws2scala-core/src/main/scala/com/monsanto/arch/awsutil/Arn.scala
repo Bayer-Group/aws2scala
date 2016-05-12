@@ -1,7 +1,11 @@
 package com.monsanto.arch.awsutil
 
+import com.monsanto.arch.awsutil.identitymanagement.model.{RoleArn, SamlProviderArn, UserArn}
 import com.monsanto.arch.awsutil.partitions.Partition
 import com.monsanto.arch.awsutil.regions.Region
+import com.monsanto.arch.awsutil.securitytoken.model.AssumedRoleArn
+
+import scala.collection.mutable
 
 /** Amazon Resource Names (ARNs) uniquely identify AWS resources.  These are required when you need to specify
   * a resource unambiguously across all of AWS, such as in IAM policies, Amazon Relation Database Service (Amazon
@@ -12,43 +16,99 @@ import com.monsanto.arch.awsutil.regions.Region
   * @param _region the region the resource resides in
   * @param _account the AWS account that owns the resource, without the hyphens
   */
-private[awsutil] abstract class Arn(_partition: Partition,
-                                    _namespace: Arn.Namespace,
-                                    _region: Option[Region],
-                                    _account: Option[Account]) {
+abstract class Arn(_partition: Partition,
+                   _namespace: Arn.Namespace,
+                   _region: Option[Region],
+                   _account: Option[Account]) {
+  /** Allows creation of an ARN where the partition is derived from the account. */
   def this(namespace: Arn.Namespace, region: Option[Region], account: Account) =
     this(account.partition, namespace, region, Some(account))
 
+  /** Returns the ARN’s partition. */
   final def partition: Partition = _partition
+  /** Returns the ARN’s namespace. */
   final def namespace: Arn.Namespace = _namespace
+  /** Returns the ARN’s region, if any. */
   final def regionOption: Option[Region] = _region
+  /** Returns the ARN’s account, if any. */
   final def accountOption: Option[Account] = _account
 
-  /** The service-dependent content identifying the resource. */
+  /** Returns the service-dependent content identifying the resource. */
   def resource: String
 
-  final def value: String = s"arn:${_partition.id}:${_namespace}:${_region.map(_.name).getOrElse("")}:${_account.getOrElse("")}:$resource"
-
-  override def toString = value
+  /** Returns the string representation of the ARN. */
+  final def arnString: String =
+    s"arn:${_partition.id}:${_namespace.id}:${_region.map(_.name).getOrElse("")}:${_account.map(_.id).getOrElse("")}:$resource"
 }
 
-private[awsutil] object Arn {
-  def unapply(arn: String): Option[(Partition, Arn.Namespace, Option[Region], Option[Account], String)] = {
-    arn match {
-      case ArnRegex(Partition(partition), Arn.Namespace(namespace), region, "", resource) ⇒
-        Some((partition, namespace, Region.unapply(region), None, resource))
-      case ArnRegex(Partition(partition), Arn.Namespace(namespace), region, accountId, resource) ⇒
-        Some((partition, namespace, Region.unapply(region), Some(Account(accountId, partition)), resource))
-      case _ ⇒ None
+object Arn {
+  private[awsutil] type ArnParts = (Partition, Arn.Namespace, Option[Region], Option[Account], String)
+
+  /** The set of all possible partial functions that can extract an `Arn` subclass given the components of an ARN. */
+  private val subextractors: mutable.Set[PartialFunction[ArnParts,Arn]] =
+    mutable.LinkedHashSet(
+      AccountArn.accountArnPF,
+      AssumedRoleArn.assumeRoleArnPF,
+      RoleArn.roleArnPF,
+      SamlProviderArn.samlProviderArnPF,
+      UserArn.userArnPF
+    )
+
+  /** Registers partial functions that can be used to extract `Arn` subclasses given a set of ARN parts. */
+  private[awsutil] def registerArnMatchers(matchers: PartialFunction[ArnParts,Arn]*): Unit = {
+    subextractors.synchronized {
+      subextractors ++= matchers
     }
   }
 
-  private val ArnRegex = "^arn:([^:]+):([^:]+):([^:]*):([^:]*):(.+)$".r
+  /** Given a string, extract an ARN object instance. */
+  def unapply(str: String): Option[Arn] = {
+    // first, try to get the parts of the ARN
+    val maybeArnParts = str match {
+      // no region or account
+      case ArnRegex(Partition(partition), Arn.Namespace.fromId(namespace), "", "", resource) ⇒
+        Some((partition, namespace, None, None, resource))
 
-  sealed abstract class Namespace(val id: String) {
-    override def toString = id
+      // region, but no account
+      case ArnRegex(Partition(partition), Arn.Namespace.fromId(namespace), Region(region), "", resource) ⇒
+        Some((partition, namespace, Some(region), None, resource))
+
+      // account, but no region
+      case ArnRegex(Partition(partition), Arn.Namespace.fromId(namespace), "", accountId, resource) ⇒
+        Some((partition, namespace, None, Some(Account(accountId, partition)), resource))
+
+      // account and region
+      case ArnRegex(Partition(partition), Arn.Namespace.fromId(namespace), Region(region), accountId, resource) ⇒
+        Some((partition, namespace, Some(region), Some(Account(accountId, partition)), resource))
+
+      case _ ⇒ None
+    }
+    // now, extract an arn by findin
+    maybeArnParts.flatMap { arnParts ⇒
+      subextractors.synchronized {
+        subextractors.view
+          .filter(_.isDefinedAt(arnParts))
+          .map(_.apply(arnParts))
+          .headOption
+          .orElse(Some((GenericArn.apply _).tupled.apply(arnParts)))
+      }
+    }
   }
 
+  /** Regular expression to match the parts of a regular expression. */
+  private val ArnRegex = "^arn:([^:]+):([^:]+):([^:]*):([^:]*):(.+)$".r
+
+  /** Generic ARN subclass that may be used when no registered matchers match a parsed ARN. */
+  private[awsutil] case class GenericArn(_partition: Partition,
+                                         _namespace: Arn.Namespace,
+                                         _region: Option[Region],
+                                         _account: Option[Account],
+                                         resource: String) extends Arn(_partition, _namespace, _region, _account)
+
+  /** Enumerated type for ARN namespaces. */
+  sealed abstract class Namespace(val id: String)
+
+  //noinspection SpellCheckingInspection
   object Namespace {
     case object ApiGateway extends Namespace("apigateway")
     case object AmazonAppStream extends Namespace("appstream")
@@ -118,8 +178,9 @@ private[awsutil] object Arn {
       AmazonSQS, AmazonS3, AmazonSWF, AmazonSimpleDB, AwsStorageGateway, AwsSupport, TrustedAdvisor, AwsWAF,
       AmazonWorkSpaces)
 
-    def fromString(str: String): Option[Namespace] = values.find(_.id == str)
-
-    def unapply(str: String): Option[Namespace] = fromString(str)
+    /** Extractor to get a Namespace from a namespace identifier. */
+    object fromId {
+      def unapply(str: String): Option[Namespace] = values.find(_.id == str)
+    }
   }
 }

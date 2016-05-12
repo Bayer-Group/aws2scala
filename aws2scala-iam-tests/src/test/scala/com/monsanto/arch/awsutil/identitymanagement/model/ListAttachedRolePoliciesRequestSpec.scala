@@ -1,6 +1,7 @@
 package com.monsanto.arch.awsutil.identitymanagement.model
 
 import com.amazonaws.services.identitymanagement.{model ⇒ aws}
+import com.monsanto.arch.awsutil.testkit.CoreScalaCheckImplicits._
 import com.monsanto.arch.awsutil.testkit.IamScalaCheckImplicits._
 import org.scalatest.FreeSpec
 import org.scalatest.Matchers._
@@ -29,7 +30,7 @@ class ListAttachedRolePoliciesRequestSpec extends FreeSpec {
   "a list roles with prefix" - {
     "creates the correct AWS request" in {
       forAll { (roleName: Name, path: Path) ⇒
-        val request = ListAttachedRolePoliciesRequest(roleName.value, path.value)
+        val request = ListAttachedRolePoliciesRequest(roleName.value, path.pathString)
         val awsRequest = new aws.ListAttachedRolePoliciesRequest()
           .withRoleName(roleName.value)
           .withPathPrefix(request.pathPrefix.get)
@@ -39,7 +40,7 @@ class ListAttachedRolePoliciesRequestSpec extends FreeSpec {
 
     "creates new requests" in {
       forAll { (roleName: Name, path: Path) ⇒
-        val request = ListAttachedRolePoliciesRequest(roleName.value, path.value)
+        val request = ListAttachedRolePoliciesRequest(roleName.value, path.pathString)
         request.toAws should not be theSameInstanceAs (request.toAws)
       }
     }

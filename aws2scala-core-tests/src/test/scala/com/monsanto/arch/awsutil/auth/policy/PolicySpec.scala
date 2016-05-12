@@ -1,7 +1,8 @@
 package com.monsanto.arch.awsutil.auth.policy
 
-import com.monsanto.arch.awsutil.auth.policy.AwsConverters._
-import com.monsanto.arch.awsutil.testkit.AwsScalaCheckImplicits._
+import com.monsanto.arch.awsutil.converters.CoreConverters
+import com.monsanto.arch.awsutil.converters.CoreConverters._
+import com.monsanto.arch.awsutil.testkit.CoreScalaCheckImplicits._
 import com.monsanto.arch.awsutil.testkit.UtilGen
 import org.scalacheck.Arbitrary.arbitrary
 import org.scalacheck.Gen
@@ -23,7 +24,7 @@ class PolicySpec extends FreeSpec {
 
       "via JSON" in {
         // the JSON will collapse multiple conditions of the same type, which is fine, but makes round-tripping trickier
-        def uniqueConditionTypes(statement: Statement):Boolean = {
+        def uniqueConditionTypes(statement: Statement): Boolean = {
           val distinctTypes = statement.conditions.map(_.asAws.getType).distinct
           distinctTypes.size == statement.conditions.size
         }
@@ -59,7 +60,7 @@ class PolicySpec extends FreeSpec {
               id = None,
               principals = Seq(),
               effect = Statement.Effect.Allow,
-              actions = Seq(AwsConverters.NamedAction("foo")),
+              actions = Seq(CoreConverters.NamedAction("foo")),
               resources = Seq(),
               conditions = Seq()
             )

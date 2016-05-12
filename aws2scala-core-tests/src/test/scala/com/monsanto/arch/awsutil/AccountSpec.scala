@@ -1,6 +1,6 @@
 package com.monsanto.arch.awsutil
 
-import com.monsanto.arch.awsutil.testkit.AwsScalaCheckImplicits._
+import com.monsanto.arch.awsutil.testkit.CoreScalaCheckImplicits._
 import org.scalatest.FreeSpec
 import org.scalatest.Matchers._
 import org.scalatest.prop.GeneratorDrivenPropertyChecks._
@@ -14,12 +14,6 @@ class AccountSpec extends FreeSpec {
             Account(id)
           }
         }
-      }
-    }
-
-    "have a string representation of its ID" in {
-      forAll { account: Account ⇒
-        account.toString shouldBe account.id
       }
     }
 

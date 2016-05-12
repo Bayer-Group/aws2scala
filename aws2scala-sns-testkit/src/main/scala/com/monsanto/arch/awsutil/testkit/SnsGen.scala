@@ -3,10 +3,10 @@ package com.monsanto.arch.awsutil.testkit
 import java.util.UUID
 
 import com.amazonaws.util.json.JSONObject
-import com.monsanto.arch.awsutil.identitymanagement.model.{Name, Path, RoleArn}
+import com.monsanto.arch.awsutil.identitymanagement.model.{Path, RoleArn}
 import com.monsanto.arch.awsutil.regions.Region
 import com.monsanto.arch.awsutil.sns.model._
-import com.monsanto.arch.awsutil.testkit.IamScalaCheckImplicits._
+import com.monsanto.arch.awsutil.testkit.CoreScalaCheckImplicits._
 import com.monsanto.arch.awsutil.testkit.SnsScalaCheckImplicits._
 import com.monsanto.arch.awsutil.{Account, Arn}
 import org.scalacheck.Arbitrary.arbitrary
@@ -90,14 +90,14 @@ object SnsGen {
   def platformApplicationAttributes(arn: PlatformApplicationArn): Gen[Map[String,String]] = {
     val maybeEventTopicArn: Gen[Option[String]] =
       Gen.frequency(
-        4 → Gen.option(SnsGen.topicArn(arn.account, arn.region).map(_.value)),
-        1 → arbitrary[TopicArn].map(arn ⇒ Some(arn.value))
+        4 → Gen.option(SnsGen.topicArn(arn.account, arn.region).map(_.arnString)),
+        1 → arbitrary[TopicArn].map(arn ⇒ Some(arn.arnString))
       )
 
     def maybeFeedbackRoleArn(name: String): Gen[Option[String]] =
       Gen.frequency(
-        1 → arbitrary[RoleArn].map(arn ⇒ Some(arn.value)),
-        7 → Some(RoleArn(arn.account, Name(name), Path("/")).value),
+        1 → arbitrary[RoleArn].map(arn ⇒ Some(arn.arnString)),
+        7 → Some(RoleArn(arn.account, name, Path.empty).arnString),
         1 → Some(""),
         1 → None)
 

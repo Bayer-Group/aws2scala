@@ -9,11 +9,14 @@ import com.monsanto.arch.awsutil.impl.ShutdownHook
 import com.monsanto.arch.awsutil.{AwsClientProvider, AwsSettings}
 
 object SQS extends AwsClientProvider[StreamingSQSClient,AsyncSQSClient] {
-  SQSAction.registerActions()
+  private[awsutil] def init(): Unit = {
+    SQSAction.registerActions()
+  }
 
   override private[awsutil] def streamingClient(settings: AwsSettings,
                                                 credentialsProvider: AWSCredentialsProvider,
                                                 executorService: ExecutorService): (StreamingSQSClient, ShutdownHook) = {
+    init()
     val aws = new AmazonSQSAsyncClient(credentialsProvider, executorService)
     aws.setRegion(settings.region)
     val client = new DefaultStreamingSQSClient(aws)

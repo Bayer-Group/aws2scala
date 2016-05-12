@@ -6,7 +6,7 @@ import com.monsanto.arch.awsutil.sns.StreamingSNSClient
 import com.monsanto.arch.awsutil.test_support.AdaptableScalaFutures._
 import com.monsanto.arch.awsutil.test_support.Samplers.arbitrarySample
 import com.monsanto.arch.awsutil.test_support.{FlowMockUtils, Materialised}
-import com.monsanto.arch.awsutil.testkit.IamScalaCheckImplicits._
+import com.monsanto.arch.awsutil.testkit.CoreScalaCheckImplicits._
 import com.monsanto.arch.awsutil.testkit.SnsScalaCheckImplicits._
 import com.monsanto.arch.awsutil.testkit.{SnsGen, UtilGen}
 import org.scalacheck.Arbitrary.arbitrary
@@ -31,18 +31,18 @@ class PlatformApplicationSpec extends FreeSpec with MockFactory with Materialise
 
         (sns.platformApplicationAttributesGetter _)
           .expects()
-          .returningFlow(arn.value, attributes)
+          .returningFlow(arn.arnString, attributes)
 
-        val result = PlatformApplication(arn.value).futureValue
+        val result = PlatformApplication(arn.arnString).futureValue
 
-        result shouldBe PlatformApplication(arn.value, attributes)
+        result shouldBe PlatformApplication(arn.arnString, attributes)
       }
     }
   }
 
   "a PlatformApplication instance" - {
     "can get its" - {
-      val arn = arbitrarySample[PlatformApplicationArn].value
+      val arn = arbitrarySample[PlatformApplicationArn].arnString
       val baseMap = Map("Enabled" → "true")
 
       "Enabled attribute" in {
@@ -55,56 +55,56 @@ class PlatformApplicationSpec extends FreeSpec with MockFactory with Materialise
 
       "EventEndpointCreated attribute" in {
         forAll { topicArn: Option[TopicArn] ⇒
-          val attrs = topicArn.map(t ⇒ baseMap + ("EventEndpointCreated" → t.value)).getOrElse(baseMap)
+          val attrs = topicArn.map(t ⇒ baseMap + ("EventEndpointCreated" → t.arnString)).getOrElse(baseMap)
           val application = PlatformApplication(arn, attrs)
 
-          application.eventEndpointCreated shouldBe topicArn.map(_.value)
+          application.eventEndpointCreated shouldBe topicArn.map(_.arnString)
         }
       }
 
       "EventEndpointDeleted attribute" in {
         forAll { topicArn: Option[TopicArn] ⇒
-          val attrs = topicArn.map(t ⇒ baseMap + ("EventEndpointDeleted" → t.value)).getOrElse(baseMap)
+          val attrs = topicArn.map(t ⇒ baseMap + ("EventEndpointDeleted" → t.arnString)).getOrElse(baseMap)
           val application = PlatformApplication(arn, attrs)
 
-          application.eventEndpointDeleted shouldBe topicArn.map(_.value)
+          application.eventEndpointDeleted shouldBe topicArn.map(_.arnString)
         }
       }
 
       "EventEndpointUpdated attribute" in {
         forAll { topicArn: Option[TopicArn] ⇒
-          val attrs = topicArn.map(t ⇒ baseMap + ("EventEndpointUpdated" → t.value)).getOrElse(baseMap)
+          val attrs = topicArn.map(t ⇒ baseMap + ("EventEndpointUpdated" → t.arnString)).getOrElse(baseMap)
           val application = PlatformApplication(arn, attrs)
 
-          application.eventEndpointUpdated shouldBe topicArn.map(_.value)
+          application.eventEndpointUpdated shouldBe topicArn.map(_.arnString)
         }
       }
 
       "EventDeliveryFailure attribute" in {
         forAll { topicArn: Option[TopicArn] ⇒
-          val attrs = topicArn.map(t ⇒ baseMap + ("EventDeliveryFailure" → t.value)).getOrElse(baseMap)
+          val attrs = topicArn.map(t ⇒ baseMap + ("EventDeliveryFailure" → t.arnString)).getOrElse(baseMap)
           val application = PlatformApplication(arn, attrs)
 
-          application.eventDeliveryFailure shouldBe topicArn.map(_.value)
+          application.eventDeliveryFailure shouldBe topicArn.map(_.arnString)
         }
       }
 
       "SuccessFeedbackRoleArn attribute" - {
         "when possibly missing" in {
           forAll { roleArn: Option[RoleArn] ⇒
-            val attrs = roleArn.map(t ⇒ baseMap + ("SuccessFeedbackRoleArn" → t.value)).getOrElse(baseMap)
+            val attrs = roleArn.map(t ⇒ baseMap + ("SuccessFeedbackRoleArn" → t.arnString)).getOrElse(baseMap)
             val application = PlatformApplication(arn, attrs)
 
-            application.successFeedbackRoleArn shouldBe roleArn.map(_.value)
+            application.successFeedbackRoleArn shouldBe roleArn.map(_.arnString)
           }
         }
 
         "when possibly empty" in {
           forAll { roleArn: Option[RoleArn] ⇒
-            val attrs = baseMap + ("SuccessFeedbackRoleArn" → roleArn.map(_.value).getOrElse(""))
+            val attrs = baseMap + ("SuccessFeedbackRoleArn" → roleArn.map(_.arnString).getOrElse(""))
             val application = PlatformApplication(arn, attrs)
 
-            application.successFeedbackRoleArn shouldBe roleArn.map(_.value)
+            application.successFeedbackRoleArn shouldBe roleArn.map(_.arnString)
           }
         }
       }
@@ -112,19 +112,19 @@ class PlatformApplicationSpec extends FreeSpec with MockFactory with Materialise
       "FailureFeedbackRoleArn attribute" - {
         "when possibly missing" in {
           forAll { roleArn: Option[RoleArn] ⇒
-            val attrs = roleArn.map(t ⇒ baseMap + ("FailureFeedbackRoleArn" → t.value)).getOrElse(baseMap)
+            val attrs = roleArn.map(t ⇒ baseMap + ("FailureFeedbackRoleArn" → t.arnString)).getOrElse(baseMap)
             val application = PlatformApplication(arn, attrs)
 
-            application.failureFeedbackRoleArn shouldBe roleArn.map(_.value)
+            application.failureFeedbackRoleArn shouldBe roleArn.map(_.arnString)
           }
         }
 
         "when possibly empty" in {
           forAll { roleArn: Option[RoleArn] ⇒
-            val attrs = baseMap + ("FailureFeedbackRoleArn" → roleArn.map(_.value).getOrElse(""))
+            val attrs = baseMap + ("FailureFeedbackRoleArn" → roleArn.map(_.arnString).getOrElse(""))
             val application = PlatformApplication(arn, attrs)
 
-            application.failureFeedbackRoleArn shouldBe roleArn.map(_.value)
+            application.failureFeedbackRoleArn shouldBe roleArn.map(_.arnString)
           }
         }
       }
@@ -141,7 +141,7 @@ class PlatformApplicationSpec extends FreeSpec with MockFactory with Materialise
 
       "name from the ARN" in {
         forAll { arn: PlatformApplicationArn ⇒
-          val application = PlatformApplication(arn.value, baseMap)
+          val application = PlatformApplication(arn.arnString, baseMap)
 
           application.name shouldBe arn.name
         }
@@ -149,7 +149,7 @@ class PlatformApplicationSpec extends FreeSpec with MockFactory with Materialise
 
       "platform from the ARN" in {
         forAll { arn: PlatformApplicationArn ⇒
-          val application = PlatformApplication(arn.value, baseMap)
+          val application = PlatformApplication(arn.arnString, baseMap)
 
           application.platform shouldBe arn.platform
         }
@@ -192,7 +192,7 @@ class PlatformApplicationSpec extends FreeSpec with MockFactory with Materialise
 
       "endpoint created topic" in {
         forAll { (application: PlatformApplication, maybeTopicArnObj: Option[TopicArn]) ⇒
-          val maybeTopicArn = maybeTopicArnObj.map(_.value)
+          val maybeTopicArn = maybeTopicArnObj.map(_.arnString)
           implicit val sns = mock[StreamingSNSClient]("sns")
 
           (sns.platformApplicationAttributesSetter _)
@@ -208,7 +208,7 @@ class PlatformApplicationSpec extends FreeSpec with MockFactory with Materialise
 
       "endpoint deleted topic" in {
         forAll { (application: PlatformApplication, maybeTopicArnObj: Option[TopicArn]) ⇒
-          val maybeTopicArn = maybeTopicArnObj.map(_.value)
+          val maybeTopicArn = maybeTopicArnObj.map(_.arnString)
           implicit val sns = mock[StreamingSNSClient]("sns")
 
           (sns.platformApplicationAttributesSetter _)
@@ -224,7 +224,7 @@ class PlatformApplicationSpec extends FreeSpec with MockFactory with Materialise
 
       "endpoint updated topic" in {
         forAll { (application: PlatformApplication, maybeTopicArnObj: Option[TopicArn]) ⇒
-          val maybeTopicArn = maybeTopicArnObj.map(_.value)
+          val maybeTopicArn = maybeTopicArnObj.map(_.arnString)
           implicit val sns = mock[StreamingSNSClient]("sns")
 
           (sns.platformApplicationAttributesSetter _)
@@ -240,7 +240,7 @@ class PlatformApplicationSpec extends FreeSpec with MockFactory with Materialise
 
       "delivery failure topic" in {
         forAll { (application: PlatformApplication, maybeTopicArnObj: Option[TopicArn]) ⇒
-          val maybeTopicArn = maybeTopicArnObj.map(_.value)
+          val maybeTopicArn = maybeTopicArnObj.map(_.arnString)
           implicit val sns = mock[StreamingSNSClient]("sns")
 
           (sns.platformApplicationAttributesSetter _)
@@ -256,7 +256,7 @@ class PlatformApplicationSpec extends FreeSpec with MockFactory with Materialise
 
       "success feedback role" in {
         forAll { (application: PlatformApplication, maybeRoleArnObj: Option[RoleArn]) ⇒
-          val maybeRoleArn = maybeRoleArnObj.map(_.value)
+          val maybeRoleArn = maybeRoleArnObj.map(_.arnString)
           implicit val sns = mock[StreamingSNSClient]("sns")
 
           (sns.platformApplicationAttributesSetter _)
@@ -272,7 +272,7 @@ class PlatformApplicationSpec extends FreeSpec with MockFactory with Materialise
 
       "failure feedback role" in {
         forAll { (application: PlatformApplication, maybeRoleArnObj: Option[RoleArn]) ⇒
-          val maybeRoleArn = maybeRoleArnObj.map(_.value)
+          val maybeRoleArn = maybeRoleArnObj.map(_.arnString)
           implicit val sns = mock[StreamingSNSClient]("sns")
 
           (sns.platformApplicationAttributesSetter _)
@@ -477,7 +477,7 @@ class PlatformApplicationSpec extends FreeSpec with MockFactory with Materialise
       attributes ← SnsGen.platformEndpointAttributes
     } yield {
       val endpointArn = PlatformEndpointArn(appArn.account, appArn.region, appArn.platform, appArn.name, endpointId)
-      PlatformEndpoint(endpointArn.value, attributes)
+      PlatformEndpoint(endpointArn.arnString, attributes)
     }
   }
 }

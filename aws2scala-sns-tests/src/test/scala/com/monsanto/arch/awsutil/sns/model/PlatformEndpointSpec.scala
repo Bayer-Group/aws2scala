@@ -24,7 +24,7 @@ class PlatformEndpointSpec extends FreeSpec with MockFactory with Materialised w
     }
 
     "can get its" - {
-      val arn = arbitrary[PlatformEndpointArn].reallySample.value
+      val arn = arbitrary[PlatformEndpointArn].reallySample.arnString
       val baseAttributes = Map("Enabled" → "true", "Token" → "aToken")
 
       "Enabled attribute" in {

@@ -2,10 +2,12 @@ package com.monsanto.arch.awsutil.auth.policy
 
 import com.amazonaws.auth.{policy ⇒ aws}
 import com.monsanto.arch.awsutil.Account
-import com.monsanto.arch.awsutil.auth.policy.AwsConverters._
+import com.monsanto.arch.awsutil.converters.CoreConverters._
+import com.monsanto.arch.awsutil.identitymanagement.model.{RoleArn, SamlProviderArn, UserArn}
+import com.monsanto.arch.awsutil.partitions.Partition
+import com.monsanto.arch.awsutil.securitytoken.model.AssumedRoleArn
 import com.monsanto.arch.awsutil.test_support.AwsEnumerationBehaviours
-import com.monsanto.arch.awsutil.testkit.AwsGen
-import com.monsanto.arch.awsutil.testkit.AwsScalaCheckImplicits._
+import com.monsanto.arch.awsutil.testkit.CoreScalaCheckImplicits._
 import org.scalatest.FreeSpec
 import org.scalatest.Matchers._
 import org.scalatest.prop.GeneratorDrivenPropertyChecks._
@@ -25,7 +27,7 @@ class PrincipalSpec extends FreeSpec with AwsEnumerationBehaviours {
     "converts" - {
       "AWS account principals that only contain an account number" in {
         forAll { account: Account ⇒
-          new aws.Principal(account.id).asScala shouldBe Principal.account(account.id)
+          new aws.Principal(account.id).asScala shouldBe Principal.account(account.copy(partition = Partition.Aws))
         }
       }
 
@@ -45,7 +47,7 @@ class PrincipalSpec extends FreeSpec with AwsEnumerationBehaviours {
         forAll { principal: Principal.SamlProviderPrincipal ⇒
           principal.asAws should have (
             'provider ("Federated"),
-            'id (s"arn:${principal.account.partition}:iam::${principal.account.id}:saml-provider/${principal.name}")
+            'id (principal.samlProviderArn.arnString)
           )
         }
       }
@@ -54,7 +56,7 @@ class PrincipalSpec extends FreeSpec with AwsEnumerationBehaviours {
         forAll { principal: Principal.IamUserPrincipal ⇒
           principal.asAws should have (
             'provider ("AWS"),
-            'id (s"arn:${principal.account.partition}:iam::${principal.account.id}:user${principal.path.getOrElse("/")}${principal.name}")
+            'id (principal.userArn.arnString)
           )
         }
       }
@@ -63,16 +65,16 @@ class PrincipalSpec extends FreeSpec with AwsEnumerationBehaviours {
         forAll { principal: Principal.IamRolePrincipal ⇒
           principal.asAws should have (
             'provider ("AWS"),
-            'id (s"arn:${principal.account.partition}:iam::${principal.account.id}:role${principal.path.getOrElse("/")}${principal.name}")
+            'id (principal.roleArn.arnString)
           )
         }
       }
 
       "IAM assumed role principals" in {
-        forAll { principal: Principal.IamAssumedRolePrincipal ⇒
+        forAll { principal: Principal.StsAssumedRolePrincipal ⇒
           principal.asAws should have (
             'provider ("AWS"),
-            'id (s"arn:${principal.account.partition}:iam::${principal.account.id}:assumed-role/${principal.roleName}/${principal.sessionName}")
+            'id (principal.assumedRoleArn.arnString)
           )
         }
       }
@@ -81,9 +83,9 @@ class PrincipalSpec extends FreeSpec with AwsEnumerationBehaviours {
     "has a valid" - {
       "account principal factory method" in {
         forAll { account: Account ⇒
-          Principal.account(account.id) should have (
+          Principal.account(account) should have (
             'provider ("AWS"),
-            'id (s"arn:aws:iam::$account:root")
+            'id (account.arn.arnString)
           )
         }
       }
@@ -107,39 +109,26 @@ class PrincipalSpec extends FreeSpec with AwsEnumerationBehaviours {
       }
 
       "SAML provider principal factory method" in {
-        forAll(
-          AwsGen.accountId → "account",
-          AwsGen.iamName → "SAML provider name"
-        ) { (account, samlProviderName) ⇒
-          Principal.samlProvider(account, samlProviderName) shouldBe Principal.SamlProviderPrincipal(Account(account), samlProviderName)
+        forAll { samlProviderArn: SamlProviderArn ⇒
+          Principal.samlProvider(samlProviderArn) shouldBe Principal.SamlProviderPrincipal(samlProviderArn)
         }
       }
 
       "IAM user principal factory method" in {
-        forAll(
-          AwsGen.accountId → "account",
-          AwsGen.iamName → "IAM user name"
-        ) { (account, name) ⇒
-          Principal.iamUser(account, name) shouldBe Principal.IamUserPrincipal(Account(account), name, None)
+        forAll { userArn: UserArn ⇒
+          Principal.iamUser(userArn) shouldBe Principal.IamUserPrincipal(userArn)
         }
       }
 
       "IAM role principal factory method" in {
-        forAll(
-          AwsGen.accountId → "account",
-          AwsGen.iamName → "IAM role name"
-        ) { (account, name) ⇒
-          Principal.iamRole(account, name) shouldBe Principal.IamRolePrincipal(Account(account), name, None)
+        forAll { roleArn: RoleArn ⇒
+          Principal.iamRole(roleArn) shouldBe Principal.IamRolePrincipal(roleArn)
         }
       }
 
       "IAM assumed role principal factory method" in {
-        forAll(
-          AwsGen.accountId → "account",
-          AwsGen.iamName → "IAM role name",
-          AwsGen.iamName → "IAM assumed role session name"
-        ) { (account, roleName, sessionName) ⇒
-          Principal.iamAssumedRole(account, roleName, sessionName) shouldBe Principal.IamAssumedRolePrincipal(Account(account), roleName, sessionName)
+        forAll { asssumedRoleArn: AssumedRoleArn ⇒
+          Principal.stsAssumedRole(asssumedRoleArn) shouldBe Principal.StsAssumedRolePrincipal(asssumedRoleArn)
         }
       }
     }
@@ -153,9 +142,9 @@ class PrincipalSpec extends FreeSpec with AwsEnumerationBehaviours {
         }
       }
 
-      "with a ById extractor" in {
+      "with a fromId extractor" in {
         forAllIn(services) { service ⇒
-          Principal.Service.ById.unapply(service.id) shouldBe Some(service)
+          Principal.Service.fromId.unapply(service.id) shouldBe Some(service)
         }
       }
     }
@@ -171,7 +160,7 @@ class PrincipalSpec extends FreeSpec with AwsEnumerationBehaviours {
 
       "with a fromId" in {
         forAllIn(webIdentityProviders) { provider ⇒
-          Principal.WebIdentityProvider.ById.unapply(provider.id) shouldBe Some(provider)
+          Principal.WebIdentityProvider.fromId.unapply(provider.id) shouldBe Some(provider)
         }
       }
     }

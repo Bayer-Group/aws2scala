@@ -8,7 +8,7 @@ import com.monsanto.arch.awsutil.sns.StreamingSNSClient
 import com.monsanto.arch.awsutil.sns.model.AwsConverters._
 import com.monsanto.arch.awsutil.test_support.AdaptableScalaFutures._
 import com.monsanto.arch.awsutil.test_support.{FlowMockUtils, Materialised}
-import com.monsanto.arch.awsutil.testkit.AwsScalaCheckImplicits._
+import com.monsanto.arch.awsutil.testkit.CoreScalaCheckImplicits._
 import com.monsanto.arch.awsutil.testkit.SnsScalaCheckImplicits._
 import com.monsanto.arch.awsutil.testkit.{SnsGen, UtilGen}
 import org.scalacheck.Arbitrary.arbitrary
@@ -26,13 +26,13 @@ class TopicSpec extends FreeSpec with MockFactory with Materialised with FlowMoc
       "an attribute map" in {
         forAll { attributes: TopicAttributes ⇒
           Topic(attributes.asMap) should have(
-            'arn (attributes.arn.value),
+            'arn (attributes.arn.arnString),
             'attributes (attributes.asMap),
             'deliveryPolicy (attributes.deliveryPolicy.map(_.toString)),
             'displayName (attributes.displayName),
             'effectiveDeliveryPolicy (attributes.effectiveDeliveryPolicy.toString),
             'name (attributes.arn.name),
-            'owner (attributes.arn.owner.id),
+            'owner (attributes.arn.account.id),
             'policy (attributes.policy.toString),
             'subscriptionsConfirmed (attributes.subscriptionsConfirmed),
             'subscriptionsDeleted (attributes.subscriptionsDeleted),
@@ -436,7 +436,7 @@ class TopicSpec extends FreeSpec with MockFactory with Materialised with FlowMoc
         effectiveDeliveryPolicy ← arbitrary[Option[SubscriptionDeliveryPolicy]]
       } yield {
         val topicArn = TopicArn(topic.arn)
-        val arn = SubscriptionArn(topicArn.owner, topicArn.region, topic.name, subscriptionId)
+        val arn = SubscriptionArn(topicArn.account, topicArn.region, topic.name, subscriptionId)
         val attrs = SubscriptionAttributes(arn, endpoint, confirmationWasAuthenticated, rawMessageDelivery,
           deliveryPolicy, effectiveDeliveryPolicy)
         (topic, Subscription(attrs.asMap))
@@ -462,8 +462,8 @@ class TopicSpec extends FreeSpec with MockFactory with Materialised with FlowMoc
         endpoint ← arbitrary[SubscriptionEndpoint]
       } yield {
         val topicArn = TopicArn(topic.arn)
-        val subscriptionArn = SubscriptionArn(topicArn.owner, topicArn.region, topicArn.name, subscriptionId)
-        SubscriptionSummary(Some(subscriptionArn.value), topic.arn, endpoint, topic.owner)
+        val subscriptionArn = SubscriptionArn(topicArn.account, topicArn.region, topicArn.name, subscriptionId)
+        SubscriptionSummary(Some(subscriptionArn.arnString), topic.arn, endpoint, topic.owner)
       }
 
     Gen.frequency(

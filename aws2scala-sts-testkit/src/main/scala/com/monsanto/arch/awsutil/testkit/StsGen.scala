@@ -1,5 +1,6 @@
 package com.monsanto.arch.awsutil.testkit
 
+import com.monsanto.arch.awsutil.Arn
 import com.monsanto.arch.awsutil.identitymanagement.model.RoleArn
 import com.monsanto.arch.awsutil.securitytoken.model._
 import com.monsanto.arch.awsutil.testkit.StsScalaCheckImplicits._
@@ -14,17 +15,15 @@ object StsGen {
 
   val packedPolicySize: Gen[Int] = Gen.choose(0, 100)
 
-  val roleSessionName: Gen[String] = UtilGen.stringOf(UtilGen.extendedWordChar, 2, 64).suchThat(_.length > 1)
-
   def resultFor(request: AssumeRoleRequest): Gen[AssumeRoleResult] =
     for {
       roleId ← IamGen.roleId
       credentials ← arbitrary[Credentials]
       packedPolicySize ← if (request.policy.isDefined) packedPolicySize.map(Some(_)) else Gen.const(None)
     } yield {
-      val roleArn = RoleArn(request.roleArn)
-      val assumedRoleArn = AssumedRoleArn(roleArn.account, roleArn.name.value, request.roleSessionName)
-      val assumedRoleUser = AssumedRoleUser(assumedRoleArn.value, s"$roleId:${request.roleSessionName}")
+      val roleArn = Arn.unapply(request.roleArn).get.asInstanceOf[RoleArn]
+      val assumedRoleArn = AssumedRoleArn(roleArn.account, roleArn.name, request.roleSessionName)
+      val assumedRoleUser = AssumedRoleUser(assumedRoleArn.arnString, s"$roleId:${request.roleSessionName}")
       AssumeRoleResult(assumedRoleUser, credentials, packedPolicySize)
     }
 }

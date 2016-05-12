@@ -6,7 +6,7 @@ import com.monsanto.arch.awsutil.identitymanagement.model._
 import com.monsanto.arch.awsutil.test_support.AdaptableScalaFutures._
 import com.monsanto.arch.awsutil.test_support.Samplers.{EnhancedGen, arbitrarySample}
 import com.monsanto.arch.awsutil.test_support.{FlowMockUtils, Materialised}
-import com.monsanto.arch.awsutil.testkit.AwsScalaCheckImplicits._
+import com.monsanto.arch.awsutil.testkit.CoreScalaCheckImplicits._
 import com.monsanto.arch.awsutil.testkit.IamGen
 import com.monsanto.arch.awsutil.testkit.IamScalaCheckImplicits._
 import org.scalacheck.Arbitrary.arbitrary
@@ -102,9 +102,9 @@ class DefaultAsyncIdentityManagementClientSpec extends FreeSpec with MockFactory
 
         (streaming.roleLister _)
           .expects()
-          .returningConcatFlow(ListRolesRequest.withPathPrefix(prefix.value), roles)
+          .returningConcatFlow(ListRolesRequest.withPathPrefix(prefix.pathString), roles)
 
-        val result = async.listRoles(prefix.value).futureValue
+        val result = async.listRoles(prefix.pathString).futureValue
         result shouldBe roles
       }
     }
@@ -119,9 +119,9 @@ class DefaultAsyncIdentityManagementClientSpec extends FreeSpec with MockFactory
 
         (streaming.rolePolicyAttacher _)
           .expects()
-          .returningFlow(AttachRolePolicyRequest(roleName.value, policyArn.value), roleName.value)
+          .returningFlow(AttachRolePolicyRequest(roleName.value, policyArn.arnString), roleName.value)
 
-        val result = async.attachRolePolicy(roleName.value, policyArn.value).futureValue
+        val result = async.attachRolePolicy(roleName.value, policyArn.arnString).futureValue
         result shouldBe Done
       }
     }
@@ -136,9 +136,9 @@ class DefaultAsyncIdentityManagementClientSpec extends FreeSpec with MockFactory
 
         (streaming.rolePolicyDetacher _)
           .expects()
-          .returningFlow(DetachRolePolicyRequest(roleName.value, policyArn.value), roleName.value)
+          .returningFlow(DetachRolePolicyRequest(roleName.value, policyArn.arnString), roleName.value)
 
-        val result = async.detachRolePolicy(roleName.value, policyArn.value).futureValue
+        val result = async.detachRolePolicy(roleName.value, policyArn.arnString).futureValue
         result shouldBe Done
       }
     }
@@ -149,7 +149,7 @@ class DefaultAsyncIdentityManagementClientSpec extends FreeSpec with MockFactory
         val async = new DefaultAsyncIdentityManagementClient(streaming)
 
         val policies = Gen.resize(20, arbitrary[List[(PolicyArn, Name)]]).reallySample.map { case (arn, name) ⇒
-          AttachedPolicy(arn.value, name.value)
+          AttachedPolicy(arn.arnString, name.value)
         }
 
         (streaming.attachedRolePolicyLister _)
@@ -170,16 +170,16 @@ class DefaultAsyncIdentityManagementClientSpec extends FreeSpec with MockFactory
         val async = new DefaultAsyncIdentityManagementClient(streaming)
 
         val policies = Gen.resize(20, arbitrary[List[(PolicyArn, Name)]]).reallySample.map { case (arn, name) ⇒
-          AttachedPolicy(arn.value, name.value)
+          AttachedPolicy(arn.arnString, name.value)
         }
 
         (streaming.attachedRolePolicyLister _)
           .expects()
           .returningConcatFlow(
-            ListAttachedRolePoliciesRequest(roleName.value, pathPrefix.value),
+            ListAttachedRolePoliciesRequest(roleName.value, pathPrefix.pathString),
             policies)
 
-        val result = async.listAttachedRolePolicies(roleName.value, pathPrefix.value).futureValue
+        val result = async.listAttachedRolePolicies(roleName.value, pathPrefix.pathString).futureValue
         result shouldBe policies
       }
     }

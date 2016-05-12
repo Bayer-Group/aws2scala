@@ -1,19 +1,25 @@
-package com.monsanto.arch.awsutil.auth.policy
+package com.monsanto.arch.awsutil.converters
 
 import java.time.Instant
 import java.util
 import java.util.{Base64, Date}
 
 import akka.util.ByteString
+import com.amazonaws.auth.policy
 import com.amazonaws.auth.policy.conditions._
-import com.amazonaws.auth.{policy ⇒ aws}
+import com.amazonaws.regions
+import com.monsanto.arch.awsutil.auth.policy._
+import com.monsanto.arch.awsutil.identitymanagement.model.{RoleArn, SamlProviderArn, UserArn}
+import com.monsanto.arch.awsutil.regions.Region
+import com.monsanto.arch.awsutil.securitytoken.model.AssumedRoleArn
 import com.monsanto.arch.awsutil.{Account, AccountArn, Arn}
 
 import scala.collection.JavaConverters._
 import scala.util.Try
 
-object AwsConverters {
-  implicit class AwsPrincipal(val principal: aws.Principal) extends AnyVal {
+/** Provides converters between core ''aws2scala'' objects and their AWS Java SDK counterparts. */
+object CoreConverters {
+  implicit class AwsPrincipal(val principal: policy.Principal) extends AnyVal {
     def asScala: Principal =
       (principal.getProvider, principal.getId) match {
         case ("*", "*") ⇒
@@ -22,24 +28,24 @@ object AwsConverters {
           Principal.allUsers
         case ("Service", "*") ⇒
           Principal.allServices
-        case ("Service", Principal.Service.ById(id)) ⇒
+        case ("Service", Principal.Service.fromId(id)) ⇒
           Principal.service(id)
         case ("Federated", "*") ⇒
           Principal.allWebProviders
-        case ("Federated", Principal.WebIdentityProvider.ById(webIdentityProvider)) ⇒
+        case ("Federated", Principal.WebIdentityProvider.fromId(webIdentityProvider)) ⇒
           Principal.webProvider(webIdentityProvider)
-        case ("Federated", SamlProviderArn(account, name)) ⇒
-          Principal.SamlProviderPrincipal(account, name)
-        case ("AWS", AccountArn.FromString(AccountArn(account))) ⇒
+        case ("Federated", Arn(samlProviderArn: SamlProviderArn)) ⇒
+          Principal.SamlProviderPrincipal(samlProviderArn)
+        case ("AWS", Arn(AccountArn(account))) ⇒
           Principal.AccountPrincipal(account)
         case ("AWS", AccountFromNumber(account)) ⇒
           Principal.AccountPrincipal(account)
-        case ("AWS", UserArn(account, name, path)) ⇒
-          Principal.IamUserPrincipal(account, name, path)
-        case ("AWS", RoleArn(account, name, path)) ⇒
-          Principal.IamRolePrincipal(account, name, path)
-        case ("AWS", AssumedRoleArn(account, roleName, sessionName)) ⇒
-          Principal.IamAssumedRolePrincipal(account, roleName, sessionName)
+        case ("AWS", Arn(userArn: UserArn)) ⇒
+          Principal.IamUserPrincipal(userArn)
+        case ("AWS", Arn(roleArn: RoleArn)) ⇒
+          Principal.IamRolePrincipal(roleArn)
+        case ("AWS", Arn(assumedRoleArn: AssumedRoleArn)) ⇒
+          Principal.StsAssumedRolePrincipal(assumedRoleArn)
       }
   }
 
@@ -53,79 +59,24 @@ object AwsConverters {
     }
   }
 
-  private object SamlProviderArn {
-    def unapply(str: String): Option[(Account, String)] =
-      str match {
-        case Arn(_, Arn.Namespace.IAM, None, Some(account), SamlProviderName(name)) ⇒
-          Some((account, name))
-        case _ ⇒
-          None
-      }
-    
-    private val SamlProviderName = "^saml-provider/(.+)$".r
-  }
-
-  private object UserArn {
-    def unapply(str: String): Option[(Account, String, Option[String])] = {
-      str match {
-        case Arn(_, Arn.Namespace.IAM, None, Some(account), UserPathAndName("/", name)) ⇒
-          Some((account, name, None))
-        case Arn(_, Arn.Namespace.IAM, None, Some(account), UserPathAndName(path, name)) ⇒
-          Some((account, name, Some(path)))
-        case _ ⇒
-          None
-      }
-    }
-
-    private val UserPathAndName = "^user(/|/.*/)([^/]+)$".r
-  }
-
-  private object RoleArn {
-    def unapply(str: String): Option[(Account, String, Option[String])] = {
-      str match {
-        case Arn(_, Arn.Namespace.IAM, None, Some(account), RolePathAndName("/", name)) ⇒
-          Some((account, name, None))
-        case Arn(_, Arn.Namespace.IAM, None, Some(account), RolePathAndName(path, name)) ⇒
-          Some((account, name, Some(path)))
-        case _ ⇒
-          None
-      }
-    }
-
-    private val RolePathAndName = "^role(/|/.*/)([^/]+)$".r
-  }
-
-  private object AssumedRoleArn {
-    def unapply(str: String): Option[(Account, String, String)] = {
-      str match {
-        case Arn(_, Arn.Namespace.IAM, None, Some(account), RoleAndSessionNames(roleName, sessionName)) ⇒
-          Some((account, roleName, sessionName))
-        case _ ⇒
-          None
-      }
-    }
-
-    private val RoleAndSessionNames = "^assumed-role/([^/]+)/([^/]+)$".r
-  }
-
   implicit class ScalaPrincipal(val principal: Principal) extends AnyVal {
-    def asAws: aws.Principal = {
+    def asAws: policy.Principal = {
       principal match {
         case Principal.AllPrincipals ⇒
-          aws.Principal.All
+          policy.Principal.All
         case Principal.AllUsers ⇒
-          aws.Principal.AllUsers
+          policy.Principal.AllUsers
         case Principal.ServicePrincipal(Principal.Service.AllServices) ⇒
-          aws.Principal.AllServices
+          policy.Principal.AllServices
         case Principal.WebProviderPrincipal(Principal.WebIdentityProvider.AllProviders) ⇒
-          aws.Principal.AllWebProviders
+          policy.Principal.AllWebProviders
         case _ ⇒
-          new aws.Principal(principal.provider, principal.id, false)
+          new policy.Principal(principal.provider, principal.id, false)
       }
     }
   }
 
-  implicit class AwsAction(val action: aws.Action) extends AnyVal {
+  implicit class AwsAction(val action: policy.Action) extends AnyVal {
     def asScala: Action = {
       Action.toScalaConversions.get(action)
         .orElse(Action.stringToScalaConversion.get(action.getActionName))
@@ -133,13 +84,13 @@ object AwsConverters {
     }
   }
 
-  private[policy] case class NamedAction(actionName: String) extends Action
+  private[awsutil] case class NamedAction(actionName: String) extends Action
 
   implicit class ScalaAction(val action: Action) extends AnyVal {
-    def asAws: aws.Action = Action.toAwsConversions(action)
+    def asAws: policy.Action = Action.toAwsConversions(action)
   }
 
-  implicit class AwsCondition(val condition: aws.Condition) extends AnyVal {
+  implicit class AwsCondition(val condition: policy.Condition) extends AnyVal {
     def asScala: Condition = {
       val key = condition.getConditionKey
       val values = condition.getValues.asScala.toList
@@ -153,7 +104,7 @@ object AwsConverters {
       comparisonType match {
         case MultipleKeyValueConditionPrefix(op, innerType) ⇒
           val innerCondition =
-            new aws.Condition()
+            new policy.Condition()
               .withConditionKey(key)
               .withType(if (ifExists) s"${innerType}IfExists" else innerType)
               .withValues(condition.getValues)
@@ -229,9 +180,9 @@ object AwsConverters {
   }
 
   implicit class ScalaCondition(val condition: Condition) extends AnyVal {
-    def asAws: aws.Condition = {
+    def asAws: policy.Condition = {
       def awsCondition(conditionKey: String, comparisonType: String, comparisonValues: Seq[String], ifExists: Boolean) =
-        new aws.Condition()
+        new policy.Condition()
           .withConditionKey(conditionKey)
           .withType(if (ifExists) s"${comparisonType}IfExists" else comparisonType)
           .withValues(comparisonValues: _*)
@@ -367,31 +318,31 @@ object AwsConverters {
       }
   }
 
-  implicit class AwsResource(val resource: aws.Resource) extends AnyVal {
+  implicit class AwsResource(val resource: policy.Resource) extends AnyVal {
     def asScala: Resource = Resource(resource.getId)
   }
 
   implicit class ScalaResource(val resource: Resource) extends AnyVal {
-    def asAws: aws.Resource = new aws.Resource(resource.id)
+    def asAws: policy.Resource = new policy.Resource(resource.id)
   }
 
-  implicit class AwsStatementEffect(val effect: aws.Statement.Effect) extends AnyVal {
+  implicit class AwsStatementEffect(val effect: policy.Statement.Effect) extends AnyVal {
     def asScala: Statement.Effect =
       effect match {
-        case aws.Statement.Effect.Allow ⇒ Statement.Effect.Allow
-        case aws.Statement.Effect.Deny ⇒ Statement.Effect.Deny
+        case policy.Statement.Effect.Allow ⇒ Statement.Effect.Allow
+        case policy.Statement.Effect.Deny ⇒ Statement.Effect.Deny
       }
   }
 
   implicit class ScalaStatementEffect(val effect: Statement.Effect) extends AnyVal {
-    def asAws: aws.Statement.Effect =
+    def asAws: policy.Statement.Effect =
       effect match {
-        case Statement.Effect.Allow ⇒ aws.Statement.Effect.Allow
-        case Statement.Effect.Deny ⇒ aws.Statement.Effect.Deny
+        case Statement.Effect.Allow ⇒ policy.Statement.Effect.Allow
+        case Statement.Effect.Deny ⇒ policy.Statement.Effect.Deny
       }
   }
 
-  implicit class AwsStatement(val statement: aws.Statement) extends AnyVal {
+  implicit class AwsStatement(val statement: policy.Statement) extends AnyVal {
     def asScala: Statement =
       Statement(
         Option(statement.getId),
@@ -403,8 +354,8 @@ object AwsConverters {
   }
 
   implicit class ScalaStatement(val statement: Statement) extends AnyVal {
-    def asAws: aws.Statement = {
-      val awsStatement = new aws.Statement(statement.effect.asAws)
+    def asAws: policy.Statement = {
+      val awsStatement = new policy.Statement(statement.effect.asAws)
       statement.id.foreach(id ⇒ awsStatement.setId(id))
       awsStatement.setPrincipals(statement.principals.map(_.asAws).asJavaCollection)
       awsStatement.setActions(statement.actions.map(_.asAws).asJavaCollection)
@@ -414,20 +365,30 @@ object AwsConverters {
     }
   }
 
-  implicit class AwsPolicy(val policy: aws.Policy) extends AnyVal {
+  implicit class AwsPolicy(val awsPolicy: policy.Policy) extends AnyVal {
     def asScala: Policy =
       Policy(
-        Option(policy.getId),
-        asList(policy.getStatements).map(_.asScala))
+        Option(awsPolicy.getId),
+        asList(awsPolicy.getStatements).map(_.asScala))
   }
 
-  implicit class ScalaPolicy(val policy: Policy) extends AnyVal {
-    def asAws: aws.Policy = {
-      val awsPolicy = new aws.Policy()
-      policy.id.foreach(id ⇒ awsPolicy.setId(id))
-      awsPolicy.setStatements(policy.statements.map(_.asAws).asJavaCollection)
+  implicit class ScalaPolicy(val scalaPolicy: Policy) extends AnyVal {
+    def asAws: policy.Policy = {
+      val awsPolicy = new policy.Policy()
+      scalaPolicy.id.foreach(id ⇒ awsPolicy.setId(id))
+      awsPolicy.setStatements(scalaPolicy.statements.map(_.asAws).asJavaCollection)
       awsPolicy
     }
+  }
+
+  implicit class AwsRegion(val region: regions.Regions) extends AnyVal {
+    def asScala: Region =
+      Region.unapply(region.getName)
+        .getOrElse(throw new IllegalArgumentException(s"Could not find Scala equivalent for $region"))
+  }
+
+  implicit class ScalaRegion(val region: Region) extends AnyVal {
+    def asAws: regions.Regions = regions.Regions.fromName(region.name)
   }
 
   private def asList[T](collection: util.Collection[T]): List[T] =

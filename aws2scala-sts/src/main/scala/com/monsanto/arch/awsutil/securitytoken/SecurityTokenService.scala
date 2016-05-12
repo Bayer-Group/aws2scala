@@ -4,13 +4,19 @@ import java.util.concurrent.ExecutorService
 
 import com.amazonaws.auth.AWSCredentialsProvider
 import com.amazonaws.services.securitytoken.AWSSecurityTokenServiceAsyncClient
+import com.monsanto.arch.awsutil.auth.policy.action.SecurityTokenServiceAction
 import com.monsanto.arch.awsutil.impl.ShutdownHook
 import com.monsanto.arch.awsutil.{AwsClientProvider, AwsSettings}
 
 object SecurityTokenService extends AwsClientProvider[StreamingSecurityTokenServiceClient,AsyncSecurityTokenServiceClient] {
+  private[awsutil] def init(): Unit = {
+    SecurityTokenServiceAction.registerActions()
+  }
+
   override private[awsutil] def streamingClient(settings: AwsSettings,
                                                 credentialsProvider: AWSCredentialsProvider,
                                                 executorService: ExecutorService): (StreamingSecurityTokenServiceClient, ShutdownHook) = {
+    init()
     val aws = new AWSSecurityTokenServiceAsyncClient(credentialsProvider, executorService)
     aws.setRegion(settings.region)
     val client = new DefaultStreamingSecurityTokenServiceClient(aws)

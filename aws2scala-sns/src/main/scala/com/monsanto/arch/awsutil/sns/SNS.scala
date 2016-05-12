@@ -6,14 +6,24 @@ import com.amazonaws.auth.AWSCredentialsProvider
 import com.amazonaws.services.sns.AmazonSNSAsyncClient
 import com.monsanto.arch.awsutil.auth.policy.action.SNSAction
 import com.monsanto.arch.awsutil.impl.ShutdownHook
-import com.monsanto.arch.awsutil.{AwsClientProvider, AwsSettings}
+import com.monsanto.arch.awsutil.sns.model.{PlatformApplicationArn, PlatformEndpointArn, SubscriptionArn, TopicArn}
+import com.monsanto.arch.awsutil.{Arn, AwsClientProvider, AwsSettings}
 
 object SNS extends AwsClientProvider[StreamingSNSClient,AsyncSNSClient] {
-  SNSAction.registerActions()
+  private[awsutil] def init(): Unit = {
+    SNSAction.registerActions()
+    Arn.registerArnMatchers(
+      PlatformApplicationArn.platformApplicationArnPF,
+      PlatformEndpointArn.platformEndpointArnPF,
+      SubscriptionArn.subscriptionArnPF,
+      TopicArn.topicArnPF
+    )
+  }
 
   override private[awsutil] def streamingClient(settings: AwsSettings,
                                                 credentialsProvider: AWSCredentialsProvider,
                                                 executorService: ExecutorService): (StreamingSNSClient, ShutdownHook) = {
+    init()
     val aws = new AmazonSNSAsyncClient(credentialsProvider, executorService)
     aws.setRegion(settings.region)
     val client = new DefaultStreamingSNSClient(aws)
