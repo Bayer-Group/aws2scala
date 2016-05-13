@@ -16,10 +16,14 @@ object Path {
   /** Extractor for getting a `Path` from a string. */
   object fromString {
     def unapply(str: String): Option[Path] = {
-      str.split("/").toList match {
-        case Nil        ⇒ Some(Path.empty)
-        case "" :: rest ⇒ Some(Path(rest))
-        case _          ⇒ None
+      if (str.nonEmpty) {
+        str.split("/").toList match {
+          case Nil        ⇒ Some(Path.empty)
+          case "" :: rest ⇒ Some(Path(rest))
+          case _          ⇒ None
+        }
+      } else {
+        None
       }
     }
   }

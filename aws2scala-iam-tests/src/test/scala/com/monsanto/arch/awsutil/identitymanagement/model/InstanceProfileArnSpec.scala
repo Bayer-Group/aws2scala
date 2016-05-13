@@ -32,5 +32,11 @@ class InstanceProfileArnSpec extends FreeSpec {
         InstanceProfileArn(arn.arnString) shouldBe arn
       }
     }
+
+    "will fail to parse an invalid ARN" in {
+      an [IllegalArgumentException] shouldBe thrownBy {
+        InstanceProfileArn("arn:aws:iam::111222333444:root")
+      }
+    }
   }
 }

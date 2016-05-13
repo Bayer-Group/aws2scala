@@ -31,5 +31,11 @@ class RoleArnSpec extends FreeSpec {
         RoleArn(arn.arnString) shouldBe arn
       }
     }
+
+    "will fail to parse an invalid ARN" in {
+      an [IllegalArgumentException] shouldBe thrownBy {
+        RoleArn("arn:aws:iam::111222333444:root")
+      }
+    }
   }
 }

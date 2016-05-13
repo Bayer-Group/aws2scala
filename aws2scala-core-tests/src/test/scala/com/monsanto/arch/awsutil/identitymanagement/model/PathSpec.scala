@@ -12,5 +12,13 @@ class PathSpec extends FreeSpec {
         Path.fromString.unapply(path.pathString) shouldBe Some(path)
       }
     }
+
+    "should not parse invalid path strings" in {
+      forAll { pathString: String ⇒
+        whenever(!pathString.matches("^(\u002F)|(\u002F[\u0021-\u007F]+\u002F)$")) {
+          pathString should not matchPattern { case Path.fromString(_) ⇒ }
+        }
+      }
+    }
   }
 }

@@ -28,5 +28,11 @@ class UserArnSpec extends FreeSpec {
         UserArn(arn.arnString) shouldBe arn
       }
     }
+
+    "will fail to parse an invalid ARN" in {
+      an [IllegalArgumentException] shouldBe thrownBy {
+        UserArn("arn:aws:iam::111222333444:root")
+      }
+    }
   }
 }
