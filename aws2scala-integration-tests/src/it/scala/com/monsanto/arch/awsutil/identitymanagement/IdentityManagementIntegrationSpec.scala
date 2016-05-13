@@ -3,7 +3,7 @@ package com.monsanto.arch.awsutil.identitymanagement
 import akka.Done
 import com.amazonaws.auth.policy.actions.SecurityTokenServiceActions
 import com.amazonaws.auth.policy.{Action, Policy, Principal, Statement}
-import com.monsanto.arch.awsutil.identitymanagement.model.{AttachedPolicy, Role, User}
+import com.monsanto.arch.awsutil.identitymanagement.model.{AttachedPolicy, PolicyArn, Role, User}
 import com.monsanto.arch.awsutil.test_support.AwsScalaFutures._
 import com.monsanto.arch.awsutil.test_support.{AwsIntegrationSpec, IntegrationCleanup, IntegrationTest}
 import com.typesafe.scalalogging.StrictLogging
@@ -66,7 +66,7 @@ class IdentityManagementIntegrationSpec extends FreeSpec with AwsIntegrationSpec
     }
 
     "attach a policy to a role" in {
-      val result = async.attachRolePolicy(testRole.name, iamReadOnlyPolicy.arn).futureValue
+      val result = async.attachRolePolicy(testRole.name, PolicyArn(iamReadOnlyPolicy.arn)).futureValue
       result shouldBe Done
     }
 

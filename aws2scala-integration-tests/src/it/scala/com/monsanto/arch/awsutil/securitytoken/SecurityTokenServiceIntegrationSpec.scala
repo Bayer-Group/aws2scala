@@ -29,7 +29,7 @@ class SecurityTokenServiceIntegrationSpec extends FreeSpec with AwsIntegrationSp
   private val testPathPrefix = "/aws2scala-it-sts/"
   private val testPath = s"$testPathPrefix$testId/"
   private val testRoleName = s"STSTestRole-$testId"
-  private val testRolePolicyArn = "arn:aws:iam::aws:policy/AmazonS3ReadOnlyAccess"
+  private val testRolePolicyArn = PolicyArn("arn:aws:iam::aws:policy/AmazonS3ReadOnlyAccess")
   private var testRole: Role = _
   private var credentials: Credentials = _
 
@@ -86,7 +86,7 @@ class SecurityTokenServiceIntegrationSpec extends FreeSpec with AwsIntegrationSp
   override protected def afterAll() = {
     try {
       val deletedRole =
-        Source.single(DetachRolePolicyRequest(testRole.name, testRolePolicyArn))
+        Source.single(DetachRolePolicyRequest(testRole.name, testRolePolicyArn.arnString))
           .via(iam.rolePolicyDetacher)
           .via(iam.roleDeleter)
           .runWith(Sink.head)

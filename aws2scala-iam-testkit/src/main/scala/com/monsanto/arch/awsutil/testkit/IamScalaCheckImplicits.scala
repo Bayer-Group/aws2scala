@@ -18,12 +18,12 @@ object IamScalaCheckImplicits {
       for {
         roleName ← CoreGen.iamName
         policyArn ← arbitrary[PolicyArn]
-      } yield AttachRolePolicyRequest(roleName, policyArn.arnString)
+      } yield AttachRolePolicyRequest(roleName, policyArn)
     }
 
   implicit lazy val shrinkAttachRolePolicyRequest: Shrink[AttachRolePolicyRequest] =
     Shrink { request ⇒
-      Shrink.shrink(PolicyArn(request.policyArn)).map(x ⇒ request.copy(policyArn = x.arnString)) append
+      Shrink.shrink(request.policyArn).map(x ⇒ request.copy(policyArn = x)) append
         Shrink.shrink(request.roleName).filter(_.nonEmpty).map(x ⇒ request.copy(roleName = x))
     }
 

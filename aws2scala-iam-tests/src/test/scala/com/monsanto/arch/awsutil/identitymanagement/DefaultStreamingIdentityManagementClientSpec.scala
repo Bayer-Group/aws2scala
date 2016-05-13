@@ -111,7 +111,7 @@ class DefaultStreamingIdentityManagementClientSpec extends FreeSpec with MockFac
       ) { (roleName, policyArn) ⇒
         val iam = mock[AmazonIdentityManagementAsync]("iam")
         val streaming = new DefaultStreamingIdentityManagementClient(iam)
-        val request = AttachRolePolicyRequest(roleName, policyArn.arnString)
+        val request = AttachRolePolicyRequest(roleName, policyArn)
 
         (iam.attachRolePolicyAsync(_: aws.AttachRolePolicyRequest, _: AsyncHandler[aws.AttachRolePolicyRequest, Void]))
           .expects(whereRequest { r ⇒

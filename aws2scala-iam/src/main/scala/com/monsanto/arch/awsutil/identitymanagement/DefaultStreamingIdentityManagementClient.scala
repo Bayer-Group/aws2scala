@@ -4,6 +4,7 @@ import akka.NotUsed
 import akka.stream.scaladsl.Flow
 import com.amazonaws.services.identitymanagement.AmazonIdentityManagementAsync
 import com.amazonaws.services.identitymanagement.model._
+import com.monsanto.arch.awsutil.converters.IamConverters._
 import com.monsanto.arch.awsutil.identitymanagement.model.{AttachRolePolicyRequest, AttachedPolicy, CreateRoleRequest, DetachRolePolicyRequest, GetUserRequest, ListAttachedRolePoliciesRequest, ListRolesRequest, Role, User}
 import com.monsanto.arch.awsutil.{AWSFlow, AWSFlowAdapter}
 
@@ -33,7 +34,7 @@ private[awsutil] class DefaultStreamingIdentityManagementClient(aws: AmazonIdent
 
   override val rolePolicyAttacher =
     Flow[AttachRolePolicyRequest]
-      .map(_.toAws)
+      .map(_.asAws)
       .via(AWSFlow.simple(AWSFlowAdapter.devoid(aws.attachRolePolicyAsync)))
       .map(_.getRoleName)
       .named("IAM.rolePolicyAttacher")

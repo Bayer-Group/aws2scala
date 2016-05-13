@@ -1,6 +1,7 @@
 package com.monsanto.arch.awsutil.identitymanagement.model
 
-import com.amazonaws.services.identitymanagement.model.{AttachRolePolicyRequest ⇒ AwsAttachRolePolicyRequest}
+import com.amazonaws.services.identitymanagement.{model ⇒ aws}
+import com.monsanto.arch.awsutil.converters.IamConverters._
 import com.monsanto.arch.awsutil.testkit.CoreGen
 import com.monsanto.arch.awsutil.testkit.IamScalaCheckImplicits._
 import org.scalacheck.Arbitrary.arbitrary
@@ -12,17 +13,17 @@ class AttachRolePolicyRequestSpec extends FreeSpec {
   "a AttachRolePolicyRequest can be round-tripped" - {
     "from its AWS equivalent" in {
       forAll(arbitrary[PolicyArn], CoreGen.iamName) { (policyArn, roleName) ⇒
-        val aws = new AwsAttachRolePolicyRequest()
+        val request = new aws.AttachRolePolicyRequest()
           .withPolicyArn(policyArn.arnString)
           .withRoleName(roleName)
 
-        AttachRolePolicyRequest.fromAws(aws).toAws shouldBe aws
+        request.asScala.asAws shouldBe request
       }
     }
 
     "via its AWS equivalent" in {
       forAll { request: AttachRolePolicyRequest ⇒
-        AttachRolePolicyRequest.fromAws(request.toAws) shouldBe request
+        request.asAws.asScala shouldBe request
       }
     }
   }

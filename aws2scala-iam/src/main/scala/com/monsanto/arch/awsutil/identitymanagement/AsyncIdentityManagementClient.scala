@@ -3,7 +3,7 @@ package com.monsanto.arch.awsutil.identitymanagement
 import akka.Done
 import akka.stream.Materializer
 import com.monsanto.arch.awsutil.AsyncAwsClient
-import com.monsanto.arch.awsutil.identitymanagement.model.{AttachedPolicy, Role, User}
+import com.monsanto.arch.awsutil.identitymanagement.model.{AttachedPolicy, PolicyArn, Role, User}
 
 import scala.concurrent.Future
 
@@ -35,7 +35,7 @@ trait AsyncIdentityManagementClient extends AsyncAwsClient {
   def listRoles(pathPrefix: String)(implicit m: Materializer): Future[Seq[Role]]
 
   /** Attaches the managed policy to a role. */
-  def attachRolePolicy(roleName: String, policyArn: String)(implicit m: Materializer): Future[Done]
+  def attachRolePolicy(roleName: String, policyArn: PolicyArn)(implicit m: Materializer): Future[Done]
 
   /** Detaches the managed policy from a role. */
   def detachRolePolicy(roleName: String, policyArn: String)(implicit m: Materializer): Future[Done]
