@@ -195,11 +195,9 @@ object IamScalaCheckImplicits {
     Arbitrary {
       for {
         policyArn ← arbitrary[PolicyArn]
-      } yield AttachedPolicy(policyArn.arnString, policyArn.name)
+      } yield AttachedPolicy(policyArn, policyArn.name)
     }
 
   implicit lazy val shrinkAttachedPolicy: Shrink[AttachedPolicy] =
-    Shrink { ap ⇒
-      Shrink.shrink(PolicyArn(ap.arn)).map(x ⇒ AttachedPolicy(x.arnString, x.name))
-    }
+    Shrink(ap ⇒ Shrink.shrink(ap.arn).map(x ⇒ AttachedPolicy(x, x.name)))
 }

@@ -17,7 +17,8 @@ import scala.collection.JavaConverters._
 class IdentityManagementIntegrationSpec extends FreeSpec with AwsIntegrationSpec with StrictLogging with IntegrationCleanup {
   private val async = awsClient.async(IdentityManagement)
 
-  private val iamReadOnlyPolicy = AttachedPolicy("arn:aws:iam::aws:policy/IAMReadOnlyAccess", "IAMReadOnlyAccess")
+  private val iamReadOnlyPolicy =
+    AttachedPolicy(PolicyArn("arn:aws:iam::aws:policy/IAMReadOnlyAccess"), "IAMReadOnlyAccess")
 
   private val testPathPrefix = "/aws2scala-it-iam/"
   private val testPath = s"$testPathPrefix$testId/"
@@ -66,7 +67,7 @@ class IdentityManagementIntegrationSpec extends FreeSpec with AwsIntegrationSpec
     }
 
     "attach a policy to a role" in {
-      val result = async.attachRolePolicy(testRole.name, PolicyArn(iamReadOnlyPolicy.arn)).futureValue
+      val result = async.attachRolePolicy(testRole.name, iamReadOnlyPolicy.arn).futureValue
       result shouldBe Done
     }
 
@@ -76,7 +77,7 @@ class IdentityManagementIntegrationSpec extends FreeSpec with AwsIntegrationSpec
     }
 
     "detach a policy from a role" in {
-      val result = async.detachRolePolicy(testRole.name, iamReadOnlyPolicy.arn).futureValue
+      val result = async.detachRolePolicy(testRole.name, iamReadOnlyPolicy.arn.arnString).futureValue
       result shouldBe Done
     }
 

@@ -3,6 +3,7 @@ package com.monsanto.arch.awsutil.identitymanagement
 import akka.stream.scaladsl.{Sink, Source}
 import com.amazonaws.handlers.AsyncHandler
 import com.amazonaws.services.identitymanagement.{AmazonIdentityManagementAsync, model ⇒ aws}
+import com.monsanto.arch.awsutil.converters.IamConverters._
 import com.monsanto.arch.awsutil.identitymanagement.model._
 import com.monsanto.arch.awsutil.test_support.AdaptableScalaFutures._
 import com.monsanto.arch.awsutil.test_support.Samplers.EnhancedGen
@@ -172,7 +173,7 @@ class DefaultStreamingIdentityManagementClientSpec extends FreeSpec with MockFac
               true
             })
             .withAwsSuccess {
-              val policies = page.map(_.toAws)
+              val policies = page.map(_.asAws)
               val result = new aws.ListAttachedRolePoliciesResult().withAttachedPolicies(policies: _*)
               val next = i + 1
               if (next != pages.size) {
