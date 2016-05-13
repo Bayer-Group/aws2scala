@@ -31,7 +31,7 @@ object IamScalaCheckImplicits {
     Arbitrary {
       for {
         name ← CoreGen.iamName
-        assumeRolePolicy ← arbitrary[Policy]
+        assumeRolePolicy ← IamGen.assumeRolePolicy
         path ← arbitrary[Option[Path]]
       } yield CreateRoleRequest(name, assumeRolePolicy.toString, path.map(_.pathString))
     }

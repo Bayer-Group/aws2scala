@@ -3,8 +3,10 @@ package com.monsanto.arch.awsutil.testkit
 import java.util.Date
 
 import com.monsanto.arch.awsutil.Account
-import com.monsanto.arch.awsutil.auth.policy.Policy
+import com.monsanto.arch.awsutil.auth.policy.action.SecurityTokenServiceAction
+import com.monsanto.arch.awsutil.auth.policy.{Policy, Principal, Statement}
 import com.monsanto.arch.awsutil.identitymanagement.model._
+import com.monsanto.arch.awsutil.securitytoken.SecurityTokenService
 import com.monsanto.arch.awsutil.testkit.CoreScalaCheckImplicits._
 import com.monsanto.arch.awsutil.testkit.IamScalaCheckImplicits._
 import org.scalacheck.Arbitrary.arbitrary
@@ -12,6 +14,8 @@ import org.scalacheck.Gen
 
 /** Handy generators for ''aws2scala-iam'' objects. */
 object IamGen {
+  SecurityTokenService.init()
+
   /** Generates a role from the given name, policy, and path. */
   def role(roleName: String, assumeRolePolicyDocument: Policy, path: Path = Path.empty): Gen[Role] =
     for {
@@ -33,6 +37,21 @@ object IamGen {
 
   /** Generates a unique identifier for a user. */
   val userId: Gen[String] = id("AID")
+
+  /** Generates a simple assume role policy with a random principal. */
+  val assumeRolePolicy: Gen[Policy] =
+    for {
+      principal ← arbitrary[Principal]
+    } yield Policy(
+      None,
+      Seq(
+        Statement(
+          id = None,
+          principals = Seq(principal),
+          effect = Statement.Effect.Allow,
+          actions = Seq(SecurityTokenServiceAction.AssumeRole),
+          resources = Seq.empty,
+          conditions = Seq.empty)))
 
   /** Used to generate IAM unique identifiers. */
   private def id(prefix: String): Gen[String] =

@@ -1,10 +1,9 @@
 package com.monsanto.arch.awsutil.identitymanagement.model
 
 import com.amazonaws.services.identitymanagement.{model ⇒ aws}
-import com.monsanto.arch.awsutil.auth.policy.Policy
-import com.monsanto.arch.awsutil.testkit.CoreGen
 import com.monsanto.arch.awsutil.testkit.CoreScalaCheckImplicits._
 import com.monsanto.arch.awsutil.testkit.IamScalaCheckImplicits._
+import com.monsanto.arch.awsutil.testkit.{CoreGen, IamGen}
 import org.scalacheck.Arbitrary.arbitrary
 import org.scalatest.FreeSpec
 import org.scalatest.Matchers._
@@ -15,7 +14,7 @@ class CreateRoleRequestSpec extends FreeSpec {
     "from its AWS equivalent" in {
       forAll(
         CoreGen.iamName → "name",
-        arbitrary[Policy] → "assumeRolePolicy",
+        IamGen.assumeRolePolicy → "assumeRolePolicy",
         arbitrary[Option[Path]] → "path"
       ) { (name, assumeRolePolicy, path) ⇒
         val request = new aws.CreateRoleRequest()

@@ -222,7 +222,7 @@ lazy val iam = Project("aws2scala-iam", file("aws2scala-iam"))
   )
 
 lazy val iamTestkit = Project("aws2scala-iam-testkit", file("aws2scala-iam-testkit"))
-  .dependsOn(iam, coreTestkit)
+  .dependsOn(iam, coreTestkit, sts)
   .settings(
     commonSettings,
     bintrayPublishingSettings,
