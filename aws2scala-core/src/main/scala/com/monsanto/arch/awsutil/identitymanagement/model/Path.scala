@@ -10,6 +10,14 @@ case class Path(elements: Seq[String]) {
 }
 
 object Path {
+  /** Allows creation of a `Path` object by parsing a string. */
+  def apply(pathString: String): Path = {
+    pathString match {
+      case Path.fromString(p) ⇒ p
+      case _                  ⇒ throw new IllegalArgumentException(s"‘$pathString’ cannot be parsed as a valid path.")
+    }
+  }
+
   /** Constant for an empty path. */
   val empty: Path = Path(Seq.empty)
 

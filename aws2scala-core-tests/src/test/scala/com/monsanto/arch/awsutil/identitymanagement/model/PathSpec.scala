@@ -9,14 +9,16 @@ class PathSpec extends FreeSpec {
   "a Path should" - {
     "be round-trippable via its string representation" in {
       forAll { path: Path ⇒
-        Path.fromString.unapply(path.pathString) shouldBe Some(path)
+        Path(path.pathString) shouldBe path
       }
     }
 
     "should not parse invalid path strings" in {
       forAll { pathString: String ⇒
         whenever(!pathString.matches("^(\u002F)|(\u002F[\u0021-\u007F]+\u002F)$")) {
-          pathString should not matchPattern { case Path.fromString(_) ⇒ }
+          an [IllegalArgumentException] shouldBe thrownBy {
+            Path(pathString)
+          }
         }
       }
     }
