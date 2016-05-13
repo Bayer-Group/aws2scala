@@ -6,11 +6,13 @@ import com.amazonaws.auth.AWSCredentialsProvider
 import com.amazonaws.services.sqs.AmazonSQSAsyncClient
 import com.monsanto.arch.awsutil.auth.policy.action.SQSAction
 import com.monsanto.arch.awsutil.impl.ShutdownHook
-import com.monsanto.arch.awsutil.{AwsClientProvider, AwsSettings}
+import com.monsanto.arch.awsutil.sqs.model.QueueArn
+import com.monsanto.arch.awsutil.{Arn, AwsClientProvider, AwsSettings}
 
 object SQS extends AwsClientProvider[StreamingSQSClient,AsyncSQSClient] {
   private[awsutil] def init(): Unit = {
     SQSAction.registerActions()
+    Arn.registerArnMatchers(QueueArn.queueArnPF)
   }
 
   override private[awsutil] def streamingClient(settings: AwsSettings,
