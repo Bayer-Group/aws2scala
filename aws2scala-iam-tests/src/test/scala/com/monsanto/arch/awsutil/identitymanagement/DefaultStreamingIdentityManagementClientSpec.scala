@@ -5,8 +5,9 @@ import com.amazonaws.handlers.AsyncHandler
 import com.amazonaws.services.identitymanagement.{AmazonIdentityManagementAsync, model ⇒ aws}
 import com.monsanto.arch.awsutil.identitymanagement.model._
 import com.monsanto.arch.awsutil.test_support.AdaptableScalaFutures._
-import com.monsanto.arch.awsutil.test_support.Samplers.{EnhancedGen, arbitrarySample}
+import com.monsanto.arch.awsutil.test_support.Samplers.EnhancedGen
 import com.monsanto.arch.awsutil.test_support.{AwsMockUtils, Materialised}
+import com.monsanto.arch.awsutil.testkit.CoreGen
 import com.monsanto.arch.awsutil.testkit.CoreScalaCheckImplicits._
 import com.monsanto.arch.awsutil.testkit.IamScalaCheckImplicits._
 import org.scalacheck.Arbitrary.arbitrary
@@ -87,32 +88,35 @@ class DefaultStreamingIdentityManagementClientSpec extends FreeSpec with MockFac
     }
 
     "a role deleter" in {
-      forAll { roleName: Name ⇒
+      forAll(CoreGen.iamName) { roleName ⇒
         val iam = mock[AmazonIdentityManagementAsync]("iam")
         val streaming = new DefaultStreamingIdentityManagementClient(iam)
 
         (iam.deleteRoleAsync(_: aws.DeleteRoleRequest, _: AsyncHandler[aws.DeleteRoleRequest, Void]))
           .expects(whereRequest { r ⇒
-            r should have ('roleName (roleName.value))
+            r should have ('roleName (roleName))
             true
           })
           .withVoidAwsSuccess()
 
-        val result = Source.single(roleName.value).via(streaming.roleDeleter).runWith(Sink.head).futureValue
-        result shouldBe roleName.value
+        val result = Source.single(roleName).via(streaming.roleDeleter).runWith(Sink.head).futureValue
+        result shouldBe roleName
       }
     }
 
     "a role policy attacher" in {
-      forAll { (roleName: Name, policyArn: PolicyArn) ⇒
+      forAll(
+        CoreGen.iamName → "roleName",
+        arbitrary[PolicyArn] → "policyArn"
+      ) { (roleName, policyArn) ⇒
         val iam = mock[AmazonIdentityManagementAsync]("iam")
         val streaming = new DefaultStreamingIdentityManagementClient(iam)
-        val request = AttachRolePolicyRequest(roleName.value, policyArn.arnString)
+        val request = AttachRolePolicyRequest(roleName, policyArn.arnString)
 
         (iam.attachRolePolicyAsync(_: aws.AttachRolePolicyRequest, _: AsyncHandler[aws.AttachRolePolicyRequest, Void]))
           .expects(whereRequest { r ⇒
             r should have (
-              'roleName (roleName.value),
+              'roleName (roleName),
               'policyArn (policyArn.arnString)
             )
             true
@@ -120,20 +124,23 @@ class DefaultStreamingIdentityManagementClientSpec extends FreeSpec with MockFac
           .withVoidAwsSuccess()
 
         val result = Source.single(request).via(streaming.rolePolicyAttacher).runWith(Sink.head).futureValue
-        result shouldBe roleName.value
+        result shouldBe roleName
       }
     }
 
     "a role policy detacher" in {
-      forAll { (roleName: Name, policyArn: PolicyArn) ⇒
+      forAll(
+        CoreGen.iamName → "roleName",
+        arbitrary[PolicyArn] → "policyArn"
+      ) { (roleName, policyArn) ⇒
         val iam = mock[AmazonIdentityManagementAsync]("iam")
         val streaming = new DefaultStreamingIdentityManagementClient(iam)
-        val request = DetachRolePolicyRequest(roleName.value, policyArn.arnString)
+        val request = DetachRolePolicyRequest(roleName, policyArn.arnString)
 
         (iam.detachRolePolicyAsync(_: aws.DetachRolePolicyRequest, _: AsyncHandler[aws.DetachRolePolicyRequest, Void]))
           .expects(whereRequest { r ⇒
             r should have (
-              'roleName (roleName.value),
+              'roleName (roleName),
               'policyArn (policyArn.arnString)
             )
             true
@@ -141,22 +148,15 @@ class DefaultStreamingIdentityManagementClientSpec extends FreeSpec with MockFac
           .withVoidAwsSuccess()
 
         val result = Source.single(request).via(streaming.rolePolicyDetacher).runWith(Sink.head).futureValue
-        result shouldBe roleName.value
+        result shouldBe roleName
       }
     }
 
     "an attached role policy lister" in {
-      forAll { args: (Name, Option[Path]) ⇒
+      forAll { request: ListAttachedRolePoliciesRequest ⇒
         val iam = mock[AmazonIdentityManagementAsync]("iam")
         val streaming = new DefaultStreamingIdentityManagementClient(iam)
-        val request = args match {
-          case (Name(name), Some(path)) ⇒ ListAttachedRolePoliciesRequest(name, path.pathString)
-          case (Name(name), None) ⇒ ListAttachedRolePoliciesRequest(name)
-        }
-        val results =
-          arbitrarySample[List[(PolicyArn, Name)]](20).map { args ⇒
-            AttachedPolicy(args._1.arnString, args._2.value)
-          }
+        val results = Gen.resize(20, arbitrary[List[AttachedPolicy]]).reallySample
 
         val pages = if (results.isEmpty) List(results) else results.grouped(5).toList
 
@@ -189,10 +189,9 @@ class DefaultStreamingIdentityManagementClientSpec extends FreeSpec with MockFac
     }
 
     "a user getter" in {
-      forAll { args: List[Option[Name]] ⇒
+      forAll { requests: List[GetUserRequest] ⇒
         val iam = mock[AmazonIdentityManagementAsync]("iam")
         val streaming = new DefaultStreamingIdentityManagementClient(iam)
-        val requests = args.map(_.map(n ⇒ GetUserRequest.forUserName(n.value)).getOrElse(GetUserRequest.currentUser))
 
         val users = Gen.resize(20, Gen.listOfN(requests.size, arbitrary[User])).reallySample
 

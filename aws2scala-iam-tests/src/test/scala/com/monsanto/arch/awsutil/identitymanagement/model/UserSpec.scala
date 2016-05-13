@@ -4,6 +4,7 @@ import java.util.Date
 
 import com.amazonaws.services.identitymanagement.{model ⇒ aws}
 import com.monsanto.arch.awsutil.Account
+import com.monsanto.arch.awsutil.testkit.CoreGen
 import com.monsanto.arch.awsutil.testkit.CoreScalaCheckImplicits._
 import com.monsanto.arch.awsutil.testkit.IamScalaCheckImplicits._
 import org.scalacheck.Arbitrary.arbitrary
@@ -17,13 +18,13 @@ class UserSpec extends FreeSpec {
       "from its AWS equivalent" in {
         forAll (
           arbitrary[Account] → "account",
-          arbitrary[Name] → "name",
+          CoreGen.iamName → "name",
           arbitrary[Path] → "path",
           arbitrary[UserId] → "userId",
           arbitrary[Date] → "created",
           arbitrary[Option[Date]] → "passwordLastUsed"
         ) { (account, name, path, id, created, passwordLastUsed) ⇒
-          val awsUser = new aws.User(path.pathString, name.value, id.value, UserArn(account, name.value, path).arnString, created)
+          val awsUser = new aws.User(path.pathString, name, id.value, UserArn(account, name, path).arnString, created)
           passwordLastUsed.foreach(d ⇒ awsUser.setPasswordLastUsed(d))
 
           User.fromAws(awsUser).toAws shouldBe awsUser

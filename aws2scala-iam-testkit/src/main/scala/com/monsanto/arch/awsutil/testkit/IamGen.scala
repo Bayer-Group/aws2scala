@@ -10,24 +10,31 @@ import com.monsanto.arch.awsutil.testkit.IamScalaCheckImplicits._
 import org.scalacheck.Arbitrary.arbitrary
 import org.scalacheck.Gen
 
+/** Handy generators for ''aws2scala-iam'' objects. */
 object IamGen {
-  def role(roleName: Name, assumeRolePolicyDocument: Policy, path: Path = Path(Seq.empty)): Gen[Role] =
+  /** Generates a role from the given name, policy, and path. */
+  def role(roleName: String, assumeRolePolicyDocument: Policy, path: Path = Path.empty): Gen[Role] =
     for {
       account ← arbitrary[Account]
       id ← arbitrary[RoleId]
     } yield {
-      val arn = RoleArn(account, roleName.value, path)
-      Role(arn.arnString, roleName.value, path.pathString, id.value, assumeRolePolicyDocument.toString, new Date)
+      val arn = RoleArn(account, roleName, path)
+      Role(arn.arnString, roleName, path.pathString, id.value, assumeRolePolicyDocument.toString, new Date)
     }
 
+  /** Generates a unique identifier for an instance profile. */
   val instanceProfileId: Gen[String] = id("AIP")
 
+  /** Generates a unique identifier for a role. */
   val roleId: Gen[String] = id("ARO")
 
+  /** Generates a unique identifier for a session access key. */
   val sessionAccessKeyId: Gen[String] = id("ASI")
 
+  /** Generates a unique identifier for a user. */
   val userId: Gen[String] = id("AID")
 
+  /** Used to generate IAM unique identifiers. */
   private def id(prefix: String): Gen[String] =
     Gen.listOfN(18, UtilGen.base36Char)
       .map(_.mkString(prefix, "", ""))

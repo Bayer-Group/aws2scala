@@ -5,6 +5,7 @@ import java.util.Date
 import com.amazonaws.services.identitymanagement.{model ⇒ aws}
 import com.monsanto.arch.awsutil.Account
 import com.monsanto.arch.awsutil.auth.policy.Policy
+import com.monsanto.arch.awsutil.testkit.CoreGen
 import com.monsanto.arch.awsutil.testkit.CoreScalaCheckImplicits._
 import com.monsanto.arch.awsutil.testkit.IamScalaCheckImplicits._
 import org.scalacheck.Arbitrary.arbitrary
@@ -17,16 +18,16 @@ class RoleSpec extends FreeSpec {
     "from its AWS equivalent" in {
       forAll (
         arbitrary[Account] → "account",
-        arbitrary[Name] → "name",
+        CoreGen.iamName → "name",
         arbitrary[Path] → "path",
         arbitrary[RoleId] → "roleId",
         arbitrary[Policy] → "assumeRolePolicy",
         arbitrary[Date] → "created"
       ) { (account, name, path, roleId, assumeRolePolicy, created) ⇒
-        val arn = RoleArn(account, name.value, path)
+        val arn = RoleArn(account, name, path)
         val role = new aws.Role()
           .withArn(arn.arnString)
-          .withRoleName(name.value)
+          .withRoleName(name)
           .withRoleId(roleId.value)
           .withPath(path.pathString)
           .withAssumeRolePolicyDocument(assumeRolePolicy.toString)

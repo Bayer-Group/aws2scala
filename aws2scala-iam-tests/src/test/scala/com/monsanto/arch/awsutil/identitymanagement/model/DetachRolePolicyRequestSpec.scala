@@ -1,6 +1,7 @@
 package com.monsanto.arch.awsutil.identitymanagement.model
 
 import com.amazonaws.services.identitymanagement.{model ⇒ aws}
+import com.monsanto.arch.awsutil.testkit.CoreGen
 import com.monsanto.arch.awsutil.testkit.IamScalaCheckImplicits._
 import org.scalacheck.Arbitrary.arbitrary
 import org.scalatest.FreeSpec
@@ -12,11 +13,11 @@ class DetachRolePolicyRequestSpec extends FreeSpec {
     "from its AWS equivalent" in {
       forAll(
         arbitrary[PolicyArn] → "policyArn",
-        arbitrary[Name] → "roleName"
+        CoreGen.iamName → "roleName"
       ) { (policyArn, roleName) ⇒
         val request = new aws.DetachRolePolicyRequest()
           .withPolicyArn(policyArn.arnString)
-          .withRoleName(roleName.value)
+          .withRoleName(roleName)
 
         DetachRolePolicyRequest.fromAws(request).toAws shouldBe request
       }

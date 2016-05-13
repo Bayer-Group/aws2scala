@@ -2,6 +2,7 @@ package com.monsanto.arch.awsutil.identitymanagement.model
 
 import com.amazonaws.services.identitymanagement.{model ⇒ aws}
 import com.monsanto.arch.awsutil.auth.policy.Policy
+import com.monsanto.arch.awsutil.testkit.CoreGen
 import com.monsanto.arch.awsutil.testkit.CoreScalaCheckImplicits._
 import com.monsanto.arch.awsutil.testkit.IamScalaCheckImplicits._
 import org.scalacheck.Arbitrary.arbitrary
@@ -13,12 +14,12 @@ class CreateRoleRequestSpec extends FreeSpec {
   "a CreateRoleRequest can be round-tripped" - {
     "from its AWS equivalent" in {
       forAll(
-        arbitrary[Name] → "name",
+        CoreGen.iamName → "name",
         arbitrary[Policy] → "assumeRolePolicy",
         arbitrary[Option[Path]] → "path"
       ) { (name, assumeRolePolicy, path) ⇒
         val request = new aws.CreateRoleRequest()
-          .withRoleName(name.value)
+          .withRoleName(name)
           .withAssumeRolePolicyDocument(assumeRolePolicy.toString)
         path.foreach(p ⇒ request.setPath(p.pathString))
 

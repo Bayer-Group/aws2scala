@@ -7,8 +7,8 @@ import com.monsanto.arch.awsutil.test_support.AdaptableScalaFutures._
 import com.monsanto.arch.awsutil.test_support.Samplers.{EnhancedGen, arbitrarySample}
 import com.monsanto.arch.awsutil.test_support.{FlowMockUtils, Materialised}
 import com.monsanto.arch.awsutil.testkit.CoreScalaCheckImplicits._
-import com.monsanto.arch.awsutil.testkit.IamGen
 import com.monsanto.arch.awsutil.testkit.IamScalaCheckImplicits._
+import com.monsanto.arch.awsutil.testkit.{CoreGen, IamGen}
 import org.scalacheck.Arbitrary.arbitrary
 import org.scalacheck.Gen
 import org.scalamock.scalatest.MockFactory
@@ -21,15 +21,14 @@ class DefaultAsyncIdentityManagementClientSpec extends FreeSpec with MockFactory
     "create roles" - {
       "without paths" in {
         forAll(
-          arbitrary[Name] → "roleName",
+          CoreGen.iamName → "roleName",
           arbitrary[Policy] → "policy"
-        ) { (roleNameObj, policyObj) ⇒
+        ) { (roleName, policyObj) ⇒
           val policy = policyObj.toJson
-          val roleName = roleNameObj.value
           val streaming = mock[StreamingIdentityManagementClient]("streaming")
           val async = new DefaultAsyncIdentityManagementClient(streaming)
 
-          val role = IamGen.role(roleNameObj, policyObj).reallySample
+          val role = IamGen.role(roleName, policyObj).reallySample
 
           (streaming.roleCreator _)
             .expects()
@@ -42,17 +41,16 @@ class DefaultAsyncIdentityManagementClientSpec extends FreeSpec with MockFactory
 
       "with paths" in {
         forAll(
-          arbitrary[Name] → "roleName",
+          CoreGen.iamName → "roleName",
           arbitrary[Policy] → "policy",
           arbitrary[Path] → "path"
-        ) { (roleNameObj, policyObj, pathObj) ⇒
+        ) { (roleName, policyObj, pathObj) ⇒
           val path = pathObj.toString
           val policy = policyObj.toString
-          val roleName = roleNameObj.value
           val streaming = mock[StreamingIdentityManagementClient]("streaming")
           val async = new DefaultAsyncIdentityManagementClient(streaming)
 
-          val role = IamGen.role(roleNameObj, policyObj, pathObj).reallySample
+          val role = IamGen.role(roleName, policyObj, pathObj).reallySample
 
           (streaming.roleCreator _)
             .expects()
@@ -65,8 +63,7 @@ class DefaultAsyncIdentityManagementClientSpec extends FreeSpec with MockFactory
     }
 
     "delete roles" in {
-      forAll(arbitrary[Name] → "roleName") { roleNameObj ⇒
-        val roleName = roleNameObj.value
+      forAll(CoreGen.iamName → "roleName") { roleName ⇒
         val streaming = mock[StreamingIdentityManagementClient]("streaming")
         val async = new DefaultAsyncIdentityManagementClient(streaming)
 
@@ -111,7 +108,7 @@ class DefaultAsyncIdentityManagementClientSpec extends FreeSpec with MockFactory
 
     "attach managed policies to roles" in {
       forAll(
-        arbitrary[Name] → "roleName",
+        CoreGen.iamName → "roleName",
         arbitrary[PolicyArn] → "policyArn"
       ) { (roleName, policyArn) ⇒
         val streaming = mock[StreamingIdentityManagementClient]("streaming")
@@ -119,16 +116,16 @@ class DefaultAsyncIdentityManagementClientSpec extends FreeSpec with MockFactory
 
         (streaming.rolePolicyAttacher _)
           .expects()
-          .returningFlow(AttachRolePolicyRequest(roleName.value, policyArn.arnString), roleName.value)
+          .returningFlow(AttachRolePolicyRequest(roleName, policyArn.arnString), roleName)
 
-        val result = async.attachRolePolicy(roleName.value, policyArn.arnString).futureValue
+        val result = async.attachRolePolicy(roleName, policyArn.arnString).futureValue
         result shouldBe Done
       }
     }
 
     "detach managed policies from roles" in {
       forAll(
-        arbitrary[Name] → "roleName",
+        CoreGen.iamName → "roleName",
         arbitrary[PolicyArn] → "policyArn"
       ) { (roleName, policyArn) ⇒
         val streaming = mock[StreamingIdentityManagementClient]("streaming")
@@ -136,50 +133,46 @@ class DefaultAsyncIdentityManagementClientSpec extends FreeSpec with MockFactory
 
         (streaming.rolePolicyDetacher _)
           .expects()
-          .returningFlow(DetachRolePolicyRequest(roleName.value, policyArn.arnString), roleName.value)
+          .returningFlow(DetachRolePolicyRequest(roleName, policyArn.arnString), roleName)
 
-        val result = async.detachRolePolicy(roleName.value, policyArn.arnString).futureValue
+        val result = async.detachRolePolicy(roleName, policyArn.arnString).futureValue
         result shouldBe Done
       }
     }
 
     "list all of the managed policies attached to a role" in {
-      forAll(arbitrary[Name] → "roleName") { roleName ⇒
+      forAll(CoreGen.iamName → "roleName") { roleName ⇒
         val streaming = mock[StreamingIdentityManagementClient]("streaming")
         val async = new DefaultAsyncIdentityManagementClient(streaming)
 
-        val policies = Gen.resize(20, arbitrary[List[(PolicyArn, Name)]]).reallySample.map { case (arn, name) ⇒
-          AttachedPolicy(arn.arnString, name.value)
-        }
+        val policies = Gen.resize(20, arbitrary[List[AttachedPolicy]]).reallySample
 
         (streaming.attachedRolePolicyLister _)
           .expects()
-          .returningConcatFlow(ListAttachedRolePoliciesRequest(roleName.value), policies)
+          .returningConcatFlow(ListAttachedRolePoliciesRequest(roleName), policies)
 
-        val result = async.listAttachedRolePolicies(roleName.value).futureValue
+        val result = async.listAttachedRolePolicies(roleName).futureValue
         result shouldBe policies
       }
     }
 
     "list the managed policies attached to a role that match a prefix" in {
       forAll(
-        arbitrary[Name] → "roleName",
+        CoreGen.iamName → "roleName",
         arbitrary[Path] → "path"
       ) { (roleName, pathPrefix) ⇒
         val streaming = mock[StreamingIdentityManagementClient]("streaming")
         val async = new DefaultAsyncIdentityManagementClient(streaming)
 
-        val policies = Gen.resize(20, arbitrary[List[(PolicyArn, Name)]]).reallySample.map { case (arn, name) ⇒
-          AttachedPolicy(arn.arnString, name.value)
-        }
+        val policies = Gen.resize(20, arbitrary[List[AttachedPolicy]]).reallySample
 
         (streaming.attachedRolePolicyLister _)
           .expects()
           .returningConcatFlow(
-            ListAttachedRolePoliciesRequest(roleName.value, pathPrefix.pathString),
+            ListAttachedRolePoliciesRequest(roleName, pathPrefix.pathString),
             policies)
 
-        val result = async.listAttachedRolePolicies(roleName.value, pathPrefix.pathString).futureValue
+        val result = async.listAttachedRolePolicies(roleName, pathPrefix.pathString).futureValue
         result shouldBe policies
       }
     }
@@ -198,16 +191,18 @@ class DefaultAsyncIdentityManagementClientSpec extends FreeSpec with MockFactory
     }
 
     "get a named user" in {
-      forAll { name: Name ⇒
+      forAll(
+        CoreGen.iamName → "name",
+        arbitrary[User] → "user"
+      ) { (name, user) ⇒
         val streaming = mock[StreamingIdentityManagementClient]("streaming")
         val async = new DefaultAsyncIdentityManagementClient(streaming)
-        val user = arbitrarySample[User]
 
         (streaming.userGetter _)
           .expects()
-          .returningFlow(GetUserRequest.forUserName(name.value), user)
+          .returningFlow(GetUserRequest.forUserName(name), user)
 
-        val result = async.getUser(name.value).futureValue
+        val result = async.getUser(name).futureValue
         result shouldBe user
       }
     }
