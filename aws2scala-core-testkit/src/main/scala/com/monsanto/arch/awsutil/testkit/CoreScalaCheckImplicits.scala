@@ -36,18 +36,14 @@ object CoreScalaCheckImplicits {
       for {
         id ← idGen
         statements ← UtilGen.nonEmptyListOfSqrtN(arbitrary[Statement])
-      } yield Policy(id, statements)
+      } yield Policy(Policy.Version.`2012-10-17`, id, statements)
     }
   }
 
   implicit lazy val shrinkPolicy: Shrink[Policy] =
     Shrink { policy ⇒
-      Shrink.shrink(policy.id)
-        .filter(_.forall(_.nonEmpty))
-        .map(Policy(_, policy.statements)) append
-        Shrink.shrink(policy.statements)
-          .filter(_.nonEmpty)
-          .map(Policy(policy.id, _))
+      Shrink.shrink(policy.id).filter(_.forall(_.nonEmpty)).map(x ⇒ policy.copy(id = x)) append
+        Shrink.shrink(policy.statements).filter(_.nonEmpty).map(x ⇒ policy.copy(statements = x))
     }
 
   implicit lazy val arbStatement: Arbitrary[Statement] =

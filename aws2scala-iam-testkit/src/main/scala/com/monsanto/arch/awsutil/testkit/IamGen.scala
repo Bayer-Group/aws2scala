@@ -43,6 +43,7 @@ object IamGen {
     for {
       principal ← arbitrary[Principal]
     } yield Policy(
+      Policy.Version.`2012-10-17`,
       None,
       Seq(
         Statement(

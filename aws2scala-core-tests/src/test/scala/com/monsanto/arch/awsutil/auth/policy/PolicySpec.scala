@@ -54,6 +54,7 @@ class PolicySpec extends FreeSpec {
       val policy = Policy.fromJson("{\"Statement\": [{\"Effect\":\"Allow\",\"Action\":\"foo\"}]}")
       policy should equal (
         Policy(
+          Policy.Version.`2012-10-17`,
           None,
           Seq(
             Statement(
@@ -77,8 +78,9 @@ class PolicySpec extends FreeSpec {
   private implicit val policyEq = new Equality[Policy] {
     override def areEqual(lhs: Policy, rhs: Any): Boolean = {
       rhs match {
-        case Policy(id, statements) ⇒
-          lhs.id == id &&
+        case Policy(version, id, statements) ⇒
+          lhs.version == version &&
+            lhs.id == id &&
             lhs.statements.size == statements.size  &&
             lhs.statements.zip(statements).forall {
               case (lhsStatement, rhsStatement) ⇒

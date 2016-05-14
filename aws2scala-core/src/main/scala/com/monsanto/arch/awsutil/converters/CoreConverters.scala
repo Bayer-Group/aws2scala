@@ -368,6 +368,7 @@ object CoreConverters {
   implicit class AwsPolicy(val awsPolicy: policy.Policy) extends AnyVal {
     def asScala: Policy =
       Policy(
+        awsPolicy.getVersion.asScalaPolicyVersion,
         Option(awsPolicy.getId),
         asList(awsPolicy.getStatements).map(_.asScala))
   }
@@ -432,6 +433,23 @@ object CoreConverters {
         case Principal.WebIdentityProvider.Amazon       ⇒ policy.Principal.WebIdentityProviders.Amazon
         case Principal.WebIdentityProvider.Facebook     ⇒ policy.Principal.WebIdentityProviders.Facebook
         case Principal.WebIdentityProvider.Google       ⇒ policy.Principal.WebIdentityProviders.Google
+      }
+  }
+
+  implicit class AwsPolicyVersion(val version: String) extends AnyVal {
+    def asScalaPolicyVersion: Policy.Version =
+      version match {
+        case "2012-10-17" ⇒ Policy.Version.`2012-10-17`
+        case "2008-10-17" ⇒ Policy.Version.`2008-10-17`
+        case _            ⇒ throw new IllegalArgumentException(s"‘$version‘ is not a valid policy version")
+      }
+  }
+
+  implicit class ScalaPolicyVersion(val version: Policy.Version) extends AnyVal {
+    def asAws: String =
+      version match {
+        case Policy.Version.`2012-10-17` ⇒ "2012-10-17"
+        case Policy.Version.`2008-10-17` ⇒ "2008-10-17"
       }
   }
 
