@@ -370,4 +370,12 @@ object CoreScalaCheckImplicits {
         Shrink.shrink(arn.roleName).filter(_.nonEmpty).map(x ⇒ arn.copy(roleName = x)) append
         Shrink.shrink(arn.sessionName).filter(_.length > 1).map(x ⇒ arn.copy(sessionName = x))
     }
+
+  implicit lazy val arbPolicyVersion: Arbitrary[Policy.Version] =
+    Arbitrary(
+      Gen.frequency(
+        19 → Gen.const(Policy.Version.`2012-10-17`),
+        1 → Gen.const(Policy.Version.`2008-10-17`)
+      )
+    )
 }

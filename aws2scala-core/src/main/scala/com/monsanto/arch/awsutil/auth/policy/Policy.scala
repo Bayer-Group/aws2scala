@@ -20,5 +20,7 @@ object Policy {
     case object `2012-10-17` extends Version
     /** An earlier version of the policy language which should not be used for any new policies. */
     case object `2008-10-17` extends Version
+
+    val values: Seq[Version] = Seq(`2012-10-17`, `2008-10-17`)
   }
 }
