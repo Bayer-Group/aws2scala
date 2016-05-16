@@ -12,7 +12,7 @@ import org.scalatest.Matchers._
 import org.scalatest.prop.GeneratorDrivenPropertyChecks._
 
 class PolicySpec extends FreeSpec {
-  StatementSpec.registerActions()
+  TestAction.registerActions()
 
   "a Policy can" - {
     "round trip" - {
