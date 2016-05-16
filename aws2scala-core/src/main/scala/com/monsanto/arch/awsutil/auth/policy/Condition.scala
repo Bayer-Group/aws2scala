@@ -40,8 +40,8 @@ import akka.util.ByteString
   *     be used in a [[Statement]].
   *  1. Finally, if you which the condition to work in cases where you want to
   *     test against multiple key values, i.e. as a set operation, then invoke
-  *     [[Condition.forAllValues forAllValues]] or
-  *     [[Condition.forAnyValue forAnyValue]] on the condition.
+  *     [[Condition.MultipleKeyValueSupport.forAllValues forAllValues]] or
+  *     [[Condition.MultipleKeyValueSupport.forAnyValue forAnyValue]] on the condition.
   *
   * For more information about the different condition types and the
   * comparisons they support, please check the following subsections.
@@ -153,7 +153,7 @@ import akka.util.ByteString
   *
   * Binary conditions restrict access based on comparing a key to a binary
   * value.  The only valid operation is equality with
-  * [[Condition.BinaryKey.is is]].
+  * [[Condition.BinaryKey.is(value:a* is]].
   *
   * '''Examples:'''
   * {{{
@@ -177,9 +177,9 @@ import akka.util.ByteString
   * address or range of IP addresses.  The two available comparions types are:
   *
   *  1. Testing that an IP address is the given address or within the given
-  *     range using the [[Condition.IpAddressCondition.isIn isIn]] operator.
+  *     range using the [[Condition.IpAddressKey.isIn isIn]] operator.
   *  1. The negation of the above using the
-  *     [[Condition.IpAddressCondition.isNotIn isNotIn]] operator.
+  *     [[Condition.IpAddressKey.isNotIn isNotIn]] operator.
   *
   * You may wish to use the [[Condition.sourceIp]] constant for building IP
   * address conditions.
