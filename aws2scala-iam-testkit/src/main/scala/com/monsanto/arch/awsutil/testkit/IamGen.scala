@@ -4,7 +4,7 @@ import java.util.Date
 
 import com.monsanto.arch.awsutil.Account
 import com.monsanto.arch.awsutil.auth.policy.action.SecurityTokenServiceAction
-import com.monsanto.arch.awsutil.auth.policy.{Policy, Principal, Statement}
+import com.monsanto.arch.awsutil.auth.policy.{Policy, PolicyDSL, Principal}
 import com.monsanto.arch.awsutil.identitymanagement.model._
 import com.monsanto.arch.awsutil.securitytoken.SecurityTokenService
 import com.monsanto.arch.awsutil.testkit.CoreScalaCheckImplicits._
@@ -42,17 +42,18 @@ object IamGen {
   val assumeRolePolicy: Gen[Policy] =
     for {
       principal ← arbitrary[Principal]
-    } yield Policy(
-      Policy.Version.`2012-10-17`,
-      None,
-      Seq(
-        Statement(
-          id = None,
-          principals = Seq(principal),
-          effect = Statement.Effect.Allow,
-          actions = Seq(SecurityTokenServiceAction.AssumeRole),
-          resources = Seq.empty,
-          conditions = Seq.empty)))
+    } yield {
+      import PolicyDSL._
+
+      policy (
+        statements (
+          allow (
+            principals(principal),
+            actions(SecurityTokenServiceAction.AssumeRole)
+          )
+        )
+      )
+    }
 
   /** Used to generate IAM unique identifiers. */
   private def id(prefix: String): Gen[String] =
