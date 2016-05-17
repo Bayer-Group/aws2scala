@@ -23,7 +23,7 @@ object CoreConverters {
     def asScala: Principal =
       (principal.getProvider, principal.getId) match {
         case ("*", "*") ⇒
-          Principal.all
+          Principal.AllPrincipals
         case ("AWS", "*") ⇒
           Principal.allUsers
         case ("Service", "*") ⇒

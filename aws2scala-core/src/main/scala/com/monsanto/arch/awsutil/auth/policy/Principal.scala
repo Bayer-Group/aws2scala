@@ -1,10 +1,8 @@
 package com.monsanto.arch.awsutil.auth.policy
 
-import com.amazonaws.auth.{policy ⇒ aws}
 import com.monsanto.arch.awsutil.Account
 import com.monsanto.arch.awsutil.identitymanagement.model.{RoleArn, SamlProviderArn, UserArn}
 import com.monsanto.arch.awsutil.securitytoken.model.AssumedRoleArn
-import com.monsanto.arch.awsutil.util.{AwsEnumeration, AwsEnumerationCompanion}
 
 /** A principal specifies the user (IAM user, federated user, or assumed-role user), AWS account, AWS service, or other
   * principal entity that it allowed or denied access to a resource.
@@ -30,8 +28,8 @@ sealed trait Principal {
 }
 
 object Principal {
-  /** Principal that includes all AWS accounts, AWS web services, and web identity providers. */
-  val all: Principal = AllPrincipals
+  /** A constant for applying a statement with all principals. */
+  val allPrincipals: Seq[Principal] = Seq(AllPrincipals)
 
   /** Principal that includes all AWS web services. */
   val allServices: Principal = service(Service.AllServices)

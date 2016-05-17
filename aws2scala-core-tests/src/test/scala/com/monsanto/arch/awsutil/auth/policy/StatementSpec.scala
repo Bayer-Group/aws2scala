@@ -9,12 +9,22 @@ import org.scalatest.Matchers._
 import org.scalatest.prop.GeneratorDrivenPropertyChecks._
 
 class StatementSpec extends FreeSpec with AwsEnumerationBehaviours {
-  "Statement object should round-trip via their AWS equivalents" - {
+  "Statement object should" - {
     // register some actions first
     TestAction.registerActions()
 
-    forAll { statement: Statement ⇒
-      statement.asAws.asScala shouldBe statement
+    "round-trip via their AWS equivalents" in {
+      forAll { statement: Statement ⇒
+        statement.asAws.asScala shouldBe statement
+      }
+    }
+
+    "reject using AllPrincipals with something else" in {
+      forAll { principal: Principal ⇒
+        an [IllegalArgumentException] shouldBe thrownBy {
+          val principals = Seq(principal, Principal.allPrincipals)
+        }
+      }
     }
   }
 

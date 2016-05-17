@@ -32,7 +32,7 @@ class PrincipalSpec extends FreeSpec with AwsEnumerationBehaviours {
       }
 
       "the all principals value to the AWS constant" in {
-        Principal.all.asAws should be theSameInstanceAs aws.Principal.All
+        Principal.AllPrincipals.asAws should be theSameInstanceAs aws.Principal.All
       }
 
       "all services value to the AWS constant" in {
