@@ -29,7 +29,7 @@ sealed trait Principal {
 
 object Principal {
   /** A constant for applying a statement with all principals. */
-  val allPrincipals: Seq[Principal] = Seq(AllPrincipals)
+  val allPrincipals: Set[Principal] = Set(AllPrincipals)
 
   /** Principal that includes all AWS web services. */
   val allServices: Principal = service(Service.AllServices)

@@ -225,7 +225,7 @@ class PolicyDSLSpec extends FreeSpec {
 
     "principals, which returns a list of Principal objects" in {
       forAll { principalList: Seq[Principal] ⇒
-        principals(principalList: _*) shouldBe principalList
+        principals(principalList: _*) shouldBe principalList.toSet
       }
     }
 
@@ -247,12 +247,12 @@ class PolicyDSLSpec extends FreeSpec {
           forAll(Gen.identifier) { identifier ⇒
             allow (
               id(identifier)
-            ) shouldBe Statement(Some(identifier), Seq.empty, Statement.Effect.Allow, Seq.empty, Seq.empty, Seq.empty)
+            ) shouldBe Statement(Some(identifier), Set.empty, Statement.Effect.Allow, Seq.empty, Seq.empty, Seq.empty)
           }
         }
 
         "with a principals argument" in {
-          forAll { principals: Seq[Principal] ⇒
+          forAll { principals: Set[Principal] ⇒
             allow (
               principals
             ) shouldBe Statement(None, principals, Statement.Effect.Allow, Seq.empty, Seq.empty, Seq.empty)
@@ -263,7 +263,7 @@ class PolicyDSLSpec extends FreeSpec {
           forAll { actions: Seq[Action] ⇒
             allow (
               actions
-            ) shouldBe Statement(None, Seq.empty, Statement.Effect.Allow, actions, Seq.empty, Seq.empty)
+            ) shouldBe Statement(None, Set.empty, Statement.Effect.Allow, actions, Seq.empty, Seq.empty)
           }
         }
 
@@ -271,7 +271,7 @@ class PolicyDSLSpec extends FreeSpec {
           forAll { resources: Seq[Resource] ⇒
             allow (
               resources
-            ) shouldBe Statement(None, Seq.empty, Statement.Effect.Allow, Seq.empty, resources, Seq.empty)
+            ) shouldBe Statement(None, Set.empty, Statement.Effect.Allow, Seq.empty, resources, Seq.empty)
           }
         }
 
@@ -279,7 +279,7 @@ class PolicyDSLSpec extends FreeSpec {
           forAll { conditions: Seq[Condition] ⇒
             allow (
               conditions
-            ) shouldBe Statement(None, Seq.empty, Statement.Effect.Allow, Seq.empty, Seq.empty, conditions)
+            ) shouldBe Statement(None, Set.empty, Statement.Effect.Allow, Seq.empty, Seq.empty, conditions)
           }
         }
 
@@ -291,7 +291,7 @@ class PolicyDSLSpec extends FreeSpec {
             allow (
               conditions,
               actions
-            ) shouldBe Statement(None, Seq.empty, Statement.Effect.Allow, actions, Seq.empty, conditions)
+            ) shouldBe Statement(None, Set.empty, Statement.Effect.Allow, actions, Seq.empty, conditions)
           }
         }
 
@@ -299,7 +299,7 @@ class PolicyDSLSpec extends FreeSpec {
           forAll(
             arbitrary[Seq[Condition]] → "conditions",
             arbitrary[Seq[Action]] → "actions",
-            arbitrary[Seq[Principal]] → "principals"
+            arbitrary[Set[Principal]] → "principals"
           ) { (conditions, actions, principals) ⇒
             allow (
               conditions,
@@ -313,7 +313,7 @@ class PolicyDSLSpec extends FreeSpec {
           forAll(
             arbitrary[Seq[Condition]] → "conditions",
             arbitrary[Seq[Action]] → "actions",
-            arbitrary[Seq[Principal]] → "principals",
+            arbitrary[Set[Principal]] → "principals",
             Gen.identifier → "statementId"
           ) { (conditions, actions, principals, statementId) ⇒
             allow (
@@ -329,7 +329,7 @@ class PolicyDSLSpec extends FreeSpec {
           forAll(
             arbitrary[Seq[Condition]] → "conditions",
             arbitrary[Seq[Action]] → "actions",
-            arbitrary[Seq[Principal]] → "principals",
+            arbitrary[Set[Principal]] → "principals",
             Gen.identifier → "statementId",
             arbitrary[Seq[Resource]] → "resources"
           ) { (conditions, actions, principals, statementId, resources) ⇒
@@ -357,7 +357,7 @@ class PolicyDSLSpec extends FreeSpec {
         }
 
         "principal lists" in {
-          forAll { (p1: Seq[Principal], p2: Seq[Principal]) ⇒
+          forAll { (p1: Set[Principal], p2: Set[Principal]) ⇒
             the [IllegalArgumentException] thrownBy {
               allow ( p1, p2 )
             } should have message "A statement may only have one principal list."
@@ -396,12 +396,12 @@ class PolicyDSLSpec extends FreeSpec {
           forAll(Gen.identifier) { identifier ⇒
             deny (
               id(identifier)
-            ) shouldBe Statement(Some(identifier), Seq.empty, Statement.Effect.Deny, Seq.empty, Seq.empty, Seq.empty)
+            ) shouldBe Statement(Some(identifier), Set.empty, Statement.Effect.Deny, Seq.empty, Seq.empty, Seq.empty)
           }
         }
 
         "with a principals argument" in {
-          forAll { principals: Seq[Principal] ⇒
+          forAll { principals: Set[Principal] ⇒
             deny (
               principals
             ) shouldBe Statement(None, principals, Statement.Effect.Deny, Seq.empty, Seq.empty, Seq.empty)
@@ -412,7 +412,7 @@ class PolicyDSLSpec extends FreeSpec {
           forAll { actions: Seq[Action] ⇒
             deny (
               actions
-            ) shouldBe Statement(None, Seq.empty, Statement.Effect.Deny, actions, Seq.empty, Seq.empty)
+            ) shouldBe Statement(None, Set.empty, Statement.Effect.Deny, actions, Seq.empty, Seq.empty)
           }
         }
 
@@ -420,7 +420,7 @@ class PolicyDSLSpec extends FreeSpec {
           forAll { resources: Seq[Resource] ⇒
             deny (
               resources
-            ) shouldBe Statement(None, Seq.empty, Statement.Effect.Deny, Seq.empty, resources, Seq.empty)
+            ) shouldBe Statement(None, Set.empty, Statement.Effect.Deny, Seq.empty, resources, Seq.empty)
           }
         }
 
@@ -428,7 +428,7 @@ class PolicyDSLSpec extends FreeSpec {
           forAll { conditions: Seq[Condition] ⇒
             deny (
               conditions
-            ) shouldBe Statement(None, Seq.empty, Statement.Effect.Deny, Seq.empty, Seq.empty, conditions)
+            ) shouldBe Statement(None, Set.empty, Statement.Effect.Deny, Seq.empty, Seq.empty, conditions)
           }
         }
 
@@ -440,7 +440,7 @@ class PolicyDSLSpec extends FreeSpec {
             deny (
               conditions,
               actions
-            ) shouldBe Statement(None, Seq.empty, Statement.Effect.Deny, actions, Seq.empty, conditions)
+            ) shouldBe Statement(None, Set.empty, Statement.Effect.Deny, actions, Seq.empty, conditions)
           }
         }
 
@@ -448,7 +448,7 @@ class PolicyDSLSpec extends FreeSpec {
           forAll(
             arbitrary[Seq[Condition]] → "conditions",
             arbitrary[Seq[Action]] → "actions",
-            arbitrary[Seq[Principal]] → "principals"
+            arbitrary[Set[Principal]] → "principals"
           ) { (conditions, actions, principals) ⇒
             deny (
               conditions,
@@ -462,7 +462,7 @@ class PolicyDSLSpec extends FreeSpec {
           forAll(
             arbitrary[Seq[Condition]] → "conditions",
             arbitrary[Seq[Action]] → "actions",
-            arbitrary[Seq[Principal]] → "principals",
+            arbitrary[Set[Principal]] → "principals",
             Gen.identifier → "statementId"
           ) { (conditions, actions, principals, statementId) ⇒
             deny (
@@ -478,7 +478,7 @@ class PolicyDSLSpec extends FreeSpec {
           forAll(
             arbitrary[Seq[Condition]] → "conditions",
             arbitrary[Seq[Action]] → "actions",
-            arbitrary[Seq[Principal]] → "principals",
+            arbitrary[Set[Principal]] → "principals",
             Gen.identifier → "statementId",
             arbitrary[Seq[Resource]] → "resources"
           ) { (conditions, actions, principals, statementId, resources) ⇒
@@ -506,7 +506,7 @@ class PolicyDSLSpec extends FreeSpec {
         }
 
         "principal lists" in {
-          forAll { (p1: Seq[Principal], p2: Seq[Principal]) ⇒
+          forAll { (p1: Set[Principal], p2: Set[Principal]) ⇒
             the [IllegalArgumentException] thrownBy {
               deny ( p1, p2 )
             } should have message "A statement may only have one principal list."

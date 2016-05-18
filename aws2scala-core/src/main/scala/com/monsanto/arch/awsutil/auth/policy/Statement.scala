@@ -19,19 +19,13 @@ package com.monsanto.arch.awsutil.auth.policy
   *                   a principal access to a resources
   */
 case class Statement(id: Option[String],
-                     principals: Seq[Principal],
+                     principals: Set[Principal],
                      effect: Statement.Effect,
                      actions: Seq[Action],
                      resources: Seq[Resource],
                      conditions: Seq[Condition]) {
-  principals match {
-    case Seq(Principal.AllPrincipals) ⇒
-      // this is OK, AllPrincipals by itself is acceptable
-    case ps if ps.contains(Principal.AllPrincipals) ⇒
-      // this is OK, AllPrincipals by itself is acceptable
-      throw new IllegalArgumentException("You may only use the AllPrincipals by itself.")
-    case _ ⇒
-      // all other cases should be ok
+  if (principals != Principal.allPrincipals && principals.contains(Principal.AllPrincipals)) {
+    throw new IllegalArgumentException("You may only use the AllPrincipals by itself.")
   }
 }
 

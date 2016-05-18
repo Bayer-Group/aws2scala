@@ -1,5 +1,6 @@
 package com.monsanto.arch.awsutil.auth.policy
 
+import com.monsanto.arch.awsutil.auth.policy.PolicyDSL._
 import com.monsanto.arch.awsutil.converters.CoreConverters
 import com.monsanto.arch.awsutil.converters.CoreConverters._
 import com.monsanto.arch.awsutil.testkit.CoreScalaCheckImplicits._
@@ -35,7 +36,7 @@ class PolicySpec extends FreeSpec {
           // generate a policy with unique condition types
             policy ← arbitrary[Policy] if policy.statements.forall(uniqueConditionTypes)
             // generate a set of principles that will round-trip
-            okPrincipals ← Gen.listOfN(policy.statements.size, UtilGen.listOfSqrtN(nonBrokenPrincipal))
+            okPrincipals ← Gen.listOfN(policy.statements.size, UtilGen.listOfSqrtN(nonBrokenPrincipal).map(_.toSet))
           } yield {
             // replace all statement principals with round-trippable ones
             val okStatements = policy.statements.zip(okPrincipals).map {
@@ -51,19 +52,12 @@ class PolicySpec extends FreeSpec {
     }
 
     "handle unknown Actions" in {
-      val policy = Policy.fromJson("{\"Statement\": [{\"Effect\":\"Allow\",\"Action\":\"foo\"}]}")
-      policy should equal (
-        Policy(
-          Policy.Version.`2012-10-17`,
-          None,
-          Seq(
-            Statement(
-              id = None,
-              principals = Seq(),
-              effect = Statement.Effect.Allow,
-              actions = Seq(CoreConverters.NamedAction("foo")),
-              resources = Seq(),
-              conditions = Seq()
+      val result = Policy.fromJson("{\"Statement\": [{\"Effect\":\"Allow\",\"Action\":\"foo\"}]}")
+      result should equal (
+        policy(
+          statements(
+            allow(
+              actions(CoreConverters.NamedAction("foo"))
             )
           )
         )

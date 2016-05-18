@@ -50,7 +50,7 @@ object CoreScalaCheckImplicits {
     Arbitrary {
       for {
         id ← Gen.option(Gen.identifier)
-        principals ← arbitrary[Seq[Principal]]
+        principals ← arbitrary[Set[Principal]]
         effect ← arbitrary[Statement.Effect]
         actions ← UtilGen.nonEmptyListOfSqrtN(arbitrary[Action])
         resources ← UtilGen.nonEmptyListOfSqrtN(arbitrary[Resource])
@@ -84,17 +84,17 @@ object CoreScalaCheckImplicits {
         arbitrary[Principal.StsAssumedRolePrincipal])
     }
 
-  implicit lazy val arbPrincipals: Arbitrary[Seq[Principal]] =
+  implicit lazy val arbPrincipals: Arbitrary[Set[Principal]] =
     Arbitrary {
-      Gen.oneOf(
-        Gen.const(Principal.allPrincipals),
-        UtilGen.nonEmptyListOfSqrtN(arbitrary[Principal])
+      Gen.frequency(
+        1 → Gen.const(Principal.allPrincipals),
+        19 → UtilGen.nonEmptyListOfSqrtN(arbitrary[Principal]).map(_.toSet)
       )
     }
 
-  implicit lazy val shrinkPrincipals: Shrink[Seq[Principal]] =
+  implicit lazy val shrinkPrincipals: Shrink[Set[Principal]] =
     Shrink { principals ⇒
-      Shrink.shrinkContainer[Seq,Principal].shrink(principals).filter(_.nonEmpty)
+      Shrink.shrinkContainer[Set,Principal].shrink(principals).filter(_.nonEmpty)
     }
 
   implicit lazy val arbAccountPrincipal: Arbitrary[Principal.AccountPrincipal] =

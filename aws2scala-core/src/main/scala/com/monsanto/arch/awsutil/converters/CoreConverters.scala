@@ -346,7 +346,7 @@ object CoreConverters {
     def asScala: Statement =
       Statement(
         Option(statement.getId),
-        asList(statement.getPrincipals).map(_.asScala),
+        asSet(statement.getPrincipals).map(_.asScala),
         statement.getEffect.asScala,
         asList(statement.getActions).map(_.asScala),
         asList(statement.getResources).map(_.asScala),
@@ -455,4 +455,7 @@ object CoreConverters {
 
   private def asList[T](collection: util.Collection[T]): List[T] =
     Option(collection).map(_.asScala.toList).getOrElse(List.empty)
+
+  private def asSet[T](collection: util.Collection[T]): Set[T] =
+    Option(collection).map(_.asScala.toSet).getOrElse(Set.empty)
 }

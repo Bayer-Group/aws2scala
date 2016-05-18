@@ -22,7 +22,8 @@ class StatementSpec extends FreeSpec with AwsEnumerationBehaviours {
     "reject using AllPrincipals with something else" in {
       forAll { principal: Principal ⇒
         an [IllegalArgumentException] shouldBe thrownBy {
-          val principals = Seq(principal, Principal.allPrincipals)
+          val principals = Set(principal, Principal.AllPrincipals)
+          Statement(None, principals, Statement.Effect.Allow, Seq.empty, Seq.empty, Seq.empty)
         }
       }
     }

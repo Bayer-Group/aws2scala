@@ -211,7 +211,7 @@ object PolicyDSL {
       .build()
 
   /** Used within an `allow` or `deny` to set the principals in a statement. */
-  def principals(principals: Principal*): Seq[Principal] = principals
+  def principals(principals: Principal*): Set[Principal] = principals.toSet
 
   /** Used within an `allow` or `deny` to set the actions in a statement. */
   def actions(actions: Action*): Seq[Action] = actions
@@ -310,7 +310,7 @@ object PolicyDSL {
 
   /** Used by the DSL to build `Statement` objects. */
   class StatementBuilder private (sid: Option[String],
-                                  principals: Option[Seq[Principal]],
+                                  principals: Option[Set[Principal]],
                                   effect: Statement.Effect,
                                   actions: Option[Seq[Action]],
                                   resources: Option[Seq[Resource]],
@@ -332,7 +332,7 @@ object PolicyDSL {
     /** Returns a new builder with the principals set.  It is an error to invoke this on a builder that
       * already has principals.
       */
-    private def withPrincipals(principals: Seq[Principal]): StatementBuilder = {
+    private def withPrincipals(principals: Set[Principal]): StatementBuilder = {
       if (this.principals.isDefined) {
         throw new IllegalArgumentException("A statement may only have one principal list.")
       }
@@ -373,7 +373,7 @@ object PolicyDSL {
     private[policy] def build(): Statement =
       Statement(
         sid,
-        principals.getOrElse(Seq.empty),
+        principals.getOrElse(Set.empty),
         effect,
         actions.getOrElse(Seq.empty),
         resources.getOrElse(Seq.empty),
@@ -401,9 +401,9 @@ object PolicyDSL {
       }
 
       /** Helper for setting a principal list on a statement builder. */
-      implicit val principalsComponent: Component[Seq[Principal]] =
-        new Component[Seq[Principal]] {
-          override def addTo(builder: StatementBuilder, principals: Seq[Principal]): StatementBuilder =
+      implicit val principalsComponent: Component[Set[Principal]] =
+        new Component[Set[Principal]] {
+          override def addTo(builder: StatementBuilder, principals: Set[Principal]): StatementBuilder =
             builder.withPrincipals(principals)
         }
 
