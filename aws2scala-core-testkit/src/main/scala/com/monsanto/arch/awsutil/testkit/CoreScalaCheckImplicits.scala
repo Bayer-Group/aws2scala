@@ -87,7 +87,7 @@ object CoreScalaCheckImplicits {
   implicit lazy val arbPrincipals: Arbitrary[Set[Principal]] =
     Arbitrary {
       Gen.frequency(
-        1 → Gen.const(Principal.allPrincipals),
+        1 → Gen.const(Statement.allPrincipals),
         19 → UtilGen.nonEmptyListOfSqrtN(arbitrary[Principal]).map(_.toSet)
       )
     }

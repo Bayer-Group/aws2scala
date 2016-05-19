@@ -9,8 +9,9 @@ package com.monsanto.arch.awsutil.auth.policy
   * @param principals indicates the user (IAM user, federated user, or
   *                   assumed-role user), AWS account, AWS service, or other
   *                   principal entity that it allowed or denied access to a
-  *                   resource.  Note that you can use [[Principal.allPrincipals]]
-  *                   as a handy value.
+  *                   resource.  Note that you can use
+  *                   [[Statement.allPrincipals allPrincipals]] as a handy
+  *                   value to match any principal.
   * @param effect     whether the statement allows or denies access
   * @param actions    indicates the ways in which the principals are trying to
   *                   interact with the resources
@@ -24,12 +25,15 @@ case class Statement(id: Option[String],
                      actions: Seq[Action],
                      resources: Seq[Resource],
                      conditions: Seq[Condition]) {
-  if (principals != Principal.allPrincipals && principals.contains(Principal.AllPrincipals)) {
+  if (principals != Statement.allPrincipals && principals.contains(Principal.AllPrincipals)) {
     throw new IllegalArgumentException("You may only use the AllPrincipals by itself.")
   }
 }
 
 object Statement {
+  /** A constant for applying a statement with all principals. */
+  val allPrincipals: Set[Principal] = Set(Principal.AllPrincipals)
+
   /** Enumeration type for statement effects. */
   sealed trait Effect
   object Effect {
