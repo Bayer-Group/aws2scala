@@ -88,13 +88,8 @@ object CoreScalaCheckImplicits {
     Arbitrary {
       Gen.frequency(
         1 → Gen.const(Statement.allPrincipals),
-        19 → UtilGen.nonEmptyListOfSqrtN(arbitrary[Principal]).map(_.toSet)
+        19 → UtilGen.listOfSqrtN(arbitrary[Principal]).map(_.toSet)
       )
-    }
-
-  implicit lazy val shrinkPrincipals: Shrink[Set[Principal]] =
-    Shrink { principals ⇒
-      Shrink.shrinkContainer[Set,Principal].shrink(principals).filter(_.nonEmpty)
     }
 
   implicit lazy val arbAccountPrincipal: Arbitrary[Principal.AccountPrincipal] =
