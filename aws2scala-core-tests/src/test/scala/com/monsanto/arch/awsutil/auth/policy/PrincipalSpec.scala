@@ -18,9 +18,17 @@ class PrincipalSpec extends FreeSpec with AwsEnumerationBehaviours {
   val webIdentityProviders = Table("web identity provider", Principal.WebIdentityProvider.values: _*)
 
   "a Principal" - {
-    "can be round-tripped" in {
-      forAll { principal: Principal ⇒
-        principal.asAws.asScala shouldBe principal
+    "can be round-tripped via" - {
+      "its AWS equivalent" in {
+        forAll { principal: Principal ⇒
+          principal.asAws.asScala shouldBe principal
+        }
+      }
+
+      "its provider and identifier" in {
+        forAll { principal: Principal ⇒
+          Principal(principal.provider, principal.id) shouldBe principal
+        }
       }
     }
 

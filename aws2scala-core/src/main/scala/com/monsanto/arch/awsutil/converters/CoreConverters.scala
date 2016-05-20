@@ -9,10 +9,7 @@ import com.amazonaws.auth.policy
 import com.amazonaws.auth.policy.conditions._
 import com.amazonaws.regions
 import com.monsanto.arch.awsutil.auth.policy._
-import com.monsanto.arch.awsutil.identitymanagement.model.{RoleArn, SamlProviderArn, UserArn}
 import com.monsanto.arch.awsutil.regions.Region
-import com.monsanto.arch.awsutil.securitytoken.model.AssumedRoleArn
-import com.monsanto.arch.awsutil.{Account, AccountArn, Arn}
 
 import scala.collection.JavaConverters._
 import scala.util.Try
@@ -20,43 +17,7 @@ import scala.util.Try
 /** Provides converters between core ''aws2scala'' objects and their AWS Java SDK counterparts. */
 object CoreConverters {
   implicit class AwsPrincipal(val principal: policy.Principal) extends AnyVal {
-    def asScala: Principal =
-      (principal.getProvider, principal.getId) match {
-        case ("*", "*") ⇒
-          Principal.AllPrincipals
-        case ("AWS", "*") ⇒
-          Principal.allUsers
-        case ("Service", "*") ⇒
-          Principal.allServices
-        case ("Service", Principal.Service.fromId(id)) ⇒
-          Principal.service(id)
-        case ("Federated", "*") ⇒
-          Principal.allWebProviders
-        case ("Federated", Principal.WebIdentityProvider.fromProvider(webIdentityProvider)) ⇒
-          Principal.webProvider(webIdentityProvider)
-        case ("Federated", Arn(samlProviderArn: SamlProviderArn)) ⇒
-          Principal.SamlProviderPrincipal(samlProviderArn)
-        case ("AWS", Arn(AccountArn(account))) ⇒
-          Principal.AccountPrincipal(account)
-        case ("AWS", AccountFromNumber(account)) ⇒
-          Principal.AccountPrincipal(account)
-        case ("AWS", Arn(userArn: UserArn)) ⇒
-          Principal.IamUserPrincipal(userArn)
-        case ("AWS", Arn(roleArn: RoleArn)) ⇒
-          Principal.IamRolePrincipal(roleArn)
-        case ("AWS", Arn(assumedRoleArn: AssumedRoleArn)) ⇒
-          Principal.StsAssumedRolePrincipal(assumedRoleArn)
-      }
-  }
-
-  private object AccountFromNumber {
-    def unapply(str: String): Option[Account] = {
-      if (str.matches("^\\d{12}$")) {
-        Some(Account(str))
-      } else {
-        None
-      }
-    }
+    def asScala: Principal = Principal(principal.getProvider, principal.getId)
   }
 
   implicit class ScalaPrincipal(val principal: Principal) extends AnyVal {

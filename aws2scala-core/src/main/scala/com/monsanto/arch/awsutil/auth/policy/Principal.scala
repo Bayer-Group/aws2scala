@@ -1,8 +1,8 @@
 package com.monsanto.arch.awsutil.auth.policy
 
-import com.monsanto.arch.awsutil.Account
 import com.monsanto.arch.awsutil.identitymanagement.model.{RoleArn, SamlProviderArn, UserArn}
 import com.monsanto.arch.awsutil.securitytoken.model.AssumedRoleArn
+import com.monsanto.arch.awsutil.{Account, AccountArn, Arn}
 
 /** A principal specifies the user (IAM user, federated user, or assumed-role user), AWS account, AWS service, or other
   * principal entity that it allowed or denied access to a resource.
@@ -101,6 +101,52 @@ object Principal {
 
     object fromProvider {
       def unapply(name: String): Option[WebIdentityProvider] = values.find(_.provider.equalsIgnoreCase(name))
+    }
+  }
+
+  /** Returns a `Provider` instance that corresponds to the given provider and
+    * identifier.
+    *
+    * @param provider indicates in what group of users the principal resides
+    * @param id       the unique identifier for the principal
+    * @throws IllegalArgumentException if no Principal can be constructed that
+    *                                  matches the given provider and
+    *                                  identifier
+    */
+  def apply(provider: String, id: String): Principal =
+    fromProviderAndId.unapply((provider, id))
+      .getOrElse(throw new IllegalArgumentException(s"($provider, $id) does not resolve to a valid principal."))
+
+  object fromProviderAndId {
+    def unapply(providerAndId: (String, String)): Option[Principal] = {
+      providerAndId match {
+        case ("*", "*") ⇒
+          Some(Principal.AllPrincipals)
+        case ("AWS", "*") ⇒
+          Some(Principal.allUsers)
+        case ("Service", "*") ⇒
+          Some(Principal.allServices)
+        case ("Service", Principal.Service.fromId(service)) ⇒
+          Some(Principal.service(service))
+        case ("Federated", "*") ⇒
+          Some(Principal.allWebProviders)
+        case ("Federated", Principal.WebIdentityProvider.fromProvider(webIdentityProvider)) ⇒
+          Some(Principal.webProvider(webIdentityProvider))
+        case ("Federated", Arn(samlProviderArn: SamlProviderArn)) ⇒
+          Some(Principal.SamlProviderPrincipal(samlProviderArn))
+        case ("AWS", Arn(AccountArn(account))) ⇒
+          Some(Principal.AccountPrincipal(account))
+        case ("AWS", Account.fromNumber(account)) ⇒
+          Some(Principal.AccountPrincipal(account))
+        case ("AWS", Arn(userArn: UserArn)) ⇒
+          Some(Principal.IamUserPrincipal(userArn))
+        case ("AWS", Arn(roleArn: RoleArn)) ⇒
+          Some(Principal.IamRolePrincipal(roleArn))
+        case ("AWS", Arn(assumedRoleArn: AssumedRoleArn)) ⇒
+          Some(Principal.StsAssumedRolePrincipal(assumedRoleArn))
+        case _ ⇒
+          None
+      }
     }
   }
 
