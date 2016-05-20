@@ -4,26 +4,26 @@ import com.amazonaws.auth.policy.actions.SecurityTokenServiceActions
 import com.monsanto.arch.awsutil.auth.policy.Action
 
 /** Type for all AWS access control policy actions for Amazon SNS. */
-sealed trait SecurityTokenServiceAction extends Action
+sealed abstract class SecurityTokenServiceAction(_name: String) extends Action(s"sts:${_name}")
 
 object SecurityTokenServiceAction {
   /** Represents any action executed on AWS STS. */
-  case object AllSecurityTokenServiceActions extends SecurityTokenServiceAction
+  case object AllSecurityTokenServiceActions extends SecurityTokenServiceAction("*")
 
   /** Action for the AssumeRole operation. */
-  case object AssumeRole extends SecurityTokenServiceAction
+  case object AssumeRole extends SecurityTokenServiceAction("AssumeRole")
   /** Action for the AssumeRoleWithSAML operation. */
-  case object AssumeRoleWithSAML extends SecurityTokenServiceAction
+  case object AssumeRoleWithSAML extends SecurityTokenServiceAction("AssumeRoleWithSAML")
   /** Action for the AssumeRoleWithWebIdentity operation. */
-  case object AssumeRoleWithWebIdentity extends SecurityTokenServiceAction
+  case object AssumeRoleWithWebIdentity extends SecurityTokenServiceAction("AssumeRoleWithWebIdentity")
   /** Action for the DecodeAuthorizationMessage operation. */
-  case object DecodeAuthorizationMessage extends SecurityTokenServiceAction
+  case object DecodeAuthorizationMessage extends SecurityTokenServiceAction("DecodeAuthorizationMessage")
   /** Action for the GetCallerIdentity operation. */
-  case object GetCallerIdentity extends SecurityTokenServiceAction
+  case object GetCallerIdentity extends SecurityTokenServiceAction("GetCallerIdentity")
   /** Action for the GetFederationToken operation. */
-  case object GetFederationToken extends SecurityTokenServiceAction
+  case object GetFederationToken extends SecurityTokenServiceAction("GetFederationToken")
   /** Action for the GetSessionToken operation. */
-  case object GetSessionToken extends SecurityTokenServiceAction
+  case object GetSessionToken extends SecurityTokenServiceAction("GetSessionToken")
 
   val values: Seq[SecurityTokenServiceAction] = Seq(
     AllSecurityTokenServiceActions, AssumeRole, AssumeRoleWithSAML, AssumeRoleWithWebIdentity,

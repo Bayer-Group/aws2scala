@@ -4,61 +4,61 @@ import com.amazonaws.auth.policy.actions.SNSActions
 import com.monsanto.arch.awsutil.auth.policy.Action
 
 /** Type for all AWS access control policy actions for Amazon SNS. */
-sealed trait SNSAction extends Action
+sealed abstract class SNSAction(_name: String) extends Action(s"sns:${_name}")
 
 object SNSAction {
   /** Represents any action executed on Amazon SNS. */
-  case object AllSNSActions extends SNSAction
+  case object AllSNSActions extends SNSAction("*")
   /** Action for the AddPermission operation. */
-  case object AddPermission extends SNSAction
+  case object AddPermission extends SNSAction("AddPermission")
   /** Action for the ConfirmSubscription operation. */
-  case object ConfirmSubscription extends SNSAction
+  case object ConfirmSubscription extends SNSAction("ConfirmSubscription")
   /** Action for the CreatePlatformApplication operation. */
-  case object CreatePlatformApplication extends SNSAction
+  case object CreatePlatformApplication extends SNSAction("CreatePlatformApplication")
   /** Action for the CreatePlatformEndpoint operation. */
-  case object CreatePlatformEndpoint extends SNSAction
+  case object CreatePlatformEndpoint extends SNSAction("CreatePlatformEndpoint")
   /** Action for the CreateTopic operation. */
-  case object CreateTopic extends SNSAction
+  case object CreateTopic extends SNSAction("CreateTopic")
   /** Action for the DeleteEndpoint operation. */
-  case object DeleteEndpoint extends SNSAction
+  case object DeleteEndpoint extends SNSAction("DeleteEndpoint")
   /** Action for the DeletePlatformApplication operation. */
-  case object DeletePlatformApplication extends SNSAction
+  case object DeletePlatformApplication extends SNSAction("DeletePlatformApplication")
   /** Action for the DeleteTopic operation. */
-  case object DeleteTopic extends SNSAction
+  case object DeleteTopic extends SNSAction("DeleteTopic")
   /** Action for the GetEndpointAttributes operation. */
-  case object GetEndpointAttributes extends SNSAction
+  case object GetEndpointAttributes extends SNSAction("GetEndpointAttributes")
   /** Action for the GetPlatformApplicationAttributes operation. */
-  case object GetPlatformApplicationAttributes extends SNSAction
+  case object GetPlatformApplicationAttributes extends SNSAction("GetPlatformApplicationAttributes")
   /** Action for the GetSubscriptionAttributes operation. */
-  case object GetSubscriptionAttributes extends SNSAction
+  case object GetSubscriptionAttributes extends SNSAction("GetSubscriptionAttributes")
   /** Action for the GetTopicAttributes operation. */
-  case object GetTopicAttributes extends SNSAction
+  case object GetTopicAttributes extends SNSAction("GetTopicAttributes")
   /** Action for the ListEndpointsByPlatformApplication operation. */
-  case object ListEndpointsByPlatformApplication extends SNSAction
+  case object ListEndpointsByPlatformApplication extends SNSAction("ListEndpointsByPlatformApplication")
   /** Action for the ListPlatformApplications operation. */
-  case object ListPlatformApplications extends SNSAction
+  case object ListPlatformApplications extends SNSAction("ListPlatformApplications")
   /** Action for the ListSubscriptions operation. */
-  case object ListSubscriptions extends SNSAction
+  case object ListSubscriptions extends SNSAction("ListSubscriptions")
   /** Action for the ListSubscriptionsByTopic operation. */
-  case object ListSubscriptionsByTopic extends SNSAction
+  case object ListSubscriptionsByTopic extends SNSAction("ListSubscriptionsByTopic")
   /** Action for the ListTopics operation. */
-  case object ListTopics extends SNSAction
+  case object ListTopics extends SNSAction("ListTopics")
   /** Action for the Publish operation. */
-  case object Publish extends SNSAction
+  case object Publish extends SNSAction("Publish")
   /** Action for the RemovePermission operation. */
-  case object RemovePermission extends SNSAction
+  case object RemovePermission extends SNSAction("RemovePermission")
   /** Action for the SetEndpointAttributes operation. */
-  case object SetEndpointAttributes extends SNSAction
+  case object SetEndpointAttributes extends SNSAction("SetEndpointAttributes")
   /** Action for the SetPlatformApplicationAttributes operation. */
-  case object SetPlatformApplicationAttributes extends SNSAction
+  case object SetPlatformApplicationAttributes extends SNSAction("SetPlatformApplicationAttributes")
   /** Action for the SetSubscriptionAttributes operation. */
-  case object SetSubscriptionAttributes extends SNSAction
+  case object SetSubscriptionAttributes extends SNSAction("SetSubscriptionAttributes")
   /** Action for the SetTopicAttributes operation. */
-  case object SetTopicAttributes extends SNSAction
+  case object SetTopicAttributes extends SNSAction("SetTopicAttributes")
   /** Action for the Subscribe operation. */
-  case object Subscribe extends SNSAction
+  case object Subscribe extends SNSAction("Subscribe")
   /** Action for the Unsubscribe operation. */
-  case object Unsubscribe extends SNSAction
+  case object Unsubscribe extends SNSAction("Unsubscribe")
 
   val values: Seq[SNSAction] = Seq(
     AllSNSActions, AddPermission, ConfirmSubscription, CreatePlatformApplication, CreatePlatformEndpoint, CreateTopic,

@@ -4,46 +4,46 @@ import com.amazonaws.auth.policy.actions.SQSActions
 import com.monsanto.arch.awsutil.auth.policy.Action
 
 /** Type for all AWS access control policy actions for Amazon SQS. */
-sealed trait SQSAction extends Action
+sealed abstract class SQSAction(_name: String) extends Action(s"sqs:${_name}")
 
 object SQSAction {
   /** Represents any action executed on Amazon SQS. */
-  case object AllSQSActions extends SQSAction
+  case object AllSQSActions extends SQSAction("*")
 
   /** Action for the AddPermission operation. */
-  case object AddPermission extends SQSAction
+  case object AddPermission extends SQSAction("AddPermission")
   /** Action for the ChangeMessageVisibility operation. */
-  case object ChangeMessageVisibility extends SQSAction
+  case object ChangeMessageVisibility extends SQSAction("ChangeMessageVisibility")
   /** Action for the ChangeMessageVisibilityBatch operation. */
-  case object ChangeMessageVisibilityBatch extends SQSAction
+  case object ChangeMessageVisibilityBatch extends SQSAction("ChangeMessageVisibilityBatch")
   /** Action for the CreateQueue operation. */
-  case object CreateQueue extends SQSAction
+  case object CreateQueue extends SQSAction("CreateQueue")
   /** Action for the DeleteMessage operation. */
-  case object DeleteMessage extends SQSAction
+  case object DeleteMessage extends SQSAction("DeleteMessage")
   /** Action for the DeleteMessageBatch operation. */
-  case object DeleteMessageBatch extends SQSAction
+  case object DeleteMessageBatch extends SQSAction("DeleteMessageBatch")
   /** Action for the DeleteQueue operation. */
-  case object DeleteQueue extends SQSAction
+  case object DeleteQueue extends SQSAction("DeleteQueue")
   /** Action for the GetQueueAttributes operation. */
-  case object GetQueueAttributes extends SQSAction
+  case object GetQueueAttributes extends SQSAction("GetQueueAttributes")
   /** Action for the GetQueueUrl operation. */
-  case object GetQueueUrl extends SQSAction
+  case object GetQueueUrl extends SQSAction("GetQueueUrl")
   /** Action for the ListDeadLetterSourceQueues operation. */
-  case object ListDeadLetterSourceQueues extends SQSAction
+  case object ListDeadLetterSourceQueues extends SQSAction("ListDeadLetterSourceQueues")
   /** Action for the ListQueues operation. */
-  case object ListQueues extends SQSAction
+  case object ListQueues extends SQSAction("ListQueues")
   /** Action for the PurgeQueue operation. */
-  case object PurgeQueue extends SQSAction
+  case object PurgeQueue extends SQSAction("PurgeQueue")
   /** Action for the ReceiveMessage operation. */
-  case object ReceiveMessage extends SQSAction
+  case object ReceiveMessage extends SQSAction("ReceiveMessage")
   /** Action for the RemovePermission operation. */
-  case object RemovePermission extends SQSAction
+  case object RemovePermission extends SQSAction("RemovePermission")
   /** Action for the SendMessage operation. */
-  case object SendMessage extends SQSAction
+  case object SendMessage extends SQSAction("SendMessage")
   /** Action for the SendMessageBatch operation. */
-  case object SendMessageBatch extends SQSAction
+  case object SendMessageBatch extends SQSAction("SendMessageBatch")
   /** Action for the SetQueueAttributes operation. */
-  case object SetQueueAttributes extends SQSAction
+  case object SetQueueAttributes extends SQSAction("SetQueueAttributes")
 
   val values: Seq[SQSAction] =
     Seq(

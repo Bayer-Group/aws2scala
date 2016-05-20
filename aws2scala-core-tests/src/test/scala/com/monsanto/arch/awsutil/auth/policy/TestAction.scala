@@ -2,8 +2,8 @@ package com.monsanto.arch.awsutil.auth.policy
 
 import com.amazonaws.auth.{policy ⇒ aws}
 
-sealed abstract class TestAction(actionName: String) extends Action with aws.Action {
-  override def getActionName: String = actionName
+sealed abstract class TestAction(_name: String) extends Action(_name) with aws.Action {
+  override def getActionName: String = name
 }
 
 object TestAction {
