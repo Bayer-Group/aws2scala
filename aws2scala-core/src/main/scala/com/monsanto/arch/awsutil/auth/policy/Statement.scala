@@ -42,13 +42,29 @@ object Statement {
   val allActions: Seq[Action] = Seq(Action.AllActions)
 
   /** Enumeration type for statement effects. */
-  sealed trait Effect
+  sealed abstract class Effect(val name: String)
+
   object Effect {
     /** Explicitly allow access. */
-    case object Allow extends Effect
+    case object Allow extends Effect("Allow")
     /** Explicitly deny access. */
-    case object Deny extends Effect
+    case object Deny extends Effect("Deny")
 
+    /** Gets the `Effect` instance corresponding to the given name.
+      *
+      * @param name the name of the effect
+      * @throws IllegalArgumentException if no Effect exists with the given name
+      */
+    def apply(name: String): Effect =
+      fromName.unapply(name)
+        .getOrElse(throw new IllegalArgumentException(s"’$name‘ is not a valid effect name."))
+
+    /** List of all possible `Effect` values. */
     val values: Seq[Effect] = Seq(Allow,Deny)
+
+    /** Extractor to get an `Effect` from a string. */
+    object fromName {
+      def unapply(name: String): Option[Effect] = values.find(_.name == name)
+    }
   }
 }

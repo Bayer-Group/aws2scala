@@ -7,6 +7,7 @@ import com.monsanto.arch.awsutil.testkit.CoreScalaCheckImplicits._
 import org.scalatest.FreeSpec
 import org.scalatest.Matchers._
 import org.scalatest.prop.GeneratorDrivenPropertyChecks._
+import org.scalatest.prop.TableDrivenPropertyChecks.{Table, forAll ⇒ forAllIn}
 
 class StatementSpec extends FreeSpec with AwsEnumerationBehaviours {
   "Statement object should" - {
@@ -39,10 +40,24 @@ class StatementSpec extends FreeSpec with AwsEnumerationBehaviours {
   }
 
   "the Statement.Effect enumeration" - {
+    val effects = Table("effect", Statement.Effect.values: _*)
+
     behave like anAwsEnumeration(
       aws.Statement.Effect.values,
       Statement.Effect.values,
       (_: Statement.Effect).asAws,
       (_: aws.Statement.Effect).asScala)
+
+    "has the same name values as their AWS equivalents" in {
+      forAllIn(effects) { effect ⇒
+        effect.name shouldBe effect.asAws.name()
+      }
+    }
+
+    "can extract Effect objects from strings" in {
+      forAllIn(effects) { effect ⇒
+        Statement.Effect(effect.name) shouldBe effect
+      }
+    }
   }
 }
