@@ -11,6 +11,16 @@ import scala.collection.concurrent
 abstract class Action(val name: String)
 
 object Action {
+  /** Returns an `Action` instance that corresponds to the given name.
+    *
+    * @param name the unique name of the action
+    * @throws IllegalArgumentException if no Action is found with the
+    *                                  given name
+    */
+  def apply(name: String): Action =
+    fromName.unapply(name)
+      .getOrElse(throw new IllegalArgumentException(s"No action instance could be found for ’$name‘."))
+
   private[awsutil] val toScalaConversions: concurrent.Map[aws.Action,Action] =
     concurrent.TrieMap(AllActions → AllActions)
   private[awsutil] val toAwsConversions: concurrent.Map[Action,aws.Action] =
