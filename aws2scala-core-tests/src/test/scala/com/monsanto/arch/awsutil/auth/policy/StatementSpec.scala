@@ -27,6 +27,15 @@ class StatementSpec extends FreeSpec with AwsEnumerationBehaviours {
         }
       }
     }
+
+    "reject using AllActions with something else" in {
+      forAll { action: Action ⇒
+        an [IllegalArgumentException] shouldBe thrownBy {
+          val actions = Seq(action, Action.AllActions)
+          Statement(None, Set.empty, Statement.Effect.Allow, actions, Seq.empty, Seq.empty)
+        }
+      }
+    }
   }
 
   "the Statement.Effect enumeration" - {

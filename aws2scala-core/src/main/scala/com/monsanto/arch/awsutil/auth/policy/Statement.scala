@@ -28,11 +28,18 @@ case class Statement(id: Option[String],
   if (principals != Statement.allPrincipals && principals.contains(Principal.AllPrincipals)) {
     throw new IllegalArgumentException("You may only use the AllPrincipals by itself.")
   }
+
+  if (actions != Statement.allActions && actions.contains(Action.AllActions)) {
+    throw new IllegalArgumentException("You may only use the AllActionss by itself.")
+  }
 }
 
 object Statement {
   /** A constant for applying a statement with all principals. */
   val allPrincipals: Set[Principal] = Set(Principal.AllPrincipals)
+
+  /** A constant for applying a statement with all principals. */
+  val allActions: Seq[Action] = Seq(Action.AllActions)
 
   /** Enumeration type for statement effects. */
   sealed trait Effect
