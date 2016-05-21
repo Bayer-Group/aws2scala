@@ -419,9 +419,23 @@ class ConditionSpec extends FreeSpec with AwsEnumerationBehaviours {
   }
 
   "Condition.DateComparisonType enumeration" - {
+    val comparisonTypes = Table("date comparison type", Condition.DateComparisonType.values: _*)
+
     behave like anAwsEnumeration(
       DateCondition.DateComparisonType.values, Condition.DateComparisonType.values,
       (_: Condition.DateComparisonType).asAws, (_: DateCondition.DateComparisonType).asScala)
+
+    "should have an id that matches the AWS name" in {
+      forAllIn(comparisonTypes) { comparisonType ⇒
+        comparisonType.id shouldBe comparisonType.asAws.name()
+      }
+    }
+
+    "should be recoverable from an ID" in {
+      forAllIn(comparisonTypes) { comparisonType ⇒
+        Condition.DateComparisonType(comparisonType.id) shouldBe theSameInstanceAs (comparisonType)
+      }
+    }
   }
 
   "Condition.IpAddressCondition should" - {

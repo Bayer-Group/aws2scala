@@ -504,16 +504,26 @@ object Condition {
   }
 
   /** Enumeration of all of the date comparison types. */
-  sealed trait DateComparisonType
+  sealed abstract class DateComparisonType(val id: String)
   object DateComparisonType {
-    case object Equals extends DateComparisonType
-    case object After extends DateComparisonType
-    case object AtOrAfter extends DateComparisonType
-    case object Before extends DateComparisonType
-    case object AtOrBefore extends DateComparisonType
-    case object NotEquals extends DateComparisonType
+    case object Equals extends DateComparisonType("DateEquals")
+    case object After extends DateComparisonType("DateGreaterThan")
+    case object AtOrAfter extends DateComparisonType("DateGreaterThanEquals")
+    case object Before extends DateComparisonType("DateLessThan")
+    case object AtOrBefore extends DateComparisonType("DateLessThanEquals")
+    case object NotEquals extends DateComparisonType("DateNotEquals")
 
     val values: Seq[DateComparisonType] = Seq(Equals, After, AtOrAfter, Before, AtOrBefore, NotEquals)
+
+    /** Returns the `DateComparisonType` value for the given ID. */
+    def apply(id: String): DateComparisonType =
+      fromId.unapply(id)
+        .getOrElse(throw new IllegalArgumentException(s"‘$id’ is not a valid date comparison type ID."))
+
+    /** Extractor for getting the date comparison type from its string identifier. */
+    object fromId {
+      def unapply(id: String): Option[DateComparisonType] = values.find(_.id == id)
+    }
   }
 
   /** Condition for comparing the value of a key against a date/time value.
