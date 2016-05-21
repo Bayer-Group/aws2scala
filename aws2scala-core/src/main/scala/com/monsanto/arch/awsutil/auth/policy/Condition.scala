@@ -629,18 +629,28 @@ object Condition {
   }
 
   /** The enumeration of all valid numeric comparison types. */
-  sealed trait NumericComparisonType
+  sealed abstract class NumericComparisonType(val id: String)
   object NumericComparisonType {
-    case object Equals extends NumericComparisonType
-    case object GreaterThan extends NumericComparisonType
-    case object GreaterThanEquals extends NumericComparisonType
-    case object LessThan extends NumericComparisonType
-    case object LessThanEquals extends NumericComparisonType
-    case object NotEquals extends NumericComparisonType
+    case object Equals extends NumericComparisonType("NumericEquals")
+    case object GreaterThan extends NumericComparisonType("NumericGreaterThan")
+    case object GreaterThanEquals extends NumericComparisonType("NumericGreaterThanEquals")
+    case object LessThan extends NumericComparisonType("NumericLessThan")
+    case object LessThanEquals extends NumericComparisonType("NumericLessThanEquals")
+    case object NotEquals extends NumericComparisonType("NumericNotEquals")
 
     val values: Seq[NumericComparisonType] =
       Seq(Equals, GreaterThan, GreaterThanEquals, LessThan, LessThanEquals,
         NotEquals)
+
+    /** Returns the `NumericComparisonType` value for the given ID. */
+    def apply(id: String): NumericComparisonType =
+      fromId.unapply(id)
+        .getOrElse(throw new IllegalArgumentException(s"‘$id’ is not a valid numeric comparison type ID."))
+
+    /** Extractor for getting the numeric comparison type from its string identifier. */
+    object fromId {
+      def unapply(id: String): Option[NumericComparisonType] = values.find(_.id == id)
+    }
   }
 
   /** Condition for comparing the value of a key against a numeric value.
