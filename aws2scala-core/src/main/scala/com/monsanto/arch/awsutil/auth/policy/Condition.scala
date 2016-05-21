@@ -704,31 +704,41 @@ object Condition {
   }
 
   /** The enumeration of all string comparison types. */
-  trait StringComparisonType
+  sealed abstract class StringComparisonType(val id: String)
   object StringComparisonType {
     /** Case-sensitive exact string matching. */
-    case object Equals extends StringComparisonType
+    case object Equals extends StringComparisonType("StringEquals")
 
     /** Negated form of [[Equals]]. */
-    case object NotEquals extends StringComparisonType
+    case object NotEquals extends StringComparisonType("StringNotEquals")
 
     /** Case-insensitive string matching. */
-    case object EqualsIgnoreCase extends StringComparisonType
+    case object EqualsIgnoreCase extends StringComparisonType("StringEqualsIgnoreCase")
 
     /** Negated form of [[NotEquals]]. */
-    case object NotEqualsIgnoreCase extends StringComparisonType
+    case object NotEqualsIgnoreCase extends StringComparisonType("StringNotEqualsIgnoreCase")
 
     /** Loose case-insensitive matching.  The values can include a
       * multi-character match wildcard (`*`) or a single-character match
       * wildcard (?) anywhere in the string.
       */
-    case object Like extends StringComparisonType
+    case object Like extends StringComparisonType("StringLike")
 
     /** Negated form of [[Like]]. */
-    case object NotLike extends StringComparisonType
+    case object NotLike extends StringComparisonType("StringNotLike")
 
     val values: Seq[StringComparisonType] =
       Seq(Equals, NotEquals, EqualsIgnoreCase, NotEqualsIgnoreCase, Like, NotLike)
+
+    /** Returns the `StringComparisonType` value for the given ID. */
+    def apply(id: String): StringComparisonType =
+      fromId.unapply(id)
+        .getOrElse(throw new IllegalArgumentException(s"‘$id’ is not a valid IP address comparison type ID."))
+
+    /** Extractor for getting the date comparison type from its string identifier. */
+    object fromId {
+      def unapply(id: String): Option[StringComparisonType] = values.find(_.id == id)
+    }
   }
 
   /** Condition for comparing the value of a key with a string.
