@@ -279,20 +279,27 @@ object CoreScalaCheckImplicits {
 
   implicit lazy val arbResource: Arbitrary[Resource] =
     Arbitrary {
-      val arnGen =
-        for {
-          partition ← arbitrary[Partition]
-          account ← Gen.option(CoreGen.accountId).map(_.map(id ⇒ Account(id, partition)))
-          region ← arbitrary[Option[Region]]
-          namespace ← arbitrary[Arn.Namespace]
-          resourceStr ← Gen.identifier
-        } yield new Arn(partition, namespace, region, account) {
-          override val resource = resourceStr
-        }
+      for {
+        partition ← arbitrary[Partition]
+        account ← Gen.option(CoreGen.accountId).map(_.map(id ⇒ Account(id, partition)))
+        region ← arbitrary[Option[Region]]
+        namespace ← arbitrary[Arn.Namespace]
+        resourceStr ← Gen.identifier
+      } yield {
+        val arn =
+          new Arn(partition, namespace, region, account) {
+            override val resource = resourceStr
+          }
+        Resource(arn.arnString)
+      }
+    }
 
-      Gen.oneOf(
-        arnGen.map(arn ⇒ Resource(arn.arnString)),
-        Gen.const(Resource("*")))
+  implicit lazy val arbResources: Arbitrary[Seq[Resource]] =
+    Arbitrary {
+      Gen.frequency(
+        1 → Gen.const(Statement.allResources),
+        19 → UtilGen.nonEmptyListOfSqrtN(arbitrary[Resource])
+      )
     }
 
   implicit def arbAction: Arbitrary[Action] =

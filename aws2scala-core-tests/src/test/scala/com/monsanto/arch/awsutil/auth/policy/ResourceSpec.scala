@@ -13,5 +13,9 @@ class ResourceSpec extends FreeSpec {
         resource.asAws.asScala shouldBe resource
       }
     }
+
+    "* will always be AllResources" in {
+      Resource("*").asAws.asScala shouldBe theSameInstanceAs (Resource.AllResources)
+    }
   }
 }

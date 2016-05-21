@@ -37,6 +37,15 @@ class StatementSpec extends FreeSpec with AwsEnumerationBehaviours {
         }
       }
     }
+
+    "reject using AllResources with something else" in {
+      forAll { resource: Resource ⇒
+        an [IllegalArgumentException] shouldBe thrownBy {
+          val resources = Seq(resource, Resource.AllResources)
+          Statement(None, Set.empty, Statement.Effect.Allow, Seq.empty, resources, Seq.empty)
+        }
+      }
+    }
   }
 
   "the Statement.Effect enumeration" - {

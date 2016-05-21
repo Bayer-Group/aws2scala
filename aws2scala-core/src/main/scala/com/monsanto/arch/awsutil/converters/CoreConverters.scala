@@ -280,7 +280,11 @@ object CoreConverters {
   }
 
   implicit class AwsResource(val resource: policy.Resource) extends AnyVal {
-    def asScala: Resource = Resource(resource.getId)
+    def asScala: Resource =
+      resource.getId match {
+        case "*" ⇒ Resource.AllResources
+        case _   ⇒ Resource(resource.getId)
+      }
   }
 
   implicit class ScalaResource(val resource: Resource) extends AnyVal {

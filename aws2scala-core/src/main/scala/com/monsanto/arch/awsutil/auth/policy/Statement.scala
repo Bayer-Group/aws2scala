@@ -30,16 +30,23 @@ case class Statement(id: Option[String],
   }
 
   if (actions != Statement.allActions && actions.contains(Action.AllActions)) {
-    throw new IllegalArgumentException("You may only use the AllActionss by itself.")
+    throw new IllegalArgumentException("You may only use the AllActions by itself.")
+  }
+
+  if (resources != Statement.allResources && resources.contains(Resource.AllResources)) {
+    throw new IllegalArgumentException("You may only use the AllResources by itself.")
   }
 }
 
 object Statement {
-  /** A constant for applying a statement with all principals. */
+  /** A constant for applying a statement to all principals. */
   val allPrincipals: Set[Principal] = Set(Principal.AllPrincipals)
 
-  /** A constant for applying a statement with all principals. */
+  /** A constant for applying a statement to all principals. */
   val allActions: Seq[Action] = Seq(Action.AllActions)
+
+  /** A constant for applying a statement to all resources. */
+  val allResources: Seq[Resource] = Seq(Resource.AllResources)
 
   /** Enumeration type for statement effects. */
   sealed abstract class Effect(val name: String)

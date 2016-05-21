@@ -7,3 +7,8 @@ package com.monsanto.arch.awsutil.auth.policy
   * The resource is C in 'A has permission to do B to C when D applies'.
   */
 case class Resource(id: String)
+
+object Resource {
+  /** Constant for the resource that matches all resources. */
+  val AllResources: Resource = Resource("*")
+}
