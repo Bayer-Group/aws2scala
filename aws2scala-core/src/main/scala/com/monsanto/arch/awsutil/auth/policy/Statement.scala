@@ -24,7 +24,7 @@ case class Statement(id: Option[String],
                      effect: Statement.Effect,
                      actions: Seq[Action],
                      resources: Seq[Resource],
-                     conditions: Seq[Condition]) {
+                     conditions: Set[Condition]) {
   if (principals != Statement.allPrincipals && principals.contains(Principal.AllPrincipals)) {
     throw new IllegalArgumentException("You may only use the AllPrincipals by itself.")
   }

@@ -24,17 +24,12 @@ class PolicySpec extends FreeSpec {
       }
 
       "via JSON" in {
-        // the JSON will collapse multiple conditions of the same type, which is fine, but makes round-tripping trickier
-        def uniqueConditionTypes(statement: Statement): Boolean = {
-          val distinctTypes = statement.conditions.map(_.asAws.getType).distinct
-          distinctTypes.size == statement.conditions.size
-        }
         // only get principals that can be process by AWS' fromJson
         val nonBrokenPrincipal = arbitrary[Principal].retryUntil(p ⇒ !p.id.contains("-") && p.id != "*")
         val nonBrokenPolicy =
           for {
           // generate a policy with unique condition types
-            policy ← arbitrary[Policy] if policy.statements.forall(uniqueConditionTypes)
+            policy ← arbitrary[Policy]
             // generate a set of principles that will round-trip
             okPrincipals ← Gen.listOfN(policy.statements.size, UtilGen.listOfSqrtN(nonBrokenPrincipal).map(_.toSet))
           } yield {

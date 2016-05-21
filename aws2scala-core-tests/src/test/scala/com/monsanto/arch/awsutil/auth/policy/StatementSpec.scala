@@ -24,7 +24,7 @@ class StatementSpec extends FreeSpec with AwsEnumerationBehaviours {
       forAll { principal: Principal ⇒
         an [IllegalArgumentException] shouldBe thrownBy {
           val principals = Set(principal, Principal.AllPrincipals)
-          Statement(None, principals, Statement.Effect.Allow, Seq.empty, Seq.empty, Seq.empty)
+          Statement(None, principals, Statement.Effect.Allow, Seq.empty, Seq.empty, Set.empty)
         }
       }
     }
@@ -33,7 +33,7 @@ class StatementSpec extends FreeSpec with AwsEnumerationBehaviours {
       forAll { action: Action ⇒
         an [IllegalArgumentException] shouldBe thrownBy {
           val actions = Seq(action, Action.AllActions)
-          Statement(None, Set.empty, Statement.Effect.Allow, actions, Seq.empty, Seq.empty)
+          Statement(None, Set.empty, Statement.Effect.Allow, actions, Seq.empty, Set.empty)
         }
       }
     }
@@ -42,7 +42,7 @@ class StatementSpec extends FreeSpec with AwsEnumerationBehaviours {
       forAll { resource: Resource ⇒
         an [IllegalArgumentException] shouldBe thrownBy {
           val resources = Seq(resource, Resource.AllResources)
-          Statement(None, Set.empty, Statement.Effect.Allow, Seq.empty, resources, Seq.empty)
+          Statement(None, Set.empty, Statement.Effect.Allow, Seq.empty, resources, Set.empty)
         }
       }
     }

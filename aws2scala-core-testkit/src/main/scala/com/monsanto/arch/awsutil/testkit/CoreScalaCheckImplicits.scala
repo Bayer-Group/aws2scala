@@ -52,9 +52,9 @@ object CoreScalaCheckImplicits {
         id ← Gen.option(Gen.identifier)
         principals ← arbitrary[Set[Principal]]
         effect ← arbitrary[Statement.Effect]
-        actions ← UtilGen.nonEmptyListOfSqrtN(arbitrary[Action])
-        resources ← UtilGen.nonEmptyListOfSqrtN(arbitrary[Resource])
-        conditions ← UtilGen.nonEmptyListOfSqrtN(arbitrary[Condition])
+        actions ← arbitrary[Seq[Action]]
+        resources ← arbitrary[Seq[Resource]]
+        conditions ← arbitrary[Set[Condition]]
       } yield Statement(id, principals, effect, actions, resources, conditions)
     }
 
@@ -260,6 +260,21 @@ object CoreScalaCheckImplicits {
         innerCondition ← innerConditionGen
         setOperation ← Gen.oneOf(Condition.SetOperation.ForAnyValue, Condition.SetOperation.ForAllValues)
       } yield Condition.MultipleKeyValueCondition(setOperation, innerCondition)
+    }
+
+  implicit lazy val arbConditions: Arbitrary[Set[Condition]] =
+    Arbitrary {
+      for {
+        c1 ← arbitrary[Option[Condition.ArnCondition]]
+        c2 ← arbitrary[Option[Condition.BinaryCondition]]
+        c3 ← arbitrary[Option[Condition.BooleanCondition]]
+        c4 ← arbitrary[Option[Condition.DateCondition]]
+        c5 ← arbitrary[Option[Condition.IpAddressCondition]]
+        c6 ← arbitrary[Option[Condition.NullCondition]]
+        c7 ← arbitrary[Option[Condition.NumericCondition]]
+        c8 ← arbitrary[Option[Condition.StringCondition]]
+        c9 ← arbitrary[Option[Condition.MultipleKeyValueCondition]]
+      } yield Set(c1, c2, c3, c4, c5, c6, c7, c8, c9).filter(_.isDefined).map(_.get)
     }
 
   implicit lazy val arbArnComparisonType: Arbitrary[Condition.ArnComparisonType] =

@@ -236,8 +236,8 @@ class PolicyDSLSpec extends FreeSpec {
     }
 
     "conditions, which returns a list of Action objects" in {
-      forAll { conditionList: Seq[Condition] ⇒
-        conditions(conditionList: _*) shouldBe conditionList
+      forAll { conditionSet: Set[Condition] ⇒
+        conditions(conditionSet.toSeq: _*) shouldBe conditionSet
       }
     }
 
@@ -247,7 +247,7 @@ class PolicyDSLSpec extends FreeSpec {
           forAll(Gen.identifier) { identifier ⇒
             allow (
               id(identifier)
-            ) shouldBe Statement(Some(identifier), Set.empty, Statement.Effect.Allow, Seq.empty, Seq.empty, Seq.empty)
+            ) shouldBe Statement(Some(identifier), Set.empty, Statement.Effect.Allow, Seq.empty, Seq.empty, Set.empty)
           }
         }
 
@@ -255,7 +255,7 @@ class PolicyDSLSpec extends FreeSpec {
           forAll { principals: Set[Principal] ⇒
             allow (
               principals
-            ) shouldBe Statement(None, principals, Statement.Effect.Allow, Seq.empty, Seq.empty, Seq.empty)
+            ) shouldBe Statement(None, principals, Statement.Effect.Allow, Seq.empty, Seq.empty, Set.empty)
           }
         }
 
@@ -263,7 +263,7 @@ class PolicyDSLSpec extends FreeSpec {
           forAll { actions: Seq[Action] ⇒
             allow (
               actions
-            ) shouldBe Statement(None, Set.empty, Statement.Effect.Allow, actions, Seq.empty, Seq.empty)
+            ) shouldBe Statement(None, Set.empty, Statement.Effect.Allow, actions, Seq.empty, Set.empty)
           }
         }
 
@@ -271,12 +271,12 @@ class PolicyDSLSpec extends FreeSpec {
           forAll { resources: Seq[Resource] ⇒
             allow (
               resources
-            ) shouldBe Statement(None, Set.empty, Statement.Effect.Allow, Seq.empty, resources, Seq.empty)
+            ) shouldBe Statement(None, Set.empty, Statement.Effect.Allow, Seq.empty, resources, Set.empty)
           }
         }
 
         "with a conditions argument" in {
-          forAll { conditions: Seq[Condition] ⇒
+          forAll { conditions: Set[Condition] ⇒
             allow (
               conditions
             ) shouldBe Statement(None, Set.empty, Statement.Effect.Allow, Seq.empty, Seq.empty, conditions)
@@ -285,7 +285,7 @@ class PolicyDSLSpec extends FreeSpec {
 
         "with two arguments" in {
           forAll(
-            arbitrary[Seq[Condition]] → "conditions",
+            arbitrary[Set[Condition]] → "conditions",
             arbitrary[Seq[Action]] → "actions"
           ) { (conditions, actions) ⇒
             allow (
@@ -297,7 +297,7 @@ class PolicyDSLSpec extends FreeSpec {
 
         "with three arguments" in {
           forAll(
-            arbitrary[Seq[Condition]] → "conditions",
+            arbitrary[Set[Condition]] → "conditions",
             arbitrary[Seq[Action]] → "actions",
             arbitrary[Set[Principal]] → "principals"
           ) { (conditions, actions, principals) ⇒
@@ -311,7 +311,7 @@ class PolicyDSLSpec extends FreeSpec {
 
         "with four arguments" in {
           forAll(
-            arbitrary[Seq[Condition]] → "conditions",
+            arbitrary[Set[Condition]] → "conditions",
             arbitrary[Seq[Action]] → "actions",
             arbitrary[Set[Principal]] → "principals",
             Gen.identifier → "statementId"
@@ -327,7 +327,7 @@ class PolicyDSLSpec extends FreeSpec {
 
         "with five arguments" in {
           forAll(
-            arbitrary[Seq[Condition]] → "conditions",
+            arbitrary[Set[Condition]] → "conditions",
             arbitrary[Seq[Action]] → "actions",
             arbitrary[Set[Principal]] → "principals",
             Gen.identifier → "statementId",
@@ -381,7 +381,7 @@ class PolicyDSLSpec extends FreeSpec {
         }
 
         "condition lists" in {
-          forAll { (c1: Seq[Condition], c2: Seq[Condition]) ⇒
+          forAll { (c1: Set[Condition], c2: Set[Condition]) ⇒
             the [IllegalArgumentException] thrownBy {
               allow ( c1, c2 )
             } should have message "A statement may only have one condition list."
@@ -396,7 +396,7 @@ class PolicyDSLSpec extends FreeSpec {
           forAll(Gen.identifier) { identifier ⇒
             deny (
               id(identifier)
-            ) shouldBe Statement(Some(identifier), Set.empty, Statement.Effect.Deny, Seq.empty, Seq.empty, Seq.empty)
+            ) shouldBe Statement(Some(identifier), Set.empty, Statement.Effect.Deny, Seq.empty, Seq.empty, Set.empty)
           }
         }
 
@@ -404,7 +404,7 @@ class PolicyDSLSpec extends FreeSpec {
           forAll { principals: Set[Principal] ⇒
             deny (
               principals
-            ) shouldBe Statement(None, principals, Statement.Effect.Deny, Seq.empty, Seq.empty, Seq.empty)
+            ) shouldBe Statement(None, principals, Statement.Effect.Deny, Seq.empty, Seq.empty, Set.empty)
           }
         }
 
@@ -412,7 +412,7 @@ class PolicyDSLSpec extends FreeSpec {
           forAll { actions: Seq[Action] ⇒
             deny (
               actions
-            ) shouldBe Statement(None, Set.empty, Statement.Effect.Deny, actions, Seq.empty, Seq.empty)
+            ) shouldBe Statement(None, Set.empty, Statement.Effect.Deny, actions, Seq.empty, Set.empty)
           }
         }
 
@@ -420,12 +420,12 @@ class PolicyDSLSpec extends FreeSpec {
           forAll { resources: Seq[Resource] ⇒
             deny (
               resources
-            ) shouldBe Statement(None, Set.empty, Statement.Effect.Deny, Seq.empty, resources, Seq.empty)
+            ) shouldBe Statement(None, Set.empty, Statement.Effect.Deny, Seq.empty, resources, Set.empty)
           }
         }
 
         "with a conditions argument" in {
-          forAll { conditions: Seq[Condition] ⇒
+          forAll { conditions: Set[Condition] ⇒
             deny (
               conditions
             ) shouldBe Statement(None, Set.empty, Statement.Effect.Deny, Seq.empty, Seq.empty, conditions)
@@ -434,7 +434,7 @@ class PolicyDSLSpec extends FreeSpec {
 
         "with two arguments" in {
           forAll(
-            arbitrary[Seq[Condition]] → "conditions",
+            arbitrary[Set[Condition]] → "conditions",
             arbitrary[Seq[Action]] → "actions"
           ) { (conditions, actions) ⇒
             deny (
@@ -446,7 +446,7 @@ class PolicyDSLSpec extends FreeSpec {
 
         "with three arguments" in {
           forAll(
-            arbitrary[Seq[Condition]] → "conditions",
+            arbitrary[Set[Condition]] → "conditions",
             arbitrary[Seq[Action]] → "actions",
             arbitrary[Set[Principal]] → "principals"
           ) { (conditions, actions, principals) ⇒
@@ -460,7 +460,7 @@ class PolicyDSLSpec extends FreeSpec {
 
         "with four arguments" in {
           forAll(
-            arbitrary[Seq[Condition]] → "conditions",
+            arbitrary[Set[Condition]] → "conditions",
             arbitrary[Seq[Action]] → "actions",
             arbitrary[Set[Principal]] → "principals",
             Gen.identifier → "statementId"
@@ -476,7 +476,7 @@ class PolicyDSLSpec extends FreeSpec {
 
         "with five arguments" in {
           forAll(
-            arbitrary[Seq[Condition]] → "conditions",
+            arbitrary[Set[Condition]] → "conditions",
             arbitrary[Seq[Action]] → "actions",
             arbitrary[Set[Principal]] → "principals",
             Gen.identifier → "statementId",
@@ -530,7 +530,7 @@ class PolicyDSLSpec extends FreeSpec {
         }
 
         "condition lists" in {
-          forAll { (c1: Seq[Condition], c2: Seq[Condition]) ⇒
+          forAll { (c1: Set[Condition], c2: Set[Condition]) ⇒
             the [IllegalArgumentException] thrownBy {
               deny ( c1, c2 )
             } should have message "A statement may only have one condition list."

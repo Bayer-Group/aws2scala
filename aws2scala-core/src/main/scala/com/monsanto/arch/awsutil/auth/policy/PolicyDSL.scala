@@ -220,7 +220,7 @@ object PolicyDSL {
   def resources(resources: Resource*): Seq[Resource] = resources
 
   /** Used within an `allow` or `deny` to set the conditions in a statement. */
-  def conditions(conditions: Condition*): Seq[Condition] = conditions
+  def conditions(conditions: Condition*): Set[Condition] = conditions.toSet
 
   /** Used by the DSL to build policy objects. */
   class PolicyBuilder private(version: Option[Policy.Version],
@@ -314,7 +314,7 @@ object PolicyDSL {
                                   effect: Statement.Effect,
                                   actions: Option[Seq[Action]],
                                   resources: Option[Seq[Resource]],
-                                  conditions: Option[Seq[Condition]]) {
+                                  conditions: Option[Set[Condition]]) {
     /** Adds a component to the statement builder. */
     private[policy] def addComponent[T: StatementBuilder.Component](component: T): StatementBuilder =
       implicitly[StatementBuilder.Component[T]].addTo(this, component)
@@ -362,7 +362,7 @@ object PolicyDSL {
     /** Returns a new builder with the conditions set.  It is an error to invoke this on a builder that
       * already has conditions.
       */
-    private def withConditions(conditions: Seq[Condition]): StatementBuilder = {
+    private def withConditions(conditions: Set[Condition]): StatementBuilder = {
       if (this.conditions.isDefined) {
         throw new IllegalArgumentException("A statement may only have one condition list.")
       }
@@ -377,7 +377,7 @@ object PolicyDSL {
         effect,
         actions.getOrElse(Seq.empty),
         resources.getOrElse(Seq.empty),
-        conditions.getOrElse(Seq.empty))
+        conditions.getOrElse(Set.empty))
   }
 
   object StatementBuilder {
@@ -422,9 +422,9 @@ object PolicyDSL {
         }
 
       /** Helper for setting a condition list on a statement builder. */
-      implicit val conditionsComponent: Component[Seq[Condition]] =
-        new Component[Seq[Condition]] {
-          override def addTo(builder: StatementBuilder, conditions: Seq[Condition]): StatementBuilder =
+      implicit val conditionsComponent: Component[Set[Condition]] =
+        new Component[Set[Condition]] {
+          override def addTo(builder: StatementBuilder, conditions: Set[Condition]): StatementBuilder =
             builder.withConditions(conditions)
         }
     }

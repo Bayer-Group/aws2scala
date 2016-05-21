@@ -315,7 +315,7 @@ object CoreConverters {
         statement.getEffect.asScala,
         asList(statement.getActions).map(_.asScala),
         asList(statement.getResources).map(_.asScala),
-        asList(statement.getConditions).map(_.asScala))
+        asSet(statement.getConditions).map(_.asScala))
   }
 
   implicit class ScalaStatement(val statement: Statement) extends AnyVal {
@@ -325,7 +325,7 @@ object CoreConverters {
       awsStatement.setPrincipals(statement.principals.map(_.asAws).asJavaCollection)
       awsStatement.setActions(statement.actions.map(_.asAws).asJavaCollection)
       awsStatement.setResources(statement.resources.map(_.asAws).asJavaCollection)
-      awsStatement.setConditions(statement.conditions.map(_.asAws).asJava)
+      awsStatement.setConditions(statement.conditions.map(_.asAws).toList.asJava)
       awsStatement
     }
   }
