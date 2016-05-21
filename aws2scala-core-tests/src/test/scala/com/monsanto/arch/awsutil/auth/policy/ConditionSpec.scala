@@ -554,18 +554,26 @@ class ConditionSpec extends FreeSpec with AwsEnumerationBehaviours {
     behave like multiValueSupportCondition[Condition.NullCondition]
   }
 
-  "Condition.MultiValueCondition should convert to the correct AWS condition" in {
-    forAll { condition: Condition.MultipleKeyValueCondition ⇒
-      val innerAwsCondition = condition.condition.asAws
-      val awsType = condition.op match {
-        case Condition.SetOperation.ForAllValues ⇒ s"ForAllValues:${innerAwsCondition.getType}"
-        case Condition.SetOperation.ForAnyValue  ⇒ s"ForAnyValue:${innerAwsCondition.getType}"
+  "Condition.MultiValueCondition should" - {
+    "have the correct key" in {
+      forAll { condition: Condition.MultipleKeyValueCondition ⇒
+        condition.key shouldBe condition.condition.key
       }
-      condition.asAws should have (
-        'conditionKey (innerAwsCondition.getConditionKey),
-        'type (awsType),
-        'values (innerAwsCondition.getValues)
-      )
+    }
+
+    "convert to the correct AWS condition" in {
+      forAll { condition: Condition.MultipleKeyValueCondition ⇒
+        val innerAwsCondition = condition.condition.asAws
+        val awsType = condition.op match {
+          case Condition.SetOperation.ForAllValues ⇒ s"ForAllValues:${innerAwsCondition.getType}"
+          case Condition.SetOperation.ForAnyValue  ⇒ s"ForAnyValue:${innerAwsCondition.getType}"
+        }
+        condition.asAws should have (
+          'conditionKey (condition.key),
+          'type (awsType),
+          'values (innerAwsCondition.getValues)
+        )
+      }
     }
   }
 

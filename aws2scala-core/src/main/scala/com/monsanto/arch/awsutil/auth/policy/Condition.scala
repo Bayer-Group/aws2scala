@@ -306,7 +306,10 @@ import akka.util.ByteString
   * @see [[http://docs.aws.amazon.com/IAM/latest/UserGuide/reference_policies_elements.html#Condition  IAM Policy Elements Reference: Condition]]
   * @see [[http://docs.aws.amazon.com/IAM/latest/UserGuide/reference_policies_multi-value-conditions.html Creating a Condition That Tests Multiple Key Values (Set Operations)]]
   */
-sealed trait Condition
+sealed trait Condition {
+  /** Returns the key for this condition. */
+  def key: String
+}
 
 object Condition {
   /** Allows creation of an ARN condition using the given key. */
@@ -826,7 +829,9 @@ object Condition {
     * @param condition the inner condition to apply to each key value
     */
   case class MultipleKeyValueCondition private[Condition](op: SetOperation,
-                                                          condition: Condition with MultipleKeyValueSupport) extends Condition
+                                                          condition: Condition with MultipleKeyValueSupport) extends Condition {
+    override def key: String = condition.key
+  }
 
   /** Adds support to a condition so that set operations may be applied to
     * it.
