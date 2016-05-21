@@ -453,9 +453,23 @@ class ConditionSpec extends FreeSpec with AwsEnumerationBehaviours {
   }
 
   "Condition.IpAddressComparisonType enumeration" - {
+    val comparisonTypes = Table("IP address comparison type", Condition.IpAddressComparisonType.values: _*)
+
     behave like anAwsEnumeration(
       IpAddressCondition.IpAddressComparisonType.values, Condition.IpAddressComparisonType.values,
       (_: Condition.IpAddressComparisonType).asAws, (_: IpAddressCondition.IpAddressComparisonType).asScala)
+
+    "should have an id that matches the AWS name" in {
+      forAllIn(comparisonTypes) { comparisonType ⇒
+        comparisonType.id shouldBe comparisonType.asAws.name()
+      }
+    }
+
+    "should be recoverable from an ID" in {
+      forAllIn(comparisonTypes) { comparisonType ⇒
+        Condition.IpAddressComparisonType(comparisonType.id) shouldBe theSameInstanceAs (comparisonType)
+      }
+    }
   }
 
   "Condition.NumericCondition should" - {

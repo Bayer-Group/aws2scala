@@ -577,16 +577,26 @@ object Condition {
   }
 
   /** Enumeration of all of the IP address comparison types. */
-  sealed trait IpAddressComparisonType
+  sealed abstract class IpAddressComparisonType(val id: String)
   object IpAddressComparisonType {
     /** Matches an IP address against a CIDR IP range, evaluating to true if the IP address being tested is in the
       * conditions‘s specified CIDR IP range.
       */
-    case object IsIn extends IpAddressComparisonType
+    case object IsIn extends IpAddressComparisonType("IpAddress")
     /** Negated form of [[IsIn]]. */
-    case object IsNotIn extends IpAddressComparisonType
+    case object IsNotIn extends IpAddressComparisonType("NotIpAddress")
 
     val values: Seq[IpAddressComparisonType] = Seq(IsIn, IsNotIn)
+
+    /** Returns the `IpAddressComparisonType` value for the given ID. */
+    def apply(id: String): IpAddressComparisonType =
+      fromId.unapply(id)
+        .getOrElse(throw new IllegalArgumentException(s"‘$id’ is not a valid IP address comparison type ID."))
+
+    /** Extractor for getting the IP address comparison type from its string identifier. */
+    object fromId {
+      def unapply(id: String): Option[IpAddressComparisonType] = values.find(_.id == id)
+    }
   }
 
   /** Provides a fluent interface for building date/time conditions. */
