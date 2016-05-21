@@ -13,6 +13,7 @@ import org.scalacheck.{Arbitrary, Gen}
 import org.scalatest.FreeSpec
 import org.scalatest.Matchers._
 import org.scalatest.prop.GeneratorDrivenPropertyChecks._
+import org.scalatest.prop.TableDrivenPropertyChecks.{Table, forAll ⇒ forAllIn}
 
 import scala.collection.JavaConverters._
 
@@ -354,8 +355,25 @@ class ConditionSpec extends FreeSpec with AwsEnumerationBehaviours {
   }
 
   "Condition.ArnComparisonType enumeration" - {
-    behave like anAwsEnumeration(ArnCondition.ArnComparisonType.values, Condition.ArnComparisonType.values,
-      (_: Condition.ArnComparisonType).asAws, (_: ArnCondition.ArnComparisonType).asScala)
+    val comparisonTypes = Table("ARN comparison types", Condition.ArnComparisonType.values: _*)
+
+    behave like anAwsEnumeration(
+      ArnCondition.ArnComparisonType.values,
+      Condition.ArnComparisonType.values,
+      (_: Condition.ArnComparisonType).asAws,
+      (_: ArnCondition.ArnComparisonType).asScala)
+
+    "should have an id that matches the AWS name" in {
+      forAllIn(comparisonTypes) { comparisonType ⇒
+        comparisonType.id shouldBe comparisonType.asAws.name()
+      }
+    }
+
+    "should be recoverable from an ID" in {
+      forAllIn(comparisonTypes) { comparisonType ⇒
+        Condition.ArnComparisonType(comparisonType.id) shouldBe theSameInstanceAs (comparisonType)
+      }
+    }
   }
 
   "Condition.BinaryCondition should" - {

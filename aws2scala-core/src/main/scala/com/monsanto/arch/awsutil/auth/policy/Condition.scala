@@ -393,18 +393,28 @@ object Condition {
   }
 
   /** Enumeration for all ARN comparison types. */
-  sealed trait ArnComparisonType
+  sealed abstract class ArnComparisonType(val id: String)
   object ArnComparisonType {
     /** Exact matching. */
-    case object Equals extends ArnComparisonType
+    case object Equals extends ArnComparisonType("ArnEquals")
     /** Loose case-insensitive matching of the ARN. */
-    case object Like extends ArnComparisonType
+    case object Like extends ArnComparisonType("ArnLike")
     /** Negated form of [[Equals]]. */
-    case object NotEquals extends ArnComparisonType
+    case object NotEquals extends ArnComparisonType("ArnNotEquals")
     /** Negated form of [[Like]]. */
-    case object NotLike extends ArnComparisonType
+    case object NotLike extends ArnComparisonType("ArnNotLike")
 
     val values: Seq[ArnComparisonType] = Seq(Equals, Like, NotEquals, NotLike)
+
+    /** Returns the `ArnComparisonType` value for the given ID. */
+    def apply(id: String): ArnComparisonType =
+      fromId.unapply(id)
+        .getOrElse(throw new IllegalArgumentException(s"‘$id’ is not a valid ARN comparison type ID."))
+
+    /** Extractor for getting the ARN comparison type from its string identifier. */
+    object fromId {
+      def unapply(id: String): Option[ArnComparisonType] = values.find(_.id == id)
+    }
   }
 
   /** Condition for comparing the value of a key against an ARN value.
