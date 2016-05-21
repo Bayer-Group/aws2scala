@@ -57,7 +57,7 @@ class ConditionSpec extends FreeSpec with AwsEnumerationBehaviours {
                 Condition.arn(condition.key)
               }
             val result =
-              condition.comparisonType match {
+              condition.arnComparisonType match {
                 case Condition.ArnComparisonType.Equals ⇒ key.is(condition.values: _*)
                 case Condition.ArnComparisonType.NotEquals ⇒ key.isNot(condition.values: _*)
                 case Condition.ArnComparisonType.Like ⇒ key.isLike(condition.values: _*)
@@ -71,7 +71,7 @@ class ConditionSpec extends FreeSpec with AwsEnumerationBehaviours {
           forAll { condition: Condition.ArnCondition ⇒
             val key = Condition.arn(condition.key)
             val baseCondition =
-              condition.comparisonType match {
+              condition.arnComparisonType match {
                 case Condition.ArnComparisonType.Equals ⇒ key.is(condition.values: _*)
                 case Condition.ArnComparisonType.NotEquals ⇒ key.isNot(condition.values: _*)
                 case Condition.ArnComparisonType.Like ⇒ key.isLike(condition.values: _*)
@@ -164,7 +164,7 @@ class ConditionSpec extends FreeSpec with AwsEnumerationBehaviours {
                 Condition.date(condition.key)
               }
             val result =
-              condition.comparisonType match {
+              condition.dateComparisonType match {
                 case Condition.DateComparisonType.Equals ⇒ key.is(condition.values: _*)
                 case Condition.DateComparisonType.NotEquals ⇒ key.isNot(condition.values: _*)
                 case Condition.DateComparisonType.After ⇒ key.isAfter(condition.values: _*)
@@ -180,7 +180,7 @@ class ConditionSpec extends FreeSpec with AwsEnumerationBehaviours {
           forAll { condition: Condition.DateCondition ⇒
             val key = Condition.date(condition.key)
             val baseCondition =
-              condition.comparisonType match {
+              condition.dateComparisonType match {
                 case Condition.DateComparisonType.Equals ⇒ key.is(condition.values: _*)
                 case Condition.DateComparisonType.NotEquals ⇒ key.isNot(condition.values: _*)
                 case Condition.DateComparisonType.After ⇒ key.isAfter(condition.values: _*)
@@ -209,7 +209,7 @@ class ConditionSpec extends FreeSpec with AwsEnumerationBehaviours {
                 Condition.ipAddress(condition.key)
               }
             val result =
-              condition.comparisonType match {
+              condition.ipAddressComparisonType match {
                 case Condition.IpAddressComparisonType.IsIn ⇒ key.isIn(condition.cidrBlocks: _*)
                 case Condition.IpAddressComparisonType.IsNotIn ⇒ key.isNotIn(condition.cidrBlocks: _*)
               }
@@ -221,7 +221,7 @@ class ConditionSpec extends FreeSpec with AwsEnumerationBehaviours {
           forAll { condition: Condition.IpAddressCondition ⇒
             val key = Condition.ipAddress(condition.key)
             val baseCondition =
-              condition.comparisonType match {
+              condition.ipAddressComparisonType match {
                 case Condition.IpAddressComparisonType.IsIn ⇒ key.isIn(condition.cidrBlocks: _*)
                 case Condition.IpAddressComparisonType.IsNotIn ⇒ key.isNotIn(condition.cidrBlocks: _*)
               }
@@ -258,7 +258,7 @@ class ConditionSpec extends FreeSpec with AwsEnumerationBehaviours {
                 Condition.numeric(condition.key)
               }
             val result =
-              condition.comparisonType match {
+              condition.numericComparisonType match {
                 case Condition.NumericComparisonType.Equals ⇒ key.is(condition.values: _*)
                 case Condition.NumericComparisonType.GreaterThan ⇒ key.isGreaterThan(condition.values: _*)
                 case Condition.NumericComparisonType.GreaterThanEquals ⇒ key.isGreaterThanOrEqualTo(condition.values: _*)
@@ -274,7 +274,7 @@ class ConditionSpec extends FreeSpec with AwsEnumerationBehaviours {
           forAll { condition: Condition.NumericCondition ⇒
             val key = Condition.numeric(condition.key)
             val baseCondition =
-              condition.comparisonType match {
+              condition.numericComparisonType match {
                 case Condition.NumericComparisonType.Equals ⇒ key.is(condition.values: _*)
                 case Condition.NumericComparisonType.GreaterThan ⇒ key.isGreaterThan(condition.values: _*)
                 case Condition.NumericComparisonType.GreaterThanEquals ⇒ key.isGreaterThanOrEqualTo(condition.values: _*)
@@ -303,7 +303,7 @@ class ConditionSpec extends FreeSpec with AwsEnumerationBehaviours {
                 Condition.string(condition.key)
               }
             val result =
-              condition.comparisonType match {
+              condition.stringComparisonType match {
                 case Condition.StringComparisonType.Equals ⇒ key.is(condition.values: _*)
                 case Condition.StringComparisonType.NotEquals ⇒ key.isNot(condition.values: _*)
                 case Condition.StringComparisonType.EqualsIgnoreCase ⇒ key.ignoringCaseIs(condition.values: _*)
@@ -319,7 +319,7 @@ class ConditionSpec extends FreeSpec with AwsEnumerationBehaviours {
           forAll { condition: Condition.StringCondition ⇒
             val key = Condition.string(condition.key)
             val baseCondition =
-              condition.comparisonType match {
+              condition.stringComparisonType match {
                 case Condition.StringComparisonType.Equals ⇒ key.is(condition.values: _*)
                 case Condition.StringComparisonType.NotEquals ⇒ key.isNot(condition.values: _*)
                 case Condition.StringComparisonType.EqualsIgnoreCase ⇒ key.ignoringCaseIs(condition.values: _*)
@@ -341,11 +341,18 @@ class ConditionSpec extends FreeSpec with AwsEnumerationBehaviours {
   }
 
   "Condition.ArnCondition should" - {
+    "have the correct comparison type" in {
+      forAll { condition: Condition.ArnCondition ⇒
+        condition.comparisonType shouldBe
+          (condition.arnComparisonType.id + (if (condition.ignoreMissing) "IfExists" else ""))
+      }
+    }
+
     "convert to the correct AWS condition" in {
       forAll { condition: Condition.ArnCondition ⇒
         condition.asAws should have (
           'conditionKey (condition.key),
-          'type (condition.comparisonType.asAws.toString + (if (condition.ignoreMissing)  "IfExists" else "")),
+          'type (condition.comparisonType),
           'values (condition.values.asJava)
         )
       }
@@ -377,11 +384,17 @@ class ConditionSpec extends FreeSpec with AwsEnumerationBehaviours {
   }
 
   "Condition.BinaryCondition should" - {
+    "have the correct comparison type" in {
+      forAll { condition: Condition.BinaryCondition ⇒
+        condition.comparisonType shouldBe (if (condition.ignoreMissing)  "BinaryIfExists" else "Binary")
+      }
+    }
+
     "convert to the correct AWS condition" in {
       forAll { condition: Condition.BinaryCondition ⇒
         condition.asAws should have (
           'conditionKey (condition.key),
-          'type (if (condition.ignoreMissing)  "BinaryIfExists" else "Binary"),
+          'type (condition.comparisonType),
           'values (condition.values.map(v ⇒ Base64.getEncoder.encodeToString(v.toArray)).asJava)
         )
       }
@@ -391,11 +404,17 @@ class ConditionSpec extends FreeSpec with AwsEnumerationBehaviours {
   }
 
   "Condition.BooleanCondition should" - {
+    "have the correct comparison type" in {
+      forAll { condition: Condition.BooleanCondition ⇒
+        condition.comparisonType shouldBe (if (condition.ignoreMissing)  "BoolIfExists" else "Bool")
+      }
+    }
+
     "convert to the correct AWS condition" in {
       forAll { condition: Condition.BooleanCondition ⇒
         condition.asAws should have (
           'conditionKey (condition.key),
-          'type (if (condition.ignoreMissing)  "BoolIfExists" else "Bool"),
+          'type (condition.comparisonType),
           'values (Seq(condition.value.toString).asJava)
         )
       }
@@ -405,11 +424,18 @@ class ConditionSpec extends FreeSpec with AwsEnumerationBehaviours {
   }
 
   "Condition.DateCondition should" - {
+    "have the correct comparison type" in {
+      forAll { condition: Condition.DateCondition ⇒
+        condition.comparisonType shouldBe
+          (condition.dateComparisonType.id + (if (condition.ignoreMissing)  "IfExists" else ""))
+      }
+    }
+
     "convert to the correct AWS condition" in {
       forAll { condition: Condition.DateCondition ⇒
         condition.asAws should have (
           'conditionKey (condition.key),
-          'type (condition.comparisonType.asAws.toString + (if (condition.ignoreMissing)  "IfExists" else "")),
+          'type (condition.comparisonType),
           'values (condition.values.map(_.toInstant.toString).asJava)
         )
       }
@@ -439,11 +465,18 @@ class ConditionSpec extends FreeSpec with AwsEnumerationBehaviours {
   }
 
   "Condition.IpAddressCondition should" - {
+    "have the correct comparison type" in {
+      forAll { condition: Condition.IpAddressCondition ⇒
+        condition.comparisonType shouldBe
+          (condition.ipAddressComparisonType.id + (if (condition.ignoreMissing)  "IfExists" else ""))
+      }
+    }
+
     "convert to the correct AWS condition" in {
       forAll { condition: Condition.IpAddressCondition ⇒
         condition.asAws should have (
           'conditionKey (condition.key),
-          'type (condition.comparisonType.asAws.toString + (if (condition.ignoreMissing)  "IfExists" else "")),
+          'type (condition.comparisonType),
           'values (condition.cidrBlocks.asJava)
         )
       }
@@ -473,11 +506,18 @@ class ConditionSpec extends FreeSpec with AwsEnumerationBehaviours {
   }
 
   "Condition.NumericCondition should" - {
+    "have the correct comparison type" in {
+      forAll { condition: Condition.NumericCondition ⇒
+        condition.comparisonType shouldBe
+          (condition.numericComparisonType.id + (if (condition.ignoreMissing) "IfExists" else ""))
+      }
+    }
+
     "convert to the correct AWS condition" in {
       forAll { condition: Condition.NumericCondition ⇒
         condition.asAws should have (
           'conditionKey (condition.key),
-          'type (condition.comparisonType.asAws.toString + (if (condition.ignoreMissing)  "IfExists" else "")),
+          'type (condition.comparisonType),
           'values (condition.values.map(_.toString).asJava)
         )
       }
@@ -507,11 +547,18 @@ class ConditionSpec extends FreeSpec with AwsEnumerationBehaviours {
   }
 
   "Condition.StringCondition should" - {
+    "have the correct comparison type" in {
+      forAll { condition: Condition.StringCondition ⇒
+        condition.comparisonType shouldBe
+          (condition.stringComparisonType.id + (if (condition.ignoreMissing)  "IfExists" else ""))
+      }
+    }
+
     "convert to the correct AWS condition" in {
       forAll { condition: Condition.StringCondition ⇒
         condition.asAws should have (
           'conditionKey (condition.key),
-          'type (condition.comparisonType.asAws.toString + (if (condition.ignoreMissing)  "IfExists" else "")),
+          'type (condition.comparisonType),
           'values (condition.values.asJava)
         )
       }
@@ -541,11 +588,17 @@ class ConditionSpec extends FreeSpec with AwsEnumerationBehaviours {
   }
 
   "Condition.NullCondition should" - {
+    "have the correct comparison type" in {
+      forAll { condition: Condition.NullCondition ⇒
+        condition.comparisonType shouldBe "Null"
+      }
+    }
+
     "convert to the correct AWS condition" in {
       forAll { condition: Condition.NullCondition ⇒
         condition.asAws should have (
           'conditionKey (condition.key),
-          'type ("Null"),
+          'type (condition.comparisonType),
           'values (Seq(condition.value.toString).asJava)
         )
       }
@@ -561,16 +614,22 @@ class ConditionSpec extends FreeSpec with AwsEnumerationBehaviours {
       }
     }
 
+    "have the comparison type" in {
+      forAll { condition: Condition.MultipleKeyValueCondition ⇒
+        val comparisonType = condition.op match {
+          case Condition.SetOperation.ForAllValues ⇒ s"ForAllValues:${condition.condition.comparisonType}"
+          case Condition.SetOperation.ForAnyValue  ⇒ s"ForAnyValue:${condition.condition.comparisonType}"
+        }
+        condition.comparisonType shouldBe comparisonType
+      }
+    }
+
     "convert to the correct AWS condition" in {
       forAll { condition: Condition.MultipleKeyValueCondition ⇒
         val innerAwsCondition = condition.condition.asAws
-        val awsType = condition.op match {
-          case Condition.SetOperation.ForAllValues ⇒ s"ForAllValues:${innerAwsCondition.getType}"
-          case Condition.SetOperation.ForAnyValue  ⇒ s"ForAnyValue:${innerAwsCondition.getType}"
-        }
         condition.asAws should have (
           'conditionKey (condition.key),
-          'type (awsType),
+          'type (condition.comparisonType),
           'values (innerAwsCondition.getValues)
         )
       }

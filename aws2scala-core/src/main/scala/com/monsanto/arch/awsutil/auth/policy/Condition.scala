@@ -309,6 +309,9 @@ import akka.util.ByteString
 sealed trait Condition {
   /** Returns the key for this condition. */
   def key: String
+
+  /** Returns the comparison type for this condition. */
+  def comparisonType: String
 }
 
 object Condition {
@@ -423,14 +426,14 @@ object Condition {
   /** Condition for comparing the value of a key against an ARN value.
     *
     * @param key the name of the value to match from the request
-    * @param comparisonType the type of comparison to perform
+    * @param arnComparisonType the type of comparison to perform
     * @param values the ARN values against which to compare
     * @param ignoreMissing if true, if the key is missing from the request, the
     *                      condition will succeed.  Otherwise, a missing key
     *                      from the request will result in a failure.
     */
   case class ArnCondition(key: String,
-                          comparisonType: ArnComparisonType,
+                          arnComparisonType: ArnComparisonType,
                           values: Seq[String],
                           ignoreMissing: Boolean)
       extends Condition with MultipleKeyValueSupport {
@@ -438,6 +441,9 @@ object Condition {
       * request.
       */
     def ifExists: ArnCondition = copy(ignoreMissing = true)
+
+    override def comparisonType: String =
+      if (ignoreMissing) s"${arnComparisonType.id}IfExists" else arnComparisonType.id
   }
 
   /** Provides a fluent interface for building binary conditions. */
@@ -474,6 +480,8 @@ object Condition {
       * request.
       */
     def ifExists: BinaryCondition = copy(ignoreMissing = true)
+
+    override def comparisonType: String = if (ignoreMissing) "BinaryIfExists" else "Binary"
   }
 
   /** Provides a fluent interface for building boolean conditions. */
@@ -504,6 +512,8 @@ object Condition {
       * request.
       */
     def ifExists: BooleanCondition = copy(ignoreMissing = true)
+
+    override def comparisonType: String = if (ignoreMissing) "BoolIfExists" else "Bool"
   }
 
   /** Enumeration of all of the date comparison types. */
@@ -532,14 +542,14 @@ object Condition {
   /** Condition for comparing the value of a key against a date/time value.
     *
     * @param key the name of the value to match from the request
-    * @param comparisonType the type of comparison to perform
+    * @param dateComparisonType the type of comparison to perform
     * @param values the date/time values against which to compare
     * @param ignoreMissing if true, if the key is missing from the request, the
     *                      condition will succeed.  Otherwise, a missing key
     *                      from the request will result in a failure.
     */
   case class DateCondition(key: String,
-                           comparisonType: DateComparisonType,
+                           dateComparisonType: DateComparisonType,
                            values: Seq[Date],
                            ignoreMissing: Boolean)
       extends Condition with MultipleKeyValueSupport {
@@ -547,6 +557,9 @@ object Condition {
       * request.
       */
     def ifExists: DateCondition = copy(ignoreMissing = true)
+
+    override def comparisonType: String =
+      if (ignoreMissing) s"${dateComparisonType.id}IfExists" else dateComparisonType.id
   }
 
   /** Provides a fluent interface for building date/time conditions. */
@@ -623,12 +636,15 @@ object Condition {
     *                      from the request will result in a failure.
     */
   case class IpAddressCondition(key: String,
-                                comparisonType: IpAddressComparisonType,
+                                ipAddressComparisonType: IpAddressComparisonType,
                                 cidrBlocks: Seq[String],
                                 ignoreMissing: Boolean)
       extends Condition with MultipleKeyValueSupport {
     /** Creates a copy of this condition that will ignore a missing key in a request. */
     def ifExists: IpAddressCondition = copy(ignoreMissing = true)
+
+    override def comparisonType: String =
+      if (ignoreMissing) s"${ipAddressComparisonType.id}IfExists" else ipAddressComparisonType.id
   }
 
   /** The enumeration of all valid numeric comparison types. */
@@ -659,14 +675,14 @@ object Condition {
   /** Condition for comparing the value of a key against a numeric value.
     *
     * @param key the name of the value to match from the request
-    * @param comparisonType the type of comparison to perform
+    * @param numericComparisonType the type of comparison to perform
     * @param values the numeric values against which to compare
     * @param ignoreMissing if true, if the key is missing from the request, the
     *                      condition will succeed.  Otherwise, a missing key
     *                      from the request will result in a failure.
     */
   case class NumericCondition(key: String,
-                              comparisonType: NumericComparisonType,
+                              numericComparisonType: NumericComparisonType,
                               values: Seq[Double],
                               ignoreMissing: Boolean)
       extends Condition with MultipleKeyValueSupport {
@@ -674,6 +690,9 @@ object Condition {
       * request.
       */
     def ifExists: NumericCondition = copy(ignoreMissing = true)
+
+    override def comparisonType: String =
+      if (ignoreMissing) s"${numericComparisonType.id}IfExists" else numericComparisonType.id
   }
 
   /** Provides a fluent interface for building numeric conditions. */
@@ -747,14 +766,14 @@ object Condition {
   /** Condition for comparing the value of a key with a string.
     *
     * @param key the name of the value to match from the request
-    * @param comparisonType the type of comparison to perform
+    * @param stringComparisonType the type of comparison to perform
     * @param values the string values against which to compare
     * @param ignoreMissing if true, if the key is missing from the request, the
     *                      condition will succeed.  Otherwise, a missing key
     *                      from the request will result in a failure.
     */
   case class StringCondition(key: String,
-                             comparisonType: StringComparisonType,
+                             stringComparisonType: StringComparisonType,
                              values: Seq[String],
                              ignoreMissing: Boolean)
       extends Condition with MultipleKeyValueSupport {
@@ -762,6 +781,9 @@ object Condition {
       * request.
       */
     def ifExists: StringCondition = copy(ignoreMissing = true)
+
+    override def comparisonType: String =
+      if (ignoreMissing) s"${stringComparisonType.id}IfExists" else stringComparisonType.id
   }
 
   /** Provides a fluent interface for building string conditions. */
@@ -808,8 +830,10 @@ object Condition {
     *              exist.  If `false`, the condition will match when the key is
     *              present and contains a non-null value.
     */
-  case class NullCondition private[Condition] (key: String, value: Boolean)
-    extends Condition with MultipleKeyValueSupport
+  case class NullCondition private[Condition] (key: String,
+                                               value: Boolean) extends Condition with MultipleKeyValueSupport {
+    override def comparisonType: String = "Null"
+  }
 
   /** An enumeration of all set operation types. */
   sealed trait SetOperation
@@ -831,6 +855,12 @@ object Condition {
   case class MultipleKeyValueCondition private[Condition](op: SetOperation,
                                                           condition: Condition with MultipleKeyValueSupport) extends Condition {
     override def key: String = condition.key
+
+    override def comparisonType: String =
+      op match {
+        case SetOperation.ForAllValues ⇒ s"ForAllValues:${condition.comparisonType}"
+        case SetOperation.ForAnyValue  ⇒ s"ForAnyValue:${condition.comparisonType}"
+      }
   }
 
   /** Adds support to a condition so that set operations may be applied to
