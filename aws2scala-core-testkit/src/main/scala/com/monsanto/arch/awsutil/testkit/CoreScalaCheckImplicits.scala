@@ -169,7 +169,7 @@ object CoreScalaCheckImplicits {
         comparisonType ← arbitrary[Condition.ArnComparisonType]
         comparisonValues ← UtilGen.nonEmptyListOfSqrtN(arn)
         ifExists ← arbitrary[Boolean]
-      } yield Condition.ArnCondition(key, comparisonType, comparisonValues, ifExists)
+      } yield Condition.ArnCondition(key, comparisonType, comparisonValues.distinct, ifExists)
     }
 
   implicit lazy val arbBinaryCondition: Arbitrary[Condition.BinaryCondition] =
@@ -178,7 +178,7 @@ object CoreScalaCheckImplicits {
         key ← Gen.identifier
         values ← UtilGen.nonEmptyListOfSqrtN(arbitrary[Array[Byte]].map(ByteString(_)))
         ifExists ← arbitrary[Boolean]
-      } yield Condition.BinaryCondition(key, values, ifExists)
+      } yield Condition.BinaryCondition(key, values.distinct, ifExists)
     }
 
   implicit lazy val arbBooleanCondition: Arbitrary[Condition.BooleanCondition] =
@@ -197,7 +197,7 @@ object CoreScalaCheckImplicits {
         comparisonType ← arbitrary[Condition.DateComparisonType]
         values ← UtilGen.nonEmptyListOfSqrtN(arbitrary[Date])
         ifExists ← arbitrary[Boolean]
-      } yield Condition.DateCondition(key, comparisonType, values, ifExists)
+      } yield Condition.DateCondition(key, comparisonType, values.distinct, ifExists)
     }
 
   implicit lazy val arbIpAddressCondition: Arbitrary[Condition.IpAddressCondition] =
@@ -212,7 +212,7 @@ object CoreScalaCheckImplicits {
         comparisonType ← arbitrary[Condition.IpAddressComparisonType]
         cidrBlocks ← UtilGen.nonEmptyListOfSqrtN(cidrBlock)
         ifExists ← arbitrary[Boolean]
-      } yield Condition.IpAddressCondition(key, comparisonType, cidrBlocks, ifExists)
+      } yield Condition.IpAddressCondition(key, comparisonType, cidrBlocks.distinct, ifExists)
     }
 
   implicit lazy val arbNullCondition: Arbitrary[Condition.NullCondition] =
@@ -230,7 +230,7 @@ object CoreScalaCheckImplicits {
         comparisonType ← arbitrary[Condition.NumericComparisonType]
         values ← UtilGen.nonEmptyListOfSqrtN(arbitrary[Double])
         ifExists ← arbitrary[Boolean]
-      } yield Condition.NumericCondition(key, comparisonType, values, ifExists)
+      } yield Condition.NumericCondition(key, comparisonType, values.distinct, ifExists)
     }
 
   implicit lazy val arbStringCondition: Arbitrary[Condition.StringCondition] =
@@ -240,7 +240,7 @@ object CoreScalaCheckImplicits {
         comparisonType ← arbitrary[Condition.StringComparisonType]
         values ← UtilGen.nonEmptyListOfSqrtN(arbitrary[String])
         ifExists ← arbitrary[Boolean]
-      } yield Condition.StringCondition(key, comparisonType, values, ifExists)
+      } yield Condition.StringCondition(key, comparisonType, values.distinct, ifExists)
     }
 
   implicit lazy val arbMultipleKeyValueCondition: Arbitrary[Condition.MultipleKeyValueCondition] =
