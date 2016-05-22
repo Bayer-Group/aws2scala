@@ -582,15 +582,6 @@ object Condition {
           case _ ⇒
             None
         }
-
-      /** Extractor to base64-decode a sequence of strings. */
-      object BooleanValue {
-        def unapply(strings: Seq[String]): Option[Boolean] =
-          strings match {
-            case Seq(string) ⇒ Try(string.toBoolean).toOption
-            case _           ⇒ None
-          }
-      }
     }
   }
 
@@ -997,6 +988,19 @@ object Condition {
     override def comparisonValues: Seq[String] = Seq(value.toString)
   }
 
+  object NullCondition {
+    /** Extracts a `NullCondition` given a tuple containing the condition’s key, comparison type,
+      * and comparison values.
+      */
+    object fromParts {
+      def unapply(parts: (String, String, Seq[String])): Option[NullCondition] =
+        parts match {
+          case (key, "Null", BooleanValue(value)) ⇒ Some(NullCondition(key, value))
+          case _                                  ⇒ None
+        }
+    }
+  }
+
   /** An enumeration of all set operation types. */
   sealed trait SetOperation
   object SetOperation {
@@ -1055,5 +1059,14 @@ object Condition {
         None
       }
     }
+  }
+
+  /** Extractor to get a boolean value from a 1-element list of strings. */
+  private object BooleanValue {
+    def unapply(strings: Seq[String]): Option[Boolean] =
+      strings match {
+        case Seq(string) ⇒ Try(string.toBoolean).toOption
+        case _           ⇒ None
+      }
   }
 }

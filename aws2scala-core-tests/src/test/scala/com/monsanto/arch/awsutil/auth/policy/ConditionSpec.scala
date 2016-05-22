@@ -633,6 +633,14 @@ class ConditionSpec extends FreeSpec with AwsEnumerationBehaviours {
       }
     }
 
+    "be extractable from its parts" in {
+      forAll { condition: Condition.NullCondition ⇒
+        inside((condition.key, condition.comparisonType, condition.comparisonValues)) {
+          case Condition.NullCondition.fromParts(c) ⇒ c shouldBe condition
+        }
+      }
+    }
+
     behave like multiValueSupportCondition[Condition.NullCondition]
   }
 
