@@ -930,6 +930,22 @@ object Condition {
       if (ignoreMissing) s"${stringComparisonType.id}IfExists" else stringComparisonType.id
   }
 
+  object StringCondition {
+    /** Extracts a `StringCondition` given a tuple containing the condition’s key, comparison type,
+      * and comparison values.
+      */
+    object fromParts {
+      def unapply(parts: (String, String, Seq[String])): Option[StringCondition] =
+        parts match {
+          case (key, WithoutIfExists(StringComparisonType.fromId(stringComparisonType)), values) ⇒
+            Some(StringCondition(key, stringComparisonType, values, ignoreMissing = true))
+          case (key, StringComparisonType.fromId(stringComparisonType), values) ⇒
+            Some(StringCondition(key, stringComparisonType, values, ignoreMissing = false))
+          case _ ⇒ None
+        }
+    }
+  }
+
   /** Provides a fluent interface for building string conditions. */
   class StringKey private[Condition] (key: String, ignoreMissing: Boolean) {
     /** Exactly matches any of the given strings, case-sensitive. */
