@@ -291,20 +291,11 @@ object CoreConverters {
   }
 
   implicit class AwsPolicyVersion(val version: String) extends AnyVal {
-    def asScalaPolicyVersion: Policy.Version =
-      version match {
-        case "2012-10-17" ⇒ Policy.Version.`2012-10-17`
-        case "2008-10-17" ⇒ Policy.Version.`2008-10-17`
-        case _            ⇒ throw new IllegalArgumentException(s"‘$version‘ is not a valid policy version")
-      }
+    def asScalaPolicyVersion: Policy.Version = Policy.Version(version)
   }
 
   implicit class ScalaPolicyVersion(val version: Policy.Version) extends AnyVal {
-    def asAws: String =
-      version match {
-        case Policy.Version.`2012-10-17` ⇒ "2012-10-17"
-        case Policy.Version.`2008-10-17` ⇒ "2008-10-17"
-      }
+    def asAws: String = version.id
   }
 
   private def asList[T](collection: util.Collection[T]): List[T] =

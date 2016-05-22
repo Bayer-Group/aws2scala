@@ -3,6 +3,7 @@ package com.monsanto.arch.awsutil.auth.policy
 import com.monsanto.arch.awsutil.auth.policy.PolicyDSL._
 import com.monsanto.arch.awsutil.converters.CoreConverters
 import com.monsanto.arch.awsutil.converters.CoreConverters._
+import com.monsanto.arch.awsutil.test_support.AwsEnumerationBehaviours
 import com.monsanto.arch.awsutil.testkit.CoreScalaCheckImplicits._
 import com.monsanto.arch.awsutil.testkit.UtilGen
 import org.scalacheck.Arbitrary.arbitrary
@@ -12,7 +13,7 @@ import org.scalatest.FreeSpec
 import org.scalatest.Matchers._
 import org.scalatest.prop.GeneratorDrivenPropertyChecks._
 
-class PolicySpec extends FreeSpec {
+class PolicySpec extends FreeSpec with AwsEnumerationBehaviours {
   TestAction.registerActions()
 
   "a Policy can" - {
@@ -58,6 +59,14 @@ class PolicySpec extends FreeSpec {
         )
       )
     }
+  }
+
+  "a Policy.Version should" - {
+    behave like anAwsEnumeration(
+      Array("2008-10-17", "2012-10-17"),
+      Policy.Version.values,
+      (_: Policy.Version).asAws,
+      (_: String).asScalaPolicyVersion)
   }
 
   /** This is used because AWS will automatically insert statement IDs if not
