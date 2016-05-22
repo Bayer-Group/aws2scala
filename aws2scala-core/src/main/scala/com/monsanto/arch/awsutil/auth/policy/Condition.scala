@@ -5,6 +5,8 @@ import java.util.{Base64, Date}
 
 import akka.util.ByteString
 
+import scala.util.Try
+
 /** Conditions specify when a statement in a policy is in effect.  A statement
   * may have zero or more conditions, and all conditions must evaluate to true
   * in order for the statement to take effect.
@@ -505,6 +507,30 @@ object Condition {
     override def comparisonType: String = if (ignoreMissing) "BinaryIfExists" else "Binary"
 
     override def comparisonValues: Seq[String] = values.map(v ⇒ Base64.getEncoder.encodeToString(v.toArray))
+  }
+
+  object BinaryCondition {
+    /** Extracts a `BinaryCondition` given a tuple containing the condition’s key, comparison type,
+      * and comparison values.
+      */
+    object fromParts {
+      def unapply(parts: (String, String, Seq[String])): Option[BinaryCondition] =
+        parts match {
+          case (key, "BinaryIfExists", AsByteStrings(values)) ⇒
+            Some(BinaryCondition(key, values, ignoreMissing = true))
+          case (key, "Binary", AsByteStrings(values)) ⇒
+            Some(BinaryCondition(key, values, ignoreMissing = false))
+          case _ ⇒ None
+        }
+
+      /** Extractor to base64-decode a sequence of strings. */
+      private object AsByteStrings {
+        private val decoder = Base64.getDecoder
+
+        def unapply(strings: Seq[String]): Option[Seq[ByteString]] =
+          Try(strings.map(s ⇒ ByteString(decoder.decode(s)))).toOption
+      }
+    }
   }
 
   /** Provides a fluent interface for building boolean conditions. */
