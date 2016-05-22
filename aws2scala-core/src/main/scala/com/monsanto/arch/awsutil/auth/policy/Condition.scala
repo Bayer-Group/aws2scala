@@ -817,6 +817,28 @@ object Condition {
     override def comparisonValues: Seq[String] = values.map(_.toString)
   }
 
+  object NumericCondition {
+    /** Extracts a `NumericCondition` given a tuple containing the condition’s key, comparison type,
+      * and comparison values.
+      */
+    object fromParts {
+      def unapply(parts: (String, String, Seq[String])): Option[NumericCondition] =
+        parts match {
+          case (key, WithoutIfExists(NumericComparisonType.fromId(numericComparisonType)), AsDoubles(values)) ⇒
+            Some(NumericCondition(key, numericComparisonType, values, ignoreMissing = true))
+          case (key, NumericComparisonType.fromId(numericComparisonType), AsDoubles(values)) ⇒
+            Some(NumericCondition(key, numericComparisonType, values, ignoreMissing = false))
+          case _ ⇒ None
+        }
+
+      /** Extractor to parse doubles from a sequence of strings. */
+      private object AsDoubles {
+        def unapply(strings: Seq[String]): Option[Seq[Double]] =
+          Try(strings.map(_.toDouble)).toOption
+      }
+    }
+  }
+
   /** Provides a fluent interface for building numeric conditions. */
   class NumericKey private[Condition] (key: String, ignoreMissing: Boolean) {
     /** Matches if it is any of the given values. */
