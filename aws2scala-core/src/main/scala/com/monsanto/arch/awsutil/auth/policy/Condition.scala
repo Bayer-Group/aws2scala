@@ -1,6 +1,7 @@
 package com.monsanto.arch.awsutil.auth.policy
 
 import java.nio.ByteBuffer
+import java.time.Instant
 import java.util.{Base64, Date}
 
 import akka.util.ByteString
@@ -669,6 +670,28 @@ object Condition {
 
     /** Makes the resulting condition be ignored if the given key is missing. */
     def ifExists: DateKey = new DateKey(key, ignoreMissing = true)
+  }
+
+  object DateCondition {
+    /** Extracts a `DateCondition` given a tuple containing the condition’s key, comparison type,
+      * and comparison values.
+      */
+    object fromParts {
+      def unapply(parts: (String, String, Seq[String])): Option[DateCondition] =
+        parts match {
+          case (key, WithoutIfExists(DateComparisonType.fromId(dateComparisonType)), AsDates(dates)) ⇒
+            Some(DateCondition(key, dateComparisonType, dates, ignoreMissing = true))
+          case (key, DateComparisonType.fromId(dateComparisonType), AsDates(dates)) ⇒
+            Some(DateCondition(key, dateComparisonType, dates, ignoreMissing = false))
+          case _ ⇒ None
+        }
+
+      /** Extractor to parse dates from a sequence of strings. */
+      private object AsDates {
+        def unapply(strings: Seq[String]): Option[Seq[Date]] =
+          Try(strings.map(s ⇒ new Date(Instant.parse(s).toEpochMilli))).toOption
+      }
+    }
   }
 
   /** Enumeration of all of the IP address comparison types. */

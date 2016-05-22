@@ -460,6 +460,14 @@ class ConditionSpec extends FreeSpec with AwsEnumerationBehaviours {
       }
     }
 
+    "be extractable from its parts" in {
+      forAll { condition: Condition.DateCondition ⇒
+        inside((condition.key, condition.comparisonType, condition.comparisonValues)) {
+          case Condition.DateCondition.fromParts(c) ⇒ c shouldBe condition
+        }
+      }
+    }
+
     behave like multiValueSupportCondition[Condition.DateCondition]
   }
 
