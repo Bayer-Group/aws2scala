@@ -36,6 +36,14 @@ class ConditionSpec extends FreeSpec with AwsEnumerationBehaviours {
       }
     }
 
+    "can extract from its parts" in {
+      forAll { condition: Condition ⇒
+        inside((condition.key, condition.comparisonType, condition.comparisonValues)) {
+          case Condition.fromParts(c) ⇒ c shouldBe condition
+        }
+      }
+    }
+
     "provide convenience keys for" - {
       "source ARNs" in {
         val result = Condition.sourceArn is "foo"

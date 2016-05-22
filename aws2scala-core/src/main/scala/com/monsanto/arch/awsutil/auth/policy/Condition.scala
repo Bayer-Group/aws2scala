@@ -1096,14 +1096,15 @@ object Condition {
   object fromParts {
     def unapply(parts: (String, String, Seq[String])): Option[Condition] =
       parts match {
-        case ArnCondition.fromParts(condition)       ⇒ Some(condition)
-        case BinaryCondition.fromParts(condition)    ⇒ Some(condition)
-        case BooleanCondition.fromParts(condition)   ⇒ Some(condition)
-        case DateCondition.fromParts(condition)      ⇒ Some(condition)
-        case IpAddressCondition.fromParts(condition) ⇒ Some(condition)
-        case NumericCondition.fromParts(condition)   ⇒ Some(condition)
-        case StringCondition.fromParts(condition)    ⇒ Some(condition)
-        case NullCondition.fromParts(condition)      ⇒ Some(condition)
+        case ArnCondition.fromParts(condition)              ⇒ Some(condition)
+        case BinaryCondition.fromParts(condition)           ⇒ Some(condition)
+        case BooleanCondition.fromParts(condition)          ⇒ Some(condition)
+        case DateCondition.fromParts(condition)             ⇒ Some(condition)
+        case IpAddressCondition.fromParts(condition)        ⇒ Some(condition)
+        case NumericCondition.fromParts(condition)          ⇒ Some(condition)
+        case StringCondition.fromParts(condition)           ⇒ Some(condition)
+        case NullCondition.fromParts(condition)             ⇒ Some(condition)
+        case MultipleKeyValueCondition.fromParts(condition) ⇒ Some(condition)
         case _ ⇒ None
       }
   }
