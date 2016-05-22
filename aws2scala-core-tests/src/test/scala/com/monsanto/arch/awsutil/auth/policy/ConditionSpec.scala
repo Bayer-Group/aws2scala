@@ -11,6 +11,7 @@ import com.monsanto.arch.awsutil.testkit.CoreScalaCheckImplicits._
 import org.scalacheck.Arbitrary.arbitrary
 import org.scalacheck.{Arbitrary, Gen}
 import org.scalatest.FreeSpec
+import org.scalatest.Inside._
 import org.scalatest.Matchers._
 import org.scalatest.prop.GeneratorDrivenPropertyChecks._
 import org.scalatest.prop.TableDrivenPropertyChecks.{Table, forAll ⇒ forAllIn}
@@ -361,6 +362,14 @@ class ConditionSpec extends FreeSpec with AwsEnumerationBehaviours {
     "have the correct comparison values" in {
       forAll { condition: Condition.ArnCondition ⇒
         condition.comparisonValues shouldBe condition.values
+      }
+    }
+
+    "be extractable from its parts" in {
+      forAll { condition: Condition.ArnCondition ⇒
+        inside((condition.key, condition.comparisonType, condition.comparisonValues)) {
+          case Condition.ArnCondition.fromParts(c) ⇒ c shouldBe condition
+        }
       }
     }
 

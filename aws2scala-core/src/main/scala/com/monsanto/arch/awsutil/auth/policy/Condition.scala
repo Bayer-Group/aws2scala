@@ -451,6 +451,22 @@ object Condition {
     override def comparisonValues: Seq[String] = values
   }
 
+  object ArnCondition {
+    /** Extracts an `ArnCondition` given a tuple containing the condition’s key, comparison type,
+      * and comparison values.
+      */
+    object fromParts {
+      def unapply(parts: (String, String, Seq[String])): Option[ArnCondition] =
+        parts match {
+          case (key, WithoutIfExists(ArnComparisonType.fromId(arnComparisonType)), values) ⇒
+            Some(ArnCondition(key, arnComparisonType, values, ignoreMissing = true))
+          case (key, ArnComparisonType.fromId(arnComparisonType), values) ⇒
+            Some(ArnCondition(key, arnComparisonType, values, ignoreMissing = false))
+          case _ ⇒ None
+        }
+    }
+  }
+
   /** Provides a fluent interface for building binary conditions. */
   class BinaryKey private[Condition] (key: String, ignoreMissing: Boolean) {
     /** Creates a condition to match the given binary value. */
@@ -899,5 +915,16 @@ object Condition {
     def forAnyValue: Condition.MultipleKeyValueCondition =
       Condition.MultipleKeyValueCondition(Condition.SetOperation.ForAnyValue,
         this)
+  }
+
+  /** Extractor that matches a string that ends with `IfExists` and returns the prefix. */
+  private object WithoutIfExists {
+    def unapply(comparisonType: String): Option[String] = {
+      if (comparisonType.endsWith("IfExists")) {
+        Some(comparisonType.dropRight(8))
+      } else {
+        None
+      }
+    }
   }
 }
