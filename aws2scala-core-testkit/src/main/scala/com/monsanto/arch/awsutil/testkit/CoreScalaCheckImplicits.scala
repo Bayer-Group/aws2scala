@@ -264,17 +264,14 @@ object CoreScalaCheckImplicits {
 
   implicit lazy val arbConditions: Arbitrary[Set[Condition]] =
     Arbitrary {
-      for {
-        c1 ← arbitrary[Option[Condition.ArnCondition]]
-        c2 ← arbitrary[Option[Condition.BinaryCondition]]
-        c3 ← arbitrary[Option[Condition.BooleanCondition]]
-        c4 ← arbitrary[Option[Condition.DateCondition]]
-        c5 ← arbitrary[Option[Condition.IpAddressCondition]]
-        c6 ← arbitrary[Option[Condition.NullCondition]]
-        c7 ← arbitrary[Option[Condition.NumericCondition]]
-        c8 ← arbitrary[Option[Condition.StringCondition]]
-        c9 ← arbitrary[Option[Condition.MultipleKeyValueCondition]]
-      } yield Set(c1, c2, c3, c4, c5, c6, c7, c8, c9).filter(_.isDefined).map(_.get)
+      for (conditions ← UtilGen.listOfSqrtN(arbitrary[Condition])) yield {
+        conditions.foldLeft(Set.empty[Condition]) { (set, condition) ⇒
+          set.find(c ⇒ c.comparisonType == condition.comparisonType && c.key == condition.key) match {
+            case Some(_) ⇒ set
+            case None    ⇒ set + condition
+          }
+        }
+      }
     }
 
   implicit lazy val arbArnComparisonType: Arbitrary[Condition.ArnComparisonType] =
