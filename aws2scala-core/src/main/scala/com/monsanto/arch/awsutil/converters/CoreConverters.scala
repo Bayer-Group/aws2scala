@@ -1,10 +1,7 @@
 package com.monsanto.arch.awsutil.converters
 
-import java.time.Instant
 import java.util
-import java.util.{Base64, Date}
 
-import akka.util.ByteString
 import com.amazonaws.auth.policy
 import com.amazonaws.auth.policy.conditions._
 import com.amazonaws.regions
@@ -12,7 +9,6 @@ import com.monsanto.arch.awsutil.auth.policy._
 import com.monsanto.arch.awsutil.regions.Region
 
 import scala.collection.JavaConverters._
-import scala.util.Try
 
 /** Provides converters between core ''aws2scala'' objects and their AWS Java SDK counterparts. */
 object CoreConverters {
@@ -52,92 +48,8 @@ object CoreConverters {
   }
 
   implicit class AwsCondition(val condition: policy.Condition) extends AnyVal {
-    def asScala: Condition = {
-      val key = condition.getConditionKey
-      val values = condition.getValues.asScala.toList
-      val (comparisonType, ifExists) =
-        if (condition.getType.endsWith("IfExists")) {
-          (condition.getType.dropRight(8), true)
-        } else {
-          (condition.getType, false)
-        }
-
-      comparisonType match {
-        case MultipleKeyValueConditionPrefix(op, innerType) ⇒
-          val innerCondition =
-            new policy.Condition()
-              .withConditionKey(key)
-              .withType(if (ifExists) s"${innerType}IfExists" else innerType)
-              .withValues(condition.getValues)
-          innerCondition.asScala match {
-            case inner: Condition with Condition.MultipleKeyValueSupport ⇒
-              Condition.MultipleKeyValueCondition(op, inner)
-            case _ ⇒
-              throw new IllegalArgumentException(
-                s"The condition type $innerType is not supported with the " +
-                  s"set operation $op.")
-          }
-        case ArnComparisonType(arnComparisonType) ⇒
-          Condition.ArnCondition(key, arnComparisonType, values, ifExists)
-        case "Binary" ⇒
-          Condition.BinaryCondition(key, values.map(v ⇒ ByteString(Base64.getDecoder.decode(v))), ifExists)
-        case "Bool" ⇒
-          values match {
-            case value :: Nil ⇒ Condition.BooleanCondition(key, value.toBoolean, ifExists)
-            case _            ⇒ throw new IllegalArgumentException("A Bool condition should only have one value.")
-          }
-        case "Null" ⇒
-          values match {
-            case value :: Nil ⇒ Condition.NullCondition(key, value.toBoolean)
-            case _            ⇒ throw new IllegalArgumentException("A Null condition should only have one value.")
-          }
-        case DateComparisonType(dateComparisonType) ⇒
-          Condition.DateCondition(key, dateComparisonType, values.map(x ⇒ new Date(Instant.parse(x).toEpochMilli)), ifExists)
-        case IpAddressComparisonType(ipAddressComparisonType) ⇒
-          Condition.IpAddressCondition(key, ipAddressComparisonType, values, ifExists)
-        case NumericComparisonType(numericComparisonType) ⇒
-          Condition.NumericCondition(key, numericComparisonType, values.map(_.toDouble), ifExists)
-        case StringComparisonType(stringComparisonType) ⇒
-          Condition.StringCondition(key, stringComparisonType, values, ifExists)
-      }
-    }
-  }
-
-  private object ArnComparisonType {
-    def unapply(str: String): Option[Condition.ArnComparisonType] =
-      Try(ArnCondition.ArnComparisonType.valueOf(str).asScala).toOption
-  }
-
-  private object DateComparisonType {
-    def unapply(str: String): Option[Condition.DateComparisonType] =
-      Try(DateCondition.DateComparisonType.valueOf(str).asScala).toOption
-  }
-
-  private object IpAddressComparisonType {
-    def unapply(str: String): Option[Condition.IpAddressComparisonType] =
-      Try(IpAddressCondition.IpAddressComparisonType.valueOf(str).asScala).toOption
-  }
-
-  private object NumericComparisonType {
-    def unapply(str: String): Option[Condition.NumericComparisonType] =
-      Try(NumericCondition.NumericComparisonType.valueOf(str).asScala).toOption
-  }
-
-  private object StringComparisonType {
-    def unapply(str: String): Option[Condition.StringComparisonType] =
-      Try(StringCondition.StringComparisonType.valueOf(str).asScala).toOption
-  }
-
-  private object MultipleKeyValueConditionPrefix {
-    def unapply(str: String): Option[(Condition.SetOperation, String)] = {
-      if (str.startsWith("ForAnyValue:")) {
-        Some((Condition.SetOperation.ForAnyValue, str.substring(12)))
-      } else if (str.startsWith("ForAllValues:")) {
-        Some((Condition.SetOperation.ForAllValues, str.substring(13)))
-      } else {
-        None
-      }
-    }
+    def asScala: Condition =
+      Condition(condition.getConditionKey, condition.getType, condition.getValues.asScala.toList)
   }
 
   implicit class ScalaCondition(val condition: Condition) extends AnyVal {

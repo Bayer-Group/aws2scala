@@ -1109,6 +1109,13 @@ object Condition {
       }
   }
 
+  private[awsutil] def apply(conditionKey: String,
+                             comparisonType: String,
+                             comparisonValues: Seq[String]): Condition =
+    fromParts.unapply((conditionKey, comparisonType, comparisonValues))
+      .getOrElse(throw new IllegalArgumentException(
+        s"($conditionKey, $comparisonType, $comparisonValues) do not define a valid condition."))
+
   /** Extractor that matches a string that ends with `IfExists` and returns the prefix. */
   private object WithoutIfExists {
     def unapply(comparisonType: String): Option[String] = {
