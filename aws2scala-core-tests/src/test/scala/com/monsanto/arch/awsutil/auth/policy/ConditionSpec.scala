@@ -505,6 +505,14 @@ class ConditionSpec extends FreeSpec with AwsEnumerationBehaviours {
       }
     }
 
+    "be extractable from its parts" in {
+      forAll { condition: Condition.IpAddressCondition ⇒
+        inside((condition.key, condition.comparisonType, condition.comparisonValues)) {
+          case Condition.IpAddressCondition.fromParts(c) ⇒ c shouldBe condition
+        }
+      }
+    }
+
     behave like multiValueSupportCondition[Condition.IpAddressCondition]
   }
 

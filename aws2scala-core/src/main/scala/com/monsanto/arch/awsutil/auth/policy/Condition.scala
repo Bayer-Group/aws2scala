@@ -751,6 +751,22 @@ object Condition {
     override def comparisonValues: Seq[String] = cidrBlocks
   }
 
+  object IpAddressCondition {
+    /** Extracts an `IpAddressCondition` given a tuple containing the condition’s key, comparison type,
+      * and comparison values.
+      */
+    object fromParts {
+      def unapply(parts: (String, String, Seq[String])): Option[IpAddressCondition] =
+        parts match {
+          case (key, WithoutIfExists(IpAddressComparisonType.fromId(ipAddressComparisonType)), cidrBlocks) ⇒
+            Some(IpAddressCondition(key, ipAddressComparisonType, cidrBlocks, ignoreMissing = true))
+          case (key, IpAddressComparisonType.fromId(ipAddressComparisonType), cidrBlocks) ⇒
+            Some(IpAddressCondition(key, ipAddressComparisonType, cidrBlocks, ignoreMissing = false))
+          case _ ⇒ None
+        }
+    }
+  }
+
   /** The enumeration of all valid numeric comparison types. */
   sealed abstract class NumericComparisonType(val id: String)
   object NumericComparisonType {
