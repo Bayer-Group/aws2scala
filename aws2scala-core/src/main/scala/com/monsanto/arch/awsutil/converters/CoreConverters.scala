@@ -141,34 +141,11 @@ object CoreConverters {
   }
 
   implicit class ScalaCondition(val condition: Condition) extends AnyVal {
-    def asAws: policy.Condition = {
-      def awsCondition(conditionKey: String, comparisonType: String, comparisonValues: Seq[String], ifExists: Boolean) =
-        new policy.Condition()
-          .withConditionKey(conditionKey)
-          .withType(if (ifExists) s"${comparisonType}IfExists" else comparisonType)
-          .withValues(comparisonValues: _*)
-      condition match {
-        case Condition.ArnCondition(key, comparisonType, values, ifExists) ⇒
-          awsCondition(key, comparisonType.asAws.toString, values, ifExists)
-        case Condition.BinaryCondition(key, values, ifExists) ⇒
-          awsCondition(key, "Binary", values.map(v ⇒ Base64.getEncoder.encodeToString(v.toArray)), ifExists)
-        case Condition.BooleanCondition(key, value, ifExists) ⇒
-          awsCondition(key, "Bool", Seq(value.toString), ifExists)
-        case Condition.DateCondition(key, comparisonType, values, ifExists) ⇒
-          awsCondition(key, comparisonType.asAws.toString, values.map(_.toInstant.toString), ifExists)
-        case Condition.IpAddressCondition(key, comparisonType, cidrBlocks, ifExists) ⇒
-          awsCondition(key, comparisonType.asAws.toString, cidrBlocks, ifExists)
-        case Condition.NullCondition(key, value) ⇒
-          awsCondition(key, "Null", Seq(value.toString), ifExists = false)
-        case Condition.NumericCondition(key, comparisonType, values, ifExists) ⇒
-          awsCondition(key, comparisonType.asAws.toString, values.map(_.toString), ifExists)
-        case Condition.StringCondition(key, comparisonType, values, ifExists) ⇒
-          awsCondition(key, comparisonType.asAws.toString, values, ifExists)
-        case Condition.MultipleKeyValueCondition(op, inner) ⇒
-          val innerAws = inner.asAws
-          innerAws.withType(s"$op:${innerAws.getType}")
-      }
-    }
+    def asAws: policy.Condition =
+      new policy.Condition()
+        .withConditionKey(condition.key)
+        .withType(condition.comparisonType)
+        .withValues(condition.comparisonValues: _*)
   }
 
   implicit class ScalaArnConditionComparisonType(val comparisonType: Condition.ArnComparisonType) extends AnyVal {

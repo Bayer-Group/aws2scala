@@ -1,7 +1,7 @@
 package com.monsanto.arch.awsutil.auth.policy
 
 import java.nio.ByteBuffer
-import java.util.Date
+import java.util.{Base64, Date}
 
 import akka.util.ByteString
 
@@ -312,6 +312,9 @@ sealed trait Condition {
 
   /** Returns the comparison type for this condition. */
   def comparisonType: String
+
+  /** Returns the comparison values for this condition. */
+  def comparisonValues: Seq[String]
 }
 
 object Condition {
@@ -444,6 +447,8 @@ object Condition {
 
     override def comparisonType: String =
       if (ignoreMissing) s"${arnComparisonType.id}IfExists" else arnComparisonType.id
+
+    override def comparisonValues: Seq[String] = values
   }
 
   /** Provides a fluent interface for building binary conditions. */
@@ -482,6 +487,8 @@ object Condition {
     def ifExists: BinaryCondition = copy(ignoreMissing = true)
 
     override def comparisonType: String = if (ignoreMissing) "BinaryIfExists" else "Binary"
+
+    override def comparisonValues: Seq[String] = values.map(v ⇒ Base64.getEncoder.encodeToString(v.toArray))
   }
 
   /** Provides a fluent interface for building boolean conditions. */
@@ -514,6 +521,8 @@ object Condition {
     def ifExists: BooleanCondition = copy(ignoreMissing = true)
 
     override def comparisonType: String = if (ignoreMissing) "BoolIfExists" else "Bool"
+
+    override def comparisonValues: Seq[String] = Seq(value.toString)
   }
 
   /** Enumeration of all of the date comparison types. */
@@ -560,6 +569,8 @@ object Condition {
 
     override def comparisonType: String =
       if (ignoreMissing) s"${dateComparisonType.id}IfExists" else dateComparisonType.id
+
+    override def comparisonValues: Seq[String] = values.map(_.toInstant.toString)
   }
 
   /** Provides a fluent interface for building date/time conditions. */
@@ -645,6 +656,8 @@ object Condition {
 
     override def comparisonType: String =
       if (ignoreMissing) s"${ipAddressComparisonType.id}IfExists" else ipAddressComparisonType.id
+
+    override def comparisonValues: Seq[String] = cidrBlocks
   }
 
   /** The enumeration of all valid numeric comparison types. */
@@ -693,6 +706,8 @@ object Condition {
 
     override def comparisonType: String =
       if (ignoreMissing) s"${numericComparisonType.id}IfExists" else numericComparisonType.id
+
+    override def comparisonValues: Seq[String] = values.map(_.toString)
   }
 
   /** Provides a fluent interface for building numeric conditions. */
@@ -767,14 +782,14 @@ object Condition {
     *
     * @param key the name of the value to match from the request
     * @param stringComparisonType the type of comparison to perform
-    * @param values the string values against which to compare
+    * @param comparisonValues the string values against which to compare
     * @param ignoreMissing if true, if the key is missing from the request, the
     *                      condition will succeed.  Otherwise, a missing key
     *                      from the request will result in a failure.
     */
   case class StringCondition(key: String,
                              stringComparisonType: StringComparisonType,
-                             values: Seq[String],
+                             comparisonValues: Seq[String],
                              ignoreMissing: Boolean)
       extends Condition with MultipleKeyValueSupport {
     /** Creates a copy of this condition that will ignore a missing key in a
@@ -833,6 +848,8 @@ object Condition {
   case class NullCondition private[Condition] (key: String,
                                                value: Boolean) extends Condition with MultipleKeyValueSupport {
     override def comparisonType: String = "Null"
+
+    override def comparisonValues: Seq[String] = Seq(value.toString)
   }
 
   /** An enumeration of all set operation types. */
@@ -861,6 +878,8 @@ object Condition {
         case SetOperation.ForAllValues ⇒ s"ForAllValues:${condition.comparisonType}"
         case SetOperation.ForAnyValue  ⇒ s"ForAnyValue:${condition.comparisonType}"
       }
+
+    override def comparisonValues: Seq[String] = condition.comparisonValues
   }
 
   /** Adds support to a condition so that set operations may be applied to
