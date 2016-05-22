@@ -1031,6 +1031,46 @@ object Condition {
     override def comparisonValues: Seq[String] = condition.comparisonValues
   }
 
+  object MultipleKeyValueCondition {
+    /** Extracts a `MultipleKeyValueCondition` given a tuple containing the condition’s key, comparison type,
+      * and comparison values.
+      */
+    object fromParts {
+      def unapply(parts: (String, String, Seq[String])): Option[MultipleKeyValueCondition] = {
+        val setOpParts = parts match {
+          case (key, ForAll(comparisonType), values) ⇒
+            Some((SetOperation.ForAllValues, (key, comparisonType, values)))
+          case (key, ForAny(comparisonType), values) ⇒
+            Some((SetOperation.ForAnyValue, (key, comparisonType, values)))
+          case _ ⇒
+            None
+        }
+        setOpParts.collect {
+          case (op, Condition.fromParts(c: Condition with MultipleKeyValueSupport)) ⇒
+            MultipleKeyValueCondition(op, c)
+        }
+      }
+    }
+
+    private object ForAll {
+      def unapply(comparisonType: String): Option[String] =
+        if (comparisonType.startsWith("ForAllValues:")) {
+          Some(comparisonType.substring(13))
+        } else {
+          None
+        }
+    }
+
+    private object ForAny {
+      def unapply(comparisonType: String): Option[String] =
+        if (comparisonType.startsWith("ForAnyValue:")) {
+          Some(comparisonType.substring(12))
+        } else {
+          None
+        }
+    }
+  }
+
   /** Adds support to a condition so that set operations may be applied to
     * it.
     */
@@ -1048,6 +1088,24 @@ object Condition {
     def forAnyValue: Condition.MultipleKeyValueCondition =
       Condition.MultipleKeyValueCondition(Condition.SetOperation.ForAnyValue,
         this)
+  }
+
+  /** Extracts a `Condition` given a tuple containing the condition’s key, comparison type,
+    * and comparison values.
+    */
+  object fromParts {
+    def unapply(parts: (String, String, Seq[String])): Option[Condition] =
+      parts match {
+        case ArnCondition.fromParts(condition)       ⇒ Some(condition)
+        case BinaryCondition.fromParts(condition)    ⇒ Some(condition)
+        case BooleanCondition.fromParts(condition)   ⇒ Some(condition)
+        case DateCondition.fromParts(condition)      ⇒ Some(condition)
+        case IpAddressCondition.fromParts(condition) ⇒ Some(condition)
+        case NumericCondition.fromParts(condition)   ⇒ Some(condition)
+        case StringCondition.fromParts(condition)    ⇒ Some(condition)
+        case NullCondition.fromParts(condition)      ⇒ Some(condition)
+        case _ ⇒ None
+      }
   }
 
   /** Extractor that matches a string that ends with `IfExists` and returns the prefix. */
