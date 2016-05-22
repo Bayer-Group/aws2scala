@@ -567,6 +567,32 @@ object Condition {
     override def comparisonValues: Seq[String] = Seq(value.toString)
   }
 
+  object BooleanCondition {
+    /** Extracts a `BooleanCondition` given a tuple containing the condition’s key, comparison type,
+      * and comparison values.
+      */
+    object fromParts {
+      def unapply(parts: (String, String, Seq[String])): Option[BooleanCondition] =
+        parts match {
+          case (key, "BoolIfExists", BooleanValue(value)) ⇒
+            Some(BooleanCondition(key, value, ignoreMissing = true))
+          case (key, "Bool", BooleanValue(value)) ⇒
+            Some(BooleanCondition(key, value, ignoreMissing = false))
+          case _ ⇒
+            None
+        }
+
+      /** Extractor to base64-decode a sequence of strings. */
+      object BooleanValue {
+        def unapply(strings: Seq[String]): Option[Boolean] =
+          strings match {
+            case Seq(string) ⇒ Try(string.toBoolean).toOption
+            case _           ⇒ None
+          }
+      }
+    }
+  }
+
   /** Enumeration of all of the date comparison types. */
   sealed abstract class DateComparisonType(val id: String)
   object DateComparisonType {
