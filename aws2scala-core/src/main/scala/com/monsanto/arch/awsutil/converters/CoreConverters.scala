@@ -222,7 +222,7 @@ object CoreConverters {
   implicit class AwsPolicy(val awsPolicy: policy.Policy) extends AnyVal {
     def asScala: Policy =
       Policy(
-        awsPolicy.getVersion.asScalaPolicyVersion,
+        Option(awsPolicy.getVersion).map(_.asScalaPolicyVersion),
         Option(awsPolicy.getId),
         asList(awsPolicy.getStatements).map(_.asScala))
   }

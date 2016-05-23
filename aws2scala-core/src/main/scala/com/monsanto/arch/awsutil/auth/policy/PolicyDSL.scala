@@ -234,7 +234,7 @@ object PolicyDSL {
     private[policy] def build(): Policy = {
       require(statements.isDefined, "A policy should have a list of statements.")
       Policy(
-        version.getOrElse(Policy.Version.`2012-10-17`),
+        version.orElse(Some(Policy.Version.`2012-10-17`)),
         id,
         statements.get)
     }

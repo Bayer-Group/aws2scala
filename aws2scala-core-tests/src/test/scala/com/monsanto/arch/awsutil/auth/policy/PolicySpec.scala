@@ -20,7 +20,7 @@ class PolicySpec extends FreeSpec with AwsEnumerationBehaviours {
     "round trip" - {
       "via its AWS equivalent" in {
         forAll { policy: Policy ⇒
-          policy.asAws.asScala should equal (policy)
+          policy.asAws.asScala should equal (policy.copy(version = Some(Policy.Version.`2012-10-17`)))
         }
       }
 
@@ -39,7 +39,7 @@ class PolicySpec extends FreeSpec with AwsEnumerationBehaviours {
               case (s, p) ⇒ s.copy(principals = p)
             }
             // create a policy that with the OK statements
-            policy.copy(statements = okStatements)
+            policy.copy(statements = okStatements, version = Some(Policy.Version.`2012-10-17`))
           }
         forAll(nonBrokenPolicy, maxSize(50)) { policy ⇒
           Policy.fromJson(policy.toJson) should equal (policy)

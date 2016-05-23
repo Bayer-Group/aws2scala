@@ -18,7 +18,7 @@ class PolicyDSLSpec extends FreeSpec {
       "build policies using" - {
         "only a statement list" in {
           forAll { statements: Seq[Statement] ⇒
-            policy(statements) shouldBe Policy(Policy.Version.`2012-10-17`, None, statements)
+            policy(statements) shouldBe Policy(Some(Policy.Version.`2012-10-17`), None, statements)
           }
         }
 
@@ -27,7 +27,7 @@ class PolicyDSLSpec extends FreeSpec {
             policy(
               id(policyId),
               statements
-            ) shouldBe Policy(Policy.Version.`2012-10-17`, Some(policyId), statements)
+            ) shouldBe Policy(Some(Policy.Version.`2012-10-17`), Some(policyId), statements)
           }
         }
 
@@ -36,7 +36,7 @@ class PolicyDSLSpec extends FreeSpec {
             policy(
               statements,
               id(policyId)
-            ) shouldBe Policy(Policy.Version.`2012-10-17`, Some(policyId), statements)
+            ) shouldBe Policy(Some(Policy.Version.`2012-10-17`), Some(policyId), statements)
           }
         }
 
@@ -45,7 +45,7 @@ class PolicyDSLSpec extends FreeSpec {
             policy(
               version(policyVersion),
               statements
-            ) shouldBe Policy(policyVersion, None, statements)
+            ) shouldBe Policy(Some(policyVersion), None, statements)
           }
         }
 
@@ -54,7 +54,7 @@ class PolicyDSLSpec extends FreeSpec {
             policy(
               statements,
               version(policyVersion)
-            ) shouldBe Policy(policyVersion, None, statements)
+            ) shouldBe Policy(Some(policyVersion), None, statements)
           }
         }
 

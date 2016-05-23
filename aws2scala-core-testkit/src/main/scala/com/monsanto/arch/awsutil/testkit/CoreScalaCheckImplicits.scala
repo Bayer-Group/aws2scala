@@ -34,9 +34,10 @@ object CoreScalaCheckImplicits {
     val idGen = Gen.option(Gen.nonEmptyListOf(UtilGen.asciiChar).map(_.mkString))
     Arbitrary {
       for {
+        version ← arbitrary[Option[Policy.Version]]
         id ← idGen
         statements ← UtilGen.nonEmptyListOfSqrtN(arbitrary[Statement])
-      } yield Policy(Policy.Version.`2012-10-17`, id, statements)
+      } yield Policy(version, id, statements)
     }
   }
 

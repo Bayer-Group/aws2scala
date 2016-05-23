@@ -3,7 +3,7 @@ package com.monsanto.arch.awsutil.auth.policy
 import com.amazonaws.auth.{policy ⇒ aws}
 import com.monsanto.arch.awsutil.converters.CoreConverters._
 
-final case class Policy(version: Policy.Version,
+final case class Policy(version: Option[Policy.Version],
                         id: Option[String],
                         statements: Seq[Statement]) {
   def toJson: String = this.asAws.toJson
