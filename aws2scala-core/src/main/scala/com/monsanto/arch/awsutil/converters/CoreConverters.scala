@@ -36,12 +36,10 @@ object CoreConverters {
   implicit class AwsAction(val action: policy.Action) extends AnyVal {
     def asScala: Action = {
       Action.toScalaConversions.get(action)
-        .orElse(Action.nameToScalaConversion.get(action.getActionName))
-        .getOrElse(NamedAction(action.getActionName))
+        .orElse(Action.fromName.unapply(action.getActionName))
+        .getOrElse(Action.NamedAction(action.getActionName))
     }
   }
-
-  private[awsutil] case class NamedAction(_name: String) extends Action(_name)
 
   implicit class ScalaAction(val action: Action) extends AnyVal {
     def asAws: policy.Action = Action.toAwsConversions(action)

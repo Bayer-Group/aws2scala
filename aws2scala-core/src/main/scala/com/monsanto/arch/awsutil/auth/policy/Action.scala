@@ -47,4 +47,7 @@ object Action {
   object fromName {
     def unapply(name: String): Option[Action] =  nameToScalaConversion.get(name)
   }
+
+  /** Used to generate `Action` instances when no matching action has been registered. */
+  private[awsutil] case class NamedAction(override val name: String) extends Action(name)
 }

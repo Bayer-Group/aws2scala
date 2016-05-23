@@ -1,7 +1,6 @@
 package com.monsanto.arch.awsutil.auth.policy
 
 import com.monsanto.arch.awsutil.auth.policy.PolicyDSL._
-import com.monsanto.arch.awsutil.converters.CoreConverters
 import com.monsanto.arch.awsutil.converters.CoreConverters._
 import com.monsanto.arch.awsutil.test_support.AwsEnumerationBehaviours
 import com.monsanto.arch.awsutil.testkit.CoreScalaCheckImplicits._
@@ -53,7 +52,7 @@ class PolicySpec extends FreeSpec with AwsEnumerationBehaviours {
         policy(
           statements(
             allow(
-              actions(CoreConverters.NamedAction("foo"))
+              actions(Action.NamedAction("foo"))
             )
           )
         )
