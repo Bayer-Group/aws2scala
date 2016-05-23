@@ -227,7 +227,7 @@ lazy val iamTestkit = Project("aws2scala-iam-testkit", file("aws2scala-iam-testk
     commonSettings,
     bintrayPublishingSettings,
     description := "Test utility library for aws2scala-iam",
-    libraryDependencies += scalaCheck
+    libraryDependencies ++= Seq(scalaCheck, sprayJson)
   )
 
 lazy val iamTests = Project("aws2scala-iam-tests", file("aws2scala-iam-tests"))

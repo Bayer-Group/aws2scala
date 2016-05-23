@@ -1,12 +1,8 @@
 package com.monsanto.arch.awsutil.auth.policy
 
-import com.monsanto.arch.awsutil.auth.policy.PolicyDSL._
 import com.monsanto.arch.awsutil.converters.CoreConverters._
 import com.monsanto.arch.awsutil.test_support.AwsEnumerationBehaviours
 import com.monsanto.arch.awsutil.testkit.CoreScalaCheckImplicits._
-import com.monsanto.arch.awsutil.testkit.UtilGen
-import org.scalacheck.Arbitrary.arbitrary
-import org.scalacheck.Gen
 import org.scalactic.Equality
 import org.scalatest.FreeSpec
 import org.scalatest.Matchers._
@@ -24,39 +20,10 @@ class PolicySpec extends FreeSpec with AwsEnumerationBehaviours {
       }
 
       "via JSON" in {
-        // only get principals that can be process by AWS' fromJson
-        val nonBrokenPrincipal = arbitrary[Principal].retryUntil(p ⇒ !p.id.contains("-") && p.id != "*")
-        val nonBrokenPolicy =
-          for {
-          // generate a policy with unique condition types
-            policy ← arbitrary[Policy]
-            // generate a set of principles that will round-trip
-            okPrincipals ← Gen.listOfN(policy.statements.size, UtilGen.listOfSqrtN(nonBrokenPrincipal).map(_.toSet))
-          } yield {
-            // replace all statement principals with round-trippable ones
-            val okStatements = policy.statements.zip(okPrincipals).map {
-              case (s, p) ⇒ s.copy(principals = p)
-            }
-            // create a policy that with the OK statements
-            policy.copy(statements = okStatements, version = Some(Policy.Version.`2012-10-17`))
-          }
-        forAll(nonBrokenPolicy, maxSize(50)) { policy ⇒
-          Policy.fromJson(policy.toJson) should equal (policy)
+        forAll { policy: Policy ⇒
+          Policy.fromJson(policy.toJson) shouldBe policy
         }
       }
-    }
-
-    "handle unknown Actions" in {
-      val result = Policy.fromJson("{\"Statement\": [{\"Effect\":\"Allow\",\"Action\":\"foo\"}]}")
-      result should equal (
-        policy(
-          statements(
-            allow(
-              actions(Action.NamedAction("foo"))
-            )
-          )
-        )
-      )
     }
   }
 
@@ -82,13 +49,11 @@ class PolicySpec extends FreeSpec with AwsEnumerationBehaviours {
             lhs.statements.zip(statements).forall {
               case (lhsStatement, rhsStatement) ⇒
                 (rhsStatement.id.isEmpty || lhsStatement.id == rhsStatement.id) &&
-                  rhsStatement.principals.diff(lhsStatement.principals).isEmpty &&
-                  lhsStatement.principals.diff(rhsStatement.principals).isEmpty &&
+                  rhsStatement.principals == lhsStatement.principals &&
                   rhsStatement.effect == lhsStatement.effect &&
                   rhsStatement.actions == lhsStatement.actions &&
                   rhsStatement.resources == lhsStatement.resources &&
-                  rhsStatement.conditions.diff(lhsStatement.conditions).isEmpty &&
-                  lhsStatement.conditions.diff(rhsStatement.conditions).isEmpty
+                  rhsStatement.conditions == lhsStatement.conditions
             }
         case _ ⇒ false
       }
