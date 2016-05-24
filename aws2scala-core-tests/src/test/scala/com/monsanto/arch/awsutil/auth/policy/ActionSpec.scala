@@ -17,7 +17,7 @@ class ActionSpec extends FreeSpec with ActionBehaviours {
 
   "it is not possible to get an action from a bad name" in {
     an [IllegalArgumentException] shouldBe thrownBy {
-      Action("this is not a valid action")
+      Action.fromName("this is not a valid action")
     }
   }
 }

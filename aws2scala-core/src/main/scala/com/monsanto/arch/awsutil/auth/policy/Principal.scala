@@ -104,20 +104,20 @@ object Principal {
     }
   }
 
-  /** Returns a `Provider` instance that corresponds to the given provider and
-    * identifier.
-    *
-    * @param provider indicates in what group of users the principal resides
-    * @param id       the unique identifier for the principal
-    * @throws IllegalArgumentException if no Principal can be constructed that
-    *                                  matches the given provider and
-    *                                  identifier
-    */
-  def apply(provider: String, id: String): Principal =
-    fromProviderAndId.unapply((provider, id))
-      .getOrElse(throw new IllegalArgumentException(s"($provider, $id) does not resolve to a valid principal."))
-
+  /** Utility to build/extract `Principal` instances from a provider name and identifier. */
   object fromProviderAndId {
+    /** Returns a `Principal` instance that corresponds to the given provider name and identifier.
+      *
+      * @param provider indicates in what group of users the principal resides
+      * @param id       the unique identifier for the principal
+      * @throws java.lang.IllegalArgumentException if no Principal can be constructed that matches the given
+      *                                            provider and identifier
+      */
+    def apply(provider: String, id: String): Principal =
+      unapply((provider, id))
+        .getOrElse(throw new IllegalArgumentException(s"($provider, $id) does not resolve to a valid principal."))
+
+    /** Extracts a principal given a tuple containing the provider name and identifier. */
     def unapply(providerAndId: (String, String)): Option[Principal] = {
       providerAndId match {
         case ("*", "*") ⇒

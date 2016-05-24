@@ -418,13 +418,16 @@ object Condition {
 
     val values: Seq[ArnComparisonType] = Seq(Equals, Like, NotEquals, NotLike)
 
-    /** Returns the `ArnComparisonType` value for the given ID. */
-    def apply(id: String): ArnComparisonType =
-      fromId.unapply(id)
-        .getOrElse(throw new IllegalArgumentException(s"‘$id’ is not a valid ARN comparison type ID."))
-
-    /** Extractor for getting the ARN comparison type from its string identifier. */
+    /** Utility to build/extract an `ArnComparisonType` given an identifier. */
     object fromId {
+      /** Returns the `ArnComparisonType` value for the given identifier.
+        *
+        * @throws java.lang.IllegalArgumentException if no object can be found matching the identifier
+        */
+      def apply(id: String): ArnComparisonType =
+        unapply(id).getOrElse(throw new IllegalArgumentException(s"‘$id’ is not a valid ARN comparison type ID."))
+
+      /** Extracts the `ArnComparisonType` for the given identifier. */
       def unapply(id: String): Option[ArnComparisonType] = values.find(_.id == id)
     }
   }
@@ -499,7 +502,7 @@ object Condition {
   case class BinaryCondition(key: String,
                              values: Seq[ByteString],
                              ignoreMissing: Boolean)
-      extends Condition with MultipleKeyValueSupport{
+      extends Condition with MultipleKeyValueSupport {
     /** Creates a copy of this condition that will ignore a missing key in a
       * request.
       */
@@ -597,13 +600,16 @@ object Condition {
 
     val values: Seq[DateComparisonType] = Seq(Equals, After, AtOrAfter, Before, AtOrBefore, NotEquals)
 
-    /** Returns the `DateComparisonType` value for the given ID. */
-    def apply(id: String): DateComparisonType =
-      fromId.unapply(id)
-        .getOrElse(throw new IllegalArgumentException(s"‘$id’ is not a valid date comparison type ID."))
-
-    /** Extractor for getting the date comparison type from its string identifier. */
+    /** Utility to build/extract an `DateComparisonType` given an identifier. */
     object fromId {
+      /** Returns the `DateComparisonType` value for the given identifier.
+        *
+        * @throws java.lang.IllegalArgumentException if no object can be found matching the identifier
+        */
+      def apply(id: String): DateComparisonType =
+        unapply(id).getOrElse(throw new IllegalArgumentException(s"‘$id’ is not a valid date comparison type ID."))
+
+      /** Extracts the `DateComparisonType` for the given identifier. */
       def unapply(id: String): Option[DateComparisonType] = values.find(_.id == id)
     }
   }
@@ -697,13 +703,16 @@ object Condition {
 
     val values: Seq[IpAddressComparisonType] = Seq(IsIn, IsNotIn)
 
-    /** Returns the `IpAddressComparisonType` value for the given ID. */
-    def apply(id: String): IpAddressComparisonType =
-      fromId.unapply(id)
-        .getOrElse(throw new IllegalArgumentException(s"‘$id’ is not a valid IP address comparison type ID."))
-
-    /** Extractor for getting the IP address comparison type from its string identifier. */
+    /** Utility to build/extract an `IpAddressComparisonType` given an identifier. */
     object fromId {
+      /** Returns the `IpAddressComparisonType` value for the given identifier.
+        *
+        * @throws java.lang.IllegalArgumentException if no object can be found matching the identifier
+        */
+      def apply(id: String): IpAddressComparisonType =
+        unapply(id).getOrElse(throw new IllegalArgumentException(s"‘$id’ is not a valid IP address comparison type ID."))
+
+      /** Extracts the `IpAddressComparisonType` for the given identifier. */
       def unapply(id: String): Option[IpAddressComparisonType] = values.find(_.id == id)
     }
   }
@@ -772,13 +781,16 @@ object Condition {
       Seq(Equals, GreaterThan, GreaterThanEquals, LessThan, LessThanEquals,
         NotEquals)
 
-    /** Returns the `NumericComparisonType` value for the given ID. */
-    def apply(id: String): NumericComparisonType =
-      fromId.unapply(id)
-        .getOrElse(throw new IllegalArgumentException(s"‘$id’ is not a valid numeric comparison type ID."))
-
-    /** Extractor for getting the numeric comparison type from its string identifier. */
+    /** Utility to build/extract an `NumericComparisonType` given an identifier. */
     object fromId {
+      /** Returns the `NumericComparisonType` value for the given identifier.
+        *
+        * @throws java.lang.IllegalArgumentException if no object can be found matching the identifier
+        */
+      def apply(id: String): NumericComparisonType =
+        unapply(id).getOrElse(throw new IllegalArgumentException(s"‘$id’ is not a valid numeric comparison type ID."))
+
+      /** Extracts the `NumericComparisonType` for the given identifier. */
       def unapply(id: String): Option[NumericComparisonType] = values.find(_.id == id)
     }
   }
@@ -887,13 +899,16 @@ object Condition {
     val values: Seq[StringComparisonType] =
       Seq(Equals, NotEquals, EqualsIgnoreCase, NotEqualsIgnoreCase, Like, NotLike)
 
-    /** Returns the `StringComparisonType` value for the given ID. */
-    def apply(id: String): StringComparisonType =
-      fromId.unapply(id)
-        .getOrElse(throw new IllegalArgumentException(s"‘$id’ is not a valid IP address comparison type ID."))
-
-    /** Extractor for getting the date comparison type from its string identifier. */
+    /** Utility to build/extract an `StringComparisonType` given an identifier. */
     object fromId {
+      /** Returns the `StringComparisonType` value for the given identifier.
+        *
+        * @throws java.lang.IllegalArgumentException if no object can be found matching the identifier
+        */
+      def apply(id: String): StringComparisonType =
+        unapply(id).getOrElse(throw new IllegalArgumentException(s"‘$id’ is not a valid IP address comparison type ID."))
+
+      /** Extracts the `StringComparisonType` for the given identifier. */
       def unapply(id: String): Option[StringComparisonType] = values.find(_.id == id)
     }
   }
@@ -1090,10 +1105,24 @@ object Condition {
         this)
   }
 
-  /** Extracts a `Condition` given a tuple containing the condition’s key, comparison type,
+  /** Utility for Extracting/building a `Condition` given a the condition’s key, comparison type,
     * and comparison values.
     */
   object fromParts {
+    /** Builds a condition given its key, comparison type, and comparison values.
+      *
+      * @throws java.lang.IllegalArgumentException if no condition could be built with the inputs
+      */
+    def apply(conditionKey: String,
+              comparisonType: String,
+              comparisonValues: Seq[String]): Condition =
+      unapply((conditionKey, comparisonType, comparisonValues))
+        .getOrElse(throw new IllegalArgumentException(
+          s"($conditionKey, $comparisonType, $comparisonValues) do not define a valid condition."))
+
+    /** Extracts a `Condition` given a tuple containing the condition’s key, comparison type,
+      * and comparison values.
+      */
     def unapply(parts: (String, String, Seq[String])): Option[Condition] =
       parts match {
         case ArnCondition.fromParts(condition)              ⇒ Some(condition)
@@ -1108,13 +1137,6 @@ object Condition {
         case _ ⇒ None
       }
   }
-
-  private[awsutil] def apply(conditionKey: String,
-                             comparisonType: String,
-                             comparisonValues: Seq[String]): Condition =
-    fromParts.unapply((conditionKey, comparisonType, comparisonValues))
-      .getOrElse(throw new IllegalArgumentException(
-        s"($conditionKey, $comparisonType, $comparisonValues) do not define a valid condition."))
 
   /** Extractor that matches a string that ends with `IfExists` and returns the prefix. */
   private object WithoutIfExists {

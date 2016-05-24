@@ -13,7 +13,7 @@ import scala.collection.JavaConverters._
 /** Provides converters between core ''aws2scala'' objects and their AWS Java SDK counterparts. */
 object CoreConverters {
   implicit class AwsPrincipal(val principal: policy.Principal) extends AnyVal {
-    def asScala: Principal = Principal(principal.getProvider, principal.getId)
+    def asScala: Principal = Principal.fromProviderAndId(principal.getProvider, principal.getId)
   }
 
   implicit class ScalaPrincipal(val principal: Principal) extends AnyVal {
@@ -47,7 +47,7 @@ object CoreConverters {
 
   implicit class AwsCondition(val condition: policy.Condition) extends AnyVal {
     def asScala: Condition =
-      Condition(condition.getConditionKey, condition.getType, condition.getValues.asScala.toList)
+      Condition.fromParts(condition.getConditionKey, condition.getType, condition.getValues.asScala.toList)
   }
 
   implicit class ScalaCondition(val condition: Condition) extends AnyVal {
@@ -289,7 +289,7 @@ object CoreConverters {
   }
 
   implicit class AwsPolicyVersion(val version: String) extends AnyVal {
-    def asScalaPolicyVersion: Policy.Version = Policy.Version(version)
+    def asScalaPolicyVersion: Policy.Version = Policy.Version.fromId(version)
   }
 
   implicit class ScalaPolicyVersion(val version: Policy.Version) extends AnyVal {

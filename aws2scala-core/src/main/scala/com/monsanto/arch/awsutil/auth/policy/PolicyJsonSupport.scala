@@ -15,7 +15,7 @@ private[awsutil] object PolicyJsonSupport {
 
   def jsonToPolicy(jsonString: String): Policy = {
     val json = new JSONObject(jsonString)
-    val version = Option(json.optString("Version", null)).map(Policy.Version.apply)
+    val version = Option(json.optString("Version", null)).map(Policy.Version.fromId(_))
     val id = Option(json.optString("Id", null))
     val statements = json.getJSONArray("Statement").asScala[JSONObject].map(jsonToStatement).toList
     Policy(version, id, statements)
@@ -35,7 +35,7 @@ private[awsutil] object PolicyJsonSupport {
   def jsonToStatement(jsonObject: JSONObject): Statement = {
     val sid  = Option(jsonObject.optString("Sid", null))
     val principals = jsonToPrincipals(Option(jsonObject.opt("Principal")))
-    val effect = Statement.Effect(jsonObject.getString("Effect"))
+    val effect = Statement.Effect.fromName(jsonObject.getString("Effect"))
     val actions = jsonToActions(Option(jsonObject.opt("Action")))
     val resources = jsonToResources(Option(jsonObject.opt("Resource")))
     val conditions = jsonToConditions(Option(jsonObject.opt("Condition").asInstanceOf[JSONObject]))
@@ -74,9 +74,9 @@ private[awsutil] object PolicyJsonSupport {
           val (provider, value) = entry
           value match {
             case id: String ⇒
-              Seq(Principal(provider, id))
+              Seq(Principal.fromProviderAndId(provider, id))
             case ids: JSONArray ⇒
-              ids.asScala[String].map(id ⇒ Principal(provider, id))
+              ids.asScala[String].map(id ⇒ Principal.fromProviderAndId(provider, id))
           }
         }.toSet
       case _ ⇒ throw new IllegalArgumentException(s"$jsonObject is not a valid principals JSON value.")
@@ -167,9 +167,9 @@ private[awsutil] object PolicyJsonSupport {
             val (key, jsonValues) = keyAndValues
             jsonValues match {
               case value: String ⇒
-                Condition(key, comparisonType, Seq(value))
+                Condition.fromParts(key, comparisonType, Seq(value))
               case values: JSONArray ⇒
-                Condition(key, comparisonType, values.asScala[String].toList)
+                Condition.fromParts(key, comparisonType, values.asScala[String].toList)
             }
           }
         }.toSet

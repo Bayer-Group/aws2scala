@@ -27,7 +27,7 @@ class PrincipalSpec extends FreeSpec with AwsEnumerationBehaviours {
 
       "its provider and identifier" in {
         forAll { principal: Principal ⇒
-          Principal(principal.provider, principal.id) shouldBe principal
+          Principal.fromProviderAndId(principal.provider, principal.id) shouldBe principal
         }
       }
     }

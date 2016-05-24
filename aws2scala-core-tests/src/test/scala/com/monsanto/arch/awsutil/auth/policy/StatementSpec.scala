@@ -65,7 +65,7 @@ class StatementSpec extends FreeSpec with AwsEnumerationBehaviours {
 
     "can extract Effect objects from strings" in {
       forAllIn(effects) { effect ⇒
-        Statement.Effect(effect.name) shouldBe effect
+        Statement.Effect.fromName(effect.name) shouldBe effect
       }
     }
   }

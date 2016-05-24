@@ -139,7 +139,7 @@ class PolicyJsonSupportSpec extends FreeSpec {
             for {
               condition ← arbitrary[Condition]
             } yield {
-              Condition(condition.key, condition.comparisonType, Seq(condition.comparisonValues.head))
+              Condition.fromParts(condition.key, condition.comparisonType, Seq(condition.comparisonValues.head))
             }
           forAll(singleValueCondition) { condition ⇒
             val expected =

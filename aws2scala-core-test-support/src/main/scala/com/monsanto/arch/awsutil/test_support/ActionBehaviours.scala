@@ -27,7 +27,7 @@ trait ActionBehaviours extends AwsEnumerationBehaviours { this: FreeSpec ⇒
 
     "the action can be recovered from its name" in {
       forAll(actionsTable) { action ⇒
-        Action(action.name) shouldBe action
+        Action.fromName(action.name) shouldBe action
       }
     }
 

@@ -1,5 +1,7 @@
 package com.monsanto.arch.awsutil.auth.policy
 
+import scala.util.Try
+
 final case class Policy(version: Option[Policy.Version],
                         id: Option[String],
                         statements: Seq[Statement]) {
@@ -7,7 +9,14 @@ final case class Policy(version: Option[Policy.Version],
 }
 
 object Policy {
-  def fromJson(json: String): Policy = PolicyJsonSupport.jsonToPolicy(json)
+  /** Utility to build/extract `Policy` objects from their JSON serialisation. */
+  object fromJson {
+    /** Parses the given string as JSON and builds a `Policy` from it. */
+    def apply(json: String): Policy = PolicyJsonSupport.jsonToPolicy(json)
+
+    /** Extracts a policy given a string. */
+    def unapply(json: String): Option[Policy] = Try(apply(json)).toOption
+  }
 
   /** Type for all policy versions. */
   sealed abstract class Version(val id: String)
@@ -20,13 +29,16 @@ object Policy {
 
     val values: Seq[Version] = Seq(`2012-10-17`, `2008-10-17`)
 
-    /** Returns the policy version corresponding to the given ID. */
-    def apply(id: String): Policy.Version =
-      fromId.unapply(id)
-        .getOrElse(throw new IllegalArgumentException(s"‘$id‘ is not a valid policy version"))
-
-    /** Extractor to get a policy version from its ID. */
+    /** Utility to get/extract a `PolicyVersion` object from its identifiers. */
     object fromId {
+      /** Returns the policy version corresponding to the given identifier.
+        *
+        * @throws java.lang.IllegalArgumentException if no policy version matches the given identifier
+        */
+      def apply(id: String): Policy.Version =
+        unapply(id).getOrElse(throw new IllegalArgumentException(s"‘$id‘ is not a valid policy version"))
+
+      /** Extracts a policy version given its identifier. */
       def unapply(id: String): Option[Policy.Version] = values.find(_.id == id)
     }
   }

@@ -57,20 +57,20 @@ object Statement {
     /** Explicitly deny access. */
     case object Deny extends Effect("Deny")
 
-    /** Gets the `Effect` instance corresponding to the given name.
-      *
-      * @param name the name of the effect
-      * @throws IllegalArgumentException if no Effect exists with the given name
-      */
-    def apply(name: String): Effect =
-      fromName.unapply(name)
-        .getOrElse(throw new IllegalArgumentException(s"’$name‘ is not a valid effect name."))
-
     /** List of all possible `Effect` values. */
     val values: Seq[Effect] = Seq(Allow,Deny)
 
-    /** Extractor to get an `Effect` from a string. */
+    /** Utility to build/extract `Effect` objects from their name. */
     object fromName {
+      /** Gets the `Effect` instance corresponding to the given name.
+        *
+        * @param name the name of the effect
+        * @throws java.lang.IllegalArgumentException if no Effect exists with the given name
+        */
+      def apply(name: String): Effect =
+        unapply(name).getOrElse(throw new IllegalArgumentException(s"’$name‘ is not a valid effect name."))
+
+      /** Extracts an `Effect` from a string. */
       def unapply(name: String): Option[Effect] = values.find(_.name == name)
     }
   }

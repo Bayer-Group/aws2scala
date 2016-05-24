@@ -44,9 +44,9 @@ class ConditionSpec extends FreeSpec with AwsEnumerationBehaviours {
       }
     }
 
-    "can build its parts" in {
+    "can be built from its parts" in {
       forAll { condition: Condition ⇒
-        Condition(condition.key, condition.comparisonType, condition.comparisonValues) shouldBe condition
+        Condition.fromParts(condition.key, condition.comparisonType, condition.comparisonValues) shouldBe condition
       }
     }
 
@@ -407,7 +407,7 @@ class ConditionSpec extends FreeSpec with AwsEnumerationBehaviours {
 
     "should be recoverable from an ID" in {
       forAllIn(comparisonTypes) { comparisonType ⇒
-        Condition.ArnComparisonType(comparisonType.id) shouldBe theSameInstanceAs (comparisonType)
+        Condition.ArnComparisonType.fromId(comparisonType.id) shouldBe theSameInstanceAs (comparisonType)
       }
     }
   }
@@ -500,7 +500,7 @@ class ConditionSpec extends FreeSpec with AwsEnumerationBehaviours {
 
     "should be recoverable from an ID" in {
       forAllIn(comparisonTypes) { comparisonType ⇒
-        Condition.DateComparisonType(comparisonType.id) shouldBe theSameInstanceAs (comparisonType)
+        Condition.DateComparisonType.fromId(comparisonType.id) shouldBe theSameInstanceAs (comparisonType)
       }
     }
   }
@@ -545,7 +545,7 @@ class ConditionSpec extends FreeSpec with AwsEnumerationBehaviours {
 
     "should be recoverable from an ID" in {
       forAllIn(comparisonTypes) { comparisonType ⇒
-        Condition.IpAddressComparisonType(comparisonType.id) shouldBe theSameInstanceAs (comparisonType)
+        Condition.IpAddressComparisonType.fromId(comparisonType.id) shouldBe theSameInstanceAs (comparisonType)
       }
     }
   }
@@ -590,7 +590,7 @@ class ConditionSpec extends FreeSpec with AwsEnumerationBehaviours {
 
     "should be recoverable from an ID" in {
       forAllIn(comparisonTypes) { comparisonType ⇒
-        Condition.NumericComparisonType(comparisonType.id) shouldBe theSameInstanceAs (comparisonType)
+        Condition.NumericComparisonType.fromId(comparisonType.id) shouldBe theSameInstanceAs (comparisonType)
       }
     }
   }
@@ -625,7 +625,7 @@ class ConditionSpec extends FreeSpec with AwsEnumerationBehaviours {
 
     "should be recoverable from an ID" in {
       forAllIn(comparisonTypes) { comparisonType ⇒
-        Condition.StringComparisonType(comparisonType.id) shouldBe theSameInstanceAs (comparisonType)
+        Condition.StringComparisonType.fromId(comparisonType.id) shouldBe theSameInstanceAs (comparisonType)
       }
     }
 

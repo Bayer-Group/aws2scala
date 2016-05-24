@@ -11,16 +11,6 @@ import scala.collection.concurrent
 abstract class Action(val name: String)
 
 object Action {
-  /** Returns an `Action` instance that corresponds to the given name.
-    *
-    * @param name the unique name of the action
-    * @throws IllegalArgumentException if no Action is found with the
-    *                                  given name
-    */
-  def apply(name: String): Action =
-    fromName.unapply(name)
-      .getOrElse(throw new IllegalArgumentException(s"No action instance could be found for ’$name‘."))
-
   private[awsutil] val toScalaConversions: concurrent.Map[aws.Action,Action] =
     concurrent.TrieMap(AllActions → AllActions)
   private[awsutil] val toAwsConversions: concurrent.Map[Action,aws.Action] =
@@ -43,8 +33,17 @@ object Action {
   /** Extracts the name from the action. */
   def unapply(action: Action): Option[String] = Some(action.name)
 
-  /** Extracts an `Action` given a name. */
+  /** Utility to build/extract an `Action` given a name. */
   object fromName {
+    /** Returns the registered `Action` instance that corresponds to the given name.
+      *
+      * @param name the unique name of the action
+      * @throws java.lang.IllegalArgumentException if no Action is found with the given name
+      */
+    def apply(name: String): Action =
+      unapply(name).getOrElse(throw new IllegalArgumentException(s"No action instance could be found for ’$name‘."))
+
+    /** Extracts an `Action` from the given name. */
     def unapply(name: String): Option[Action] =  nameToScalaConversion.get(name)
   }
 
