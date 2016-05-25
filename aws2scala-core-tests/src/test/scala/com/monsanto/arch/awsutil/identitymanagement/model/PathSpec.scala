@@ -9,7 +9,7 @@ class PathSpec extends FreeSpec {
   "a Path should" - {
     "be round-trippable via its string representation" in {
       forAll { path: Path ⇒
-        Path(path.pathString) shouldBe path
+        Path.fromPathString(path.pathString) shouldBe path
       }
     }
 
@@ -17,7 +17,7 @@ class PathSpec extends FreeSpec {
       forAll { pathString: String ⇒
         whenever(!pathString.matches("^(\u002F)|(\u002F[\u0021-\u007F]+\u002F)$")) {
           an [IllegalArgumentException] shouldBe thrownBy {
-            Path(pathString)
+            Path.fromPathString(pathString)
           }
         }
       }

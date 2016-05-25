@@ -22,7 +22,7 @@ object InstanceProfileArn {
   }
 
   private[identitymanagement] val instanceProfileArnPF: PartialFunction[Arn.ArnParts, InstanceProfileArn] = {
-    case (_, Arn.Namespace.IAM, None, Some(account), InstanceProfileResourceRegex(Path.fromString(path), name)) ⇒
+    case (_, Arn.Namespace.IAM, None, Some(account), InstanceProfileResourceRegex(Path.fromPathString(path), name)) ⇒
       InstanceProfileArn(account, name, path)
   }
 

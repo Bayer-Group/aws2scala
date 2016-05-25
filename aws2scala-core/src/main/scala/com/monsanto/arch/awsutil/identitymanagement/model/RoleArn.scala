@@ -21,7 +21,7 @@ object RoleArn {
     }
 
   private[awsutil] val roleArnPF: PartialFunction[Arn.ArnParts, RoleArn] = {
-    case (_, Arn.Namespace.IAM, None, Some(account), RoleResourceRegex(Path.fromString(path), name)) ⇒
+    case (_, Arn.Namespace.IAM, None, Some(account), RoleResourceRegex(Path.fromPathString(path), name)) ⇒
       RoleArn(account, name, path)
   }
 

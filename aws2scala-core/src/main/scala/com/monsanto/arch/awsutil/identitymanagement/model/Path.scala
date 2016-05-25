@@ -10,19 +10,23 @@ case class Path(elements: Seq[String]) {
 }
 
 object Path {
-  /** Allows creation of a `Path` object by parsing a string. */
-  def apply(pathString: String): Path = {
-    pathString match {
-      case Path.fromString(p) ⇒ p
-      case _                  ⇒ throw new IllegalArgumentException(s"‘$pathString’ cannot be parsed as a valid path.")
-    }
-  }
-
   /** Constant for an empty path. */
   val empty: Path = Path(Seq.empty)
 
-  /** Extractor for getting a `Path` from a string. */
-  object fromString {
+  /** Utility for extracting/creating a `Path` from a string. */
+  object fromPathString {
+    /** Creates a `Path` by parsing a string.
+      *
+      * @throws java.lang.IllegalArgumentException if `pathString` cannot be parsed
+      */
+    def apply(pathString: String): Path = {
+      pathString match {
+        case Path.fromPathString(p) ⇒ p
+        case _                  ⇒ throw new IllegalArgumentException(s"‘$pathString’ cannot be parsed as a valid path.")
+      }
+    }
+
+    /** Extracts a `Path` from a path string. */
     def unapply(str: String): Option[Path] = {
       if (str.nonEmpty) {
         str.split("/").toList match {

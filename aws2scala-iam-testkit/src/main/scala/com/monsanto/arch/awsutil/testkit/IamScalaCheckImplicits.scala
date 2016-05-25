@@ -42,7 +42,7 @@ object IamScalaCheckImplicits {
         Shrink.shrink(Policy.fromJson(request.assumeRolePolicy))
           .filterNot(p ⇒ p.toJson == request.assumeRolePolicy)
           .map(policy ⇒ request.copy(assumeRolePolicy = policy.toJson)) append
-        Shrink.shrink(request.path.map(Path.fromString.unapply(_).get)).map(path ⇒ request.copy(path = path.map(_.pathString)))
+        Shrink.shrink(request.path.map(Path.fromPathString.unapply(_).get)).map(path ⇒ request.copy(path = path.map(_.pathString)))
     }
 
   implicit lazy val arbDetachRolePolicyRequest: Arbitrary[DetachRolePolicyRequest] =

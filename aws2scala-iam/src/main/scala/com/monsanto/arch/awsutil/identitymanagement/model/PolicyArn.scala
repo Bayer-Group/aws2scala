@@ -22,7 +22,7 @@ object PolicyArn {
   }
 
   private[identitymanagement] val policyArnPF: PartialFunction[Arn.ArnParts, PolicyArn] = {
-    case (_, Arn.Namespace.IAM, None, Some(account), PolicyResourceRegex(Path.fromString(path), name)) ⇒
+    case (_, Arn.Namespace.IAM, None, Some(account), PolicyResourceRegex(Path.fromPathString(path), name)) ⇒
       PolicyArn(account, name, path)
   }
 

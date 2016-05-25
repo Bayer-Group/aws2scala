@@ -21,7 +21,7 @@ object UserArn {
     }
 
   private[awsutil] val userArnPF: PartialFunction[Arn.ArnParts, UserArn] = {
-    case (_, Arn.Namespace.IAM, None, Some(account), UserResourceRegex(Path.fromString(path), name)) ⇒
+    case (_, Arn.Namespace.IAM, None, Some(account), UserResourceRegex(Path.fromPathString(path), name)) ⇒
       UserArn(account, name, path)
   }
 
