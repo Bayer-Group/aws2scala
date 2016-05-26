@@ -217,11 +217,11 @@ class PolicyJsonSupportSpec extends FreeSpec {
           val mergeableConditions =
             (
               for {
-                condition1 ← arbitrary[Condition.StringCondition]
-                condition2 ← arbitrary[Condition.StringCondition]
+                condition1 ← arbitrary[Condition.NumericCondition]
+                condition2 ← arbitrary[Condition.NumericCondition]
                   .suchThat(c ⇒ c.comparisonValues != condition1.comparisonValues)
                   .map(c ⇒ c.copy(
-                    stringComparisonType = condition1.stringComparisonType,
+                    numericComparisonType = condition1.numericComparisonType,
                     ignoreMissing = condition1.ignoreMissing,
                     key = condition1.key))
               } yield Set[Condition](condition1, condition2)
