@@ -83,7 +83,8 @@ object Arn {
 
       case _ ⇒ None
     }
-    // now, extract an arn by findin
+    // now, extract an arn by finding it in the registered extractors, ending with GenericArn if no extractors
+    // are found.
     maybeArnParts.flatMap { arnParts ⇒
       subextractors.synchronized {
         subextractors.view
