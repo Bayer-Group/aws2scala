@@ -3,7 +3,8 @@ package com.monsanto.arch.awsutil.identitymanagement
 import akka.Done
 import akka.stream.Materializer
 import com.monsanto.arch.awsutil.AsyncAwsClient
-import com.monsanto.arch.awsutil.identitymanagement.model.{AttachedPolicy, PolicyArn, Role, User}
+import com.monsanto.arch.awsutil.auth.policy.Policy
+import com.monsanto.arch.awsutil.identitymanagement.model._
 
 import scala.concurrent.Future
 
@@ -14,7 +15,7 @@ trait AsyncIdentityManagementClient extends AsyncAwsClient {
     * @param assumeRolePolicy the trust relationship policy that grants an entity permission to assume the role (a JSON
     *                         document)
     */
-  def createRole(roleName: String, assumeRolePolicy: String)(implicit m: Materializer): Future[Role]
+  def createRole(roleName: String, assumeRolePolicy: Policy)(implicit m: Materializer): Future[Role]
 
   /** Creates a new role.
     *
@@ -23,7 +24,7 @@ trait AsyncIdentityManagementClient extends AsyncAwsClient {
     *                         document)
     * @param path an optional path to the role
     */
-  def createRole(roleName: String, assumeRolePolicy: String, path: String)(implicit m: Materializer): Future[Role]
+  def createRole(roleName: String, assumeRolePolicy: Policy, path: Path)(implicit m: Materializer): Future[Role]
 
   /** Deletes the role with the given name.  The role must not have any policies attached. */
   def deleteRole(roleName: String)(implicit m: Materializer): Future[Done]

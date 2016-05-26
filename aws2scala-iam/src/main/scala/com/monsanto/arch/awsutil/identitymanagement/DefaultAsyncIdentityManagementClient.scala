@@ -2,15 +2,16 @@ package com.monsanto.arch.awsutil.identitymanagement
 
 import akka.stream.Materializer
 import akka.stream.scaladsl.{Sink, Source}
+import com.monsanto.arch.awsutil.auth.policy.Policy
 import com.monsanto.arch.awsutil.identitymanagement.model._
 
 private[awsutil] class DefaultAsyncIdentityManagementClient(streaming: StreamingIdentityManagementClient) extends AsyncIdentityManagementClient {
-  override def createRole(roleName: String, assumeRolePolicy: String)(implicit m: Materializer) =
+  override def createRole(roleName: String, assumeRolePolicy: Policy)(implicit m: Materializer) =
     Source.single(CreateRoleRequest(roleName, assumeRolePolicy, None))
       .via(streaming.roleCreator)
       .runWith(Sink.head)
 
-  override def createRole(roleName: String, assumeRolePolicy: String, path: String)(implicit m: Materializer) =
+  override def createRole(roleName: String, assumeRolePolicy: Policy, path: Path)(implicit m: Materializer) =
     Source.single(CreateRoleRequest(roleName, assumeRolePolicy, Some(path)))
       .via(streaming.roleCreator)
       .runWith(Sink.head)

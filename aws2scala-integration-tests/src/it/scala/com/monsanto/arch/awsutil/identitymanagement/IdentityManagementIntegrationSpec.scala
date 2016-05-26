@@ -1,17 +1,16 @@
 package com.monsanto.arch.awsutil.identitymanagement
 
 import akka.Done
-import com.amazonaws.auth.policy.actions.SecurityTokenServiceActions
-import com.amazonaws.auth.policy.{Action, Policy, Principal, Statement}
-import com.monsanto.arch.awsutil.identitymanagement.model.{AttachedPolicy, PolicyArn, Role, User}
+import com.monsanto.arch.awsutil.auth.policy.PolicyDSL._
+import com.monsanto.arch.awsutil.auth.policy.action.SecurityTokenServiceAction
+import com.monsanto.arch.awsutil.auth.policy.{Policy, Principal}
+import com.monsanto.arch.awsutil.identitymanagement.model._
 import com.monsanto.arch.awsutil.test_support.AwsScalaFutures._
 import com.monsanto.arch.awsutil.test_support.{AwsIntegrationSpec, IntegrationCleanup, IntegrationTest}
 import com.typesafe.scalalogging.StrictLogging
 import org.scalactic.Equality
 import org.scalatest.FreeSpec
 import org.scalatest.Matchers._
-
-import scala.collection.JavaConverters._
 
 @IntegrationTest
 class IdentityManagementIntegrationSpec extends FreeSpec with AwsIntegrationSpec with StrictLogging with IntegrationCleanup {
@@ -21,7 +20,7 @@ class IdentityManagementIntegrationSpec extends FreeSpec with AwsIntegrationSpec
     AttachedPolicy(PolicyArn("arn:aws:iam::aws:policy/IAMReadOnlyAccess"), "IAMReadOnlyAccess")
 
   private val testPathPrefix = "/aws2scala-it-iam/"
-  private val testPath = s"$testPathPrefix$testId/"
+  private val testPath = Path.fromPathString(s"$testPathPrefix$testId/")
   private var testUser: User = _
   private var testRole: Role = _
 
@@ -38,7 +37,7 @@ class IdentityManagementIntegrationSpec extends FreeSpec with AwsIntegrationSpec
     "create a role" in {
       val roleName = s"TestRole-$testId"
       val result = async.createRole(roleName, assumeRolePolicy(testUser), testPath).futureValue
-      result.arn shouldBe s"arn:aws:iam::${testUser.account.id}:role$testPath$roleName"
+      result.arn shouldBe s"arn:aws:iam::${testUser.account.id}:role${testPath.pathString}$roleName"
 
       logger.info(s"Created role ${result.name} with ARN ${result.arn}")
 
@@ -61,7 +60,7 @@ class IdentityManagementIntegrationSpec extends FreeSpec with AwsIntegrationSpec
       }
 
       "with a prefix" in {
-        val result = async.listRoles(testPath).futureValue
+        val result = async.listRoles(testPath.pathString).futureValue
         (result should contain (testRole)) (decided by roleId)
       }
     }
@@ -91,13 +90,14 @@ class IdentityManagementIntegrationSpec extends FreeSpec with AwsIntegrationSpec
     behave like cleanupIAMRoles(testPathPrefix)
   }
 
-  def assumeRolePolicy(user: User): String = {
-    val statement = new Statement(Statement.Effect.Allow)
-    statement.setActions(Seq[Action](SecurityTokenServiceActions.AssumeRole).asJavaCollection)
-    statement.setPrincipals(new Principal(user.account.id))
-
-    val policy = new Policy()
-    policy.setStatements(Seq(statement).asJavaCollection)
-    policy.toJson
+  def assumeRolePolicy(user: User): Policy = {
+    policy (
+      statements (
+        allow (
+          principals(Principal.iamUser(UserArn(user.arn))),
+          actions(SecurityTokenServiceAction.AssumeRole)
+        )
+      )
+    )
   }
 }

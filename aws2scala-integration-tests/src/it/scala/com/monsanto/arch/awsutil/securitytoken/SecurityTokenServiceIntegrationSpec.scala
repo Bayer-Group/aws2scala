@@ -1,9 +1,10 @@
 package com.monsanto.arch.awsutil.securitytoken
 
 import akka.stream.scaladsl.{Sink, Source}
-import com.amazonaws.auth.policy.actions.SecurityTokenServiceActions
-import com.amazonaws.auth.policy.{Action, Policy, Principal, Statement}
 import com.amazonaws.services.sns.model.AuthorizationErrorException
+import com.monsanto.arch.awsutil.auth.policy.PolicyDSL._
+import com.monsanto.arch.awsutil.auth.policy.Principal
+import com.monsanto.arch.awsutil.auth.policy.action.SecurityTokenServiceAction
 import com.monsanto.arch.awsutil.identitymanagement.IdentityManagement
 import com.monsanto.arch.awsutil.identitymanagement.model._
 import com.monsanto.arch.awsutil.s3.S3
@@ -17,7 +18,6 @@ import org.scalatest.Matchers._
 import org.scalatest.concurrent.Eventually
 import org.scalatest.concurrent.Eventually.eventually
 
-import scala.collection.JavaConverters._
 import scala.concurrent.duration.DurationInt
 import scala.concurrent.{Await, Promise}
 
@@ -27,7 +27,7 @@ class SecurityTokenServiceIntegrationSpec extends FreeSpec with AwsIntegrationSp
   private val async = awsClient.async(SecurityTokenService)
 
   private val testPathPrefix = "/aws2scala-it-sts/"
-  private val testPath = s"$testPathPrefix$testId/"
+  private val testPath = Path.fromPathString(s"$testPathPrefix$testId/")
   private val testRoleName = s"STSTestRole-$testId"
   private val testRolePolicyArn = PolicyArn("arn:aws:iam::aws:policy/AmazonS3ReadOnlyAccess")
   private var testRole: Role = _
@@ -96,12 +96,15 @@ class SecurityTokenServiceIntegrationSpec extends FreeSpec with AwsIntegrationSp
   }
 
   private def makeCreateRoleRequest(user: User): CreateRoleRequest = {
-    val statement = new Statement(Statement.Effect.Allow)
-    statement.setActions(Seq[Action](SecurityTokenServiceActions.AssumeRole).asJavaCollection)
-    statement.setPrincipals(new Principal("AWS", user.arn))
-
-    val policy = new Policy()
-    policy.setStatements(Seq(statement).asJavaCollection)
-    CreateRoleRequest(testRoleName, policy.toJson, Some(testPath))
+    val assumeRolePolicy =
+      policy (
+        statements (
+          allow (
+            principals(Principal.iamUser(UserArn(user.arn))),
+            actions(SecurityTokenServiceAction.AssumeRole)
+          )
+        )
+      )
+    CreateRoleRequest(testRoleName, assumeRolePolicy, Some(testPath))
   }
 }

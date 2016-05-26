@@ -65,18 +65,18 @@ class DefaultStreamingIdentityManagementClientSpec extends FreeSpec with MockFac
     }
 
     "a role creator" in {
-      forAll(maxSize(30)) { requests: List[CreateRoleRequest] ⇒
+      forAll(maxSize(20)) { requestsWithRoles: List[(CreateRoleRequest,Role)] ⇒
         val iam = mock[AmazonIdentityManagementAsync]("iam")
         val streaming = new DefaultStreamingIdentityManagementClient(iam)
-        val createdRoles = Gen.listOfN(requests.size, arbitrary[Role]).reallySample
+        val (requests, createdRoles) = requestsWithRoles.unzip
 
         requests.zip(createdRoles).foreach { case (request, role) ⇒
           (iam.createRoleAsync(_: aws.CreateRoleRequest, _: AsyncHandler[aws.CreateRoleRequest,aws.CreateRoleResult]))
             .expects(whereRequest { r ⇒
               r should have (
                 'roleName (request.name),
-                'path (request.path.orNull),
-                'assumeRolePolicyDocument (request.assumeRolePolicy)
+                'path (request.path.map(_.pathString).orNull),
+                'assumeRolePolicyDocument (request.assumeRolePolicy.toJson)
               )
               true
             })

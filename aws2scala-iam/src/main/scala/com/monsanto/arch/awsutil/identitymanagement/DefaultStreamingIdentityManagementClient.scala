@@ -20,7 +20,7 @@ private[awsutil] class DefaultStreamingIdentityManagementClient(aws: AmazonIdent
 
   override val roleCreator =
     Flow[CreateRoleRequest]
-      .map(_.toAws)
+      .map(_.asAws)
       .via[CreateRoleResult,NotUsed](AWSFlow.simple(aws.createRoleAsync))
       .map(r ⇒ Role.fromAws(r.getRole))
       .named("IAM.roleCreator")

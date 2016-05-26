@@ -1,7 +1,6 @@
 package com.monsanto.arch.awsutil.identitymanagement
 
 import akka.Done
-import com.monsanto.arch.awsutil.auth.policy.Policy
 import com.monsanto.arch.awsutil.identitymanagement.model._
 import com.monsanto.arch.awsutil.test_support.AdaptableScalaFutures._
 import com.monsanto.arch.awsutil.test_support.Samplers.{EnhancedGen, arbitrarySample}
@@ -22,13 +21,12 @@ class DefaultAsyncIdentityManagementClientSpec extends FreeSpec with MockFactory
       "without paths" in {
         forAll(
           CoreGen.iamName → "roleName",
-          arbitrary[Policy] → "policy"
-        ) { (roleName, policyObj) ⇒
-          val policy = policyObj.toJson
+          IamGen.assumeRolePolicy → "policy"
+        ) { (roleName, policy) ⇒
           val streaming = mock[StreamingIdentityManagementClient]("streaming")
           val async = new DefaultAsyncIdentityManagementClient(streaming)
 
-          val role = IamGen.role(roleName, policyObj).reallySample
+          val role = IamGen.role(roleName, policy).reallySample
 
           (streaming.roleCreator _)
             .expects()
@@ -42,15 +40,13 @@ class DefaultAsyncIdentityManagementClientSpec extends FreeSpec with MockFactory
       "with paths" in {
         forAll(
           CoreGen.iamName → "roleName",
-          arbitrary[Policy] → "policy",
+          IamGen.assumeRolePolicy → "policy",
           arbitrary[Path] → "path"
-        ) { (roleName, policyObj, pathObj) ⇒
-          val path = pathObj.toString
-          val policy = policyObj.toString
+        ) { (roleName, policy, path) ⇒
           val streaming = mock[StreamingIdentityManagementClient]("streaming")
           val async = new DefaultAsyncIdentityManagementClient(streaming)
 
-          val role = IamGen.role(roleName, policyObj, pathObj).reallySample
+          val role = IamGen.role(roleName, policy, path).reallySample
 
           (streaming.roleCreator _)
             .expects()

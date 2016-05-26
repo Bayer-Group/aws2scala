@@ -33,16 +33,16 @@ object IamScalaCheckImplicits {
         name ← CoreGen.iamName
         assumeRolePolicy ← IamGen.assumeRolePolicy
         path ← arbitrary[Option[Path]]
-      } yield CreateRoleRequest(name, assumeRolePolicy.toString, path.map(_.pathString))
+      } yield CreateRoleRequest(name, assumeRolePolicy, path)
     }
 
   implicit lazy val shrinkCreateRoleRequest: Shrink[CreateRoleRequest] =
     Shrink { request ⇒
       Shrink.shrink(request.name).filter(_.nonEmpty).map(x ⇒ request.copy(name = x)) append
-        Shrink.shrink(Policy.fromJson(request.assumeRolePolicy))
-          .filterNot(p ⇒ p.toJson == request.assumeRolePolicy)
-          .map(policy ⇒ request.copy(assumeRolePolicy = policy.toJson)) append
-        Shrink.shrink(request.path.map(Path.fromPathString.unapply(_).get)).map(path ⇒ request.copy(path = path.map(_.pathString)))
+        Shrink.shrink(request.assumeRolePolicy)
+          .filterNot(p ⇒ p == request.assumeRolePolicy)
+          .map(policy ⇒ request.copy(assumeRolePolicy = policy)) append
+        Shrink.shrink(request.path).map(p ⇒ request.copy(path = p))
     }
 
   implicit lazy val arbDetachRolePolicyRequest: Arbitrary[DetachRolePolicyRequest] =
