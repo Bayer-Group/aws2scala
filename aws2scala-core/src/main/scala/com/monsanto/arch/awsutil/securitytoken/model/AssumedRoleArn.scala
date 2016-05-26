@@ -15,12 +15,19 @@ case class AssumedRoleArn(account: Account,
 }
 
 object AssumedRoleArn {
-  /** Builds an assumed role ARN object from the given ARN string. */
-  def apply(arnString: String): AssumedRoleArn =
-    arnString match {
-      case Arn(arn: AssumedRoleArn) ⇒ arn
-      case _ ⇒ throw new IllegalArgumentException(s"‘$arnString’ is not a valid assumed role ARN.")
-    }
+  /** Utility to build/extract `AssumedRoleArn` instances from strings containing ARNs. */
+  object fromArnString {
+    /** Builds a `AssumedRoleArn` object from the given ARN string. */
+    def apply(arnString: String): AssumedRoleArn =
+      unapply(arnString).getOrElse(throw new IllegalArgumentException(s"‘$arnString’ is not a valid assumed role ARN."))
+
+    /** Extracts a `AssumedRoleArn` object from the given ARN string. */
+    def unapply(arnString: String): Option[AssumedRoleArn] =
+      arnString match {
+        case Arn.fromArnString(arn: AssumedRoleArn) ⇒ Some(arn)
+        case _                                      ⇒ None
+      }
+  }
 
   private[awsutil] val assumeRoleArnPF: PartialFunction[Arn.ArnParts, AssumedRoleArn] = {
     case (_, Arn.Namespace.AwsSTS, None, Some(account), AssumedRoleResourceRegex(roleName, sessionName)) ⇒

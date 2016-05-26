@@ -12,7 +12,7 @@ import com.monsanto.arch.awsutil.{Arn, AwsClientProvider, AwsSettings}
 object SNS extends AwsClientProvider[StreamingSNSClient,AsyncSNSClient] {
   private[awsutil] def init(): Unit = {
     SNSAction.registerActions()
-    Arn.registerArnMatchers(
+    Arn.registerArnPartialFunctions(
       PlatformApplicationArn.platformApplicationArnPF,
       PlatformEndpointArn.platformEndpointArnPF,
       SubscriptionArn.subscriptionArnPF,

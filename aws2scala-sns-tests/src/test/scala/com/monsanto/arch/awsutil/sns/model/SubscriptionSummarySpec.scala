@@ -66,7 +66,7 @@ class SubscriptionSummarySpec extends FreeSpec with MockFactory with Materialise
           effectiveDeliveryPolicy ← arbitrary[Option[SubscriptionDeliveryPolicy]]
         } yield {
           val attrs = SubscriptionAttributes(
-            SubscriptionArn(arn),
+            SubscriptionArn.fromArnString(arn),
             subscriptionSummary.endpoint,
             confirmationWasAuthenticated,
             rawMessageDelivery,

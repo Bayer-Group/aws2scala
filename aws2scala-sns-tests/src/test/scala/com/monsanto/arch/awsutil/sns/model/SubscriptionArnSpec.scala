@@ -25,13 +25,13 @@ class SubscriptionArnSpec extends FreeSpec {
 
     "can round-trip via an ARN" in {
       forAll { arn: SubscriptionArn ⇒
-        SubscriptionArn(arn.arnString) shouldBe arn
+        SubscriptionArn.fromArnString(arn.arnString) shouldBe arn
       }
     }
 
     "will fail to parse an invalid ARN" in {
       an [IllegalArgumentException] shouldBe thrownBy {
-        SubscriptionArn("arn:aws:iam::111222333444:root")
+        SubscriptionArn.fromArnString("arn:aws:iam::111222333444:root")
       }
     }
   }

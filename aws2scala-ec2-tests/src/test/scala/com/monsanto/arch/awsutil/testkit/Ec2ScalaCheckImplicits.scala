@@ -92,7 +92,7 @@ object Ec2ScalaCheckImplicits {
 
   implicit lazy val shrinkIamInstanceProfile: Shrink[IamInstanceProfile] =
     Shrink { profile ⇒
-      Shrink.shrink(InstanceProfileArn(profile.arn)).map(arn ⇒ profile.copy(arn = arn.arnString))
+      Shrink.shrink(InstanceProfileArn.fromArnString(profile.arn)).map(arn ⇒ profile.copy(arn = arn.arnString))
     }
 
   implicit lazy val arbInstance: Arbitrary[Instance] = {

@@ -18,12 +18,19 @@ case class PlatformApplicationArn(account: Account,
 }
 
 object PlatformApplicationArn {
-  /** Constructs a `PlatformApplicationArn` object from the given ARN string. */
-  def apply(arnString: String): PlatformApplicationArn = {
-    arnString match {
-      case Arn(arn: PlatformApplicationArn) ⇒ arn
-      case _ ⇒ throw new IllegalArgumentException(s"’$arnString‘ is not a valid platform application ARN")
-    }
+  /** Utility to build/extract `PlatformApplicationArn` instances from strings containing ARNs. */
+  object fromArnString {
+    /** Builds a `PlatformApplicationArn` object from the given ARN string. */
+    def apply(arnString: String): PlatformApplicationArn =
+      unapply(arnString)
+        .getOrElse(throw new IllegalArgumentException(s"‘$arnString’ is not a valid platform application ARN."))
+
+    /** Extracts a `PlatformApplicationArn` object from the given ARN string. */
+    def unapply(arnString: String): Option[PlatformApplicationArn] =
+      arnString match {
+        case Arn.fromArnString(arn: PlatformApplicationArn) ⇒ Some(arn)
+        case _                                              ⇒ None
+      }
   }
 
   private[sns] val platformApplicationArnPF: PartialFunction[Arn.ArnParts, PlatformApplicationArn] = {

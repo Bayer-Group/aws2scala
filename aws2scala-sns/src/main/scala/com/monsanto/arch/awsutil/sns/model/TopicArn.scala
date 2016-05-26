@@ -14,12 +14,19 @@ case class TopicArn(account: Account, region: Region, name: String) extends Arn(
 }
 
 object TopicArn {
-  /** Builds a topic ARN object from the given ARN string. */
-  def apply(arnString: String): TopicArn =
-    arnString match {
-      case Arn(arn: TopicArn) ⇒ arn
-      case _ ⇒ throw new IllegalArgumentException(s"‘$arnString’ is not a valid topic ARN.")
-    }
+  /** Utility to build/extract `TopicArn` instances from strings containing ARNs. */
+  object fromArnString {
+    /** Builds a `TopicArn` object from the given ARN string. */
+    def apply(arnString: String): TopicArn =
+      unapply(arnString).getOrElse(throw new IllegalArgumentException(s"‘$arnString’ is not a valid topic ARN."))
+
+    /** Extracts a `TopicArn` object from the given ARN string. */
+    def unapply(arnString: String): Option[TopicArn] =
+      arnString match {
+        case Arn.fromArnString(arn: TopicArn) ⇒ Some(arn)
+        case _                                ⇒ None
+      }
+  }
 
   private[sns] val topicArnPF: PartialFunction[Arn.ArnParts, TopicArn] = {
     case (_, Arn.Namespace.AmazonSNS, Some(region), Some(owner), TopicResourceRegex(name)) ⇒

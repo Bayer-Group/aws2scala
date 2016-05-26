@@ -17,7 +17,7 @@ class IdentityManagementIntegrationSpec extends FreeSpec with AwsIntegrationSpec
   private val async = awsClient.async(IdentityManagement)
 
   private val iamReadOnlyPolicy =
-    AttachedPolicy(PolicyArn("arn:aws:iam::aws:policy/IAMReadOnlyAccess"), "IAMReadOnlyAccess")
+    AttachedPolicy(PolicyArn.fromArnString("arn:aws:iam::aws:policy/IAMReadOnlyAccess"), "IAMReadOnlyAccess")
 
   private val testPathPrefix = "/aws2scala-it-iam/"
   private val testPath = Path.fromPathString(s"$testPathPrefix$testId/")
@@ -94,7 +94,7 @@ class IdentityManagementIntegrationSpec extends FreeSpec with AwsIntegrationSpec
     policy (
       statements (
         allow (
-          principals(Principal.iamUser(UserArn(user.arn))),
+          principals(Principal.iamUser(UserArn.fromArnString(user.arn))),
           actions(SecurityTokenServiceAction.AssumeRole)
         )
       )

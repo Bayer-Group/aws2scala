@@ -34,9 +34,9 @@ case class PlatformApplication private[awsutil] (arn: String,
   /** The sample rate percentage for logging successfully delivered messages to CloudWatch. */
   val successFeedbackSampleRate: Option[Int] = attributes.get("SuccessFeedbackSampleRate").map(_.toInt)
   /** Returns the name that was used to create the application. */
-  def name: String = PlatformApplicationArn(arn).name
+  def name: String = PlatformApplicationArn.fromArnString(arn).name
   /** Returns the push notification platform for this application. */
-  def platform: Platform = PlatformApplicationArn(arn).platform
+  def platform: Platform = PlatformApplicationArn.fromArnString(arn).platform
 
   /** Updates the enabled attribute for the platform application. */
   def setEnabled(enabled: Boolean)(implicit sns: StreamingSNSClient, m: Materializer): Future[Done] =

@@ -40,7 +40,7 @@ class UserSpec extends FreeSpec {
 
     "can provide its account ID" in {
       forAll { user: User ⇒
-        val UserArn(account, _, _) = UserArn(user.arn)
+        val UserArn(account, _, _) = UserArn.fromArnString(user.arn)
         user.account shouldBe account
       }
     }

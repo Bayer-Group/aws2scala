@@ -12,7 +12,7 @@ import com.monsanto.arch.awsutil.{Arn, AwsClientProvider, AwsSettings}
 object IdentityManagement extends AwsClientProvider[StreamingIdentityManagementClient,AsyncIdentityManagementClient] {
   private[awsutil] def init(): Unit = {
     IdentityManagementAction.registerActions()
-    Arn.registerArnMatchers(
+    Arn.registerArnPartialFunctions(
       InstanceProfileArn.instanceProfileArnPF,
       PolicyArn.policyArnPF
     )

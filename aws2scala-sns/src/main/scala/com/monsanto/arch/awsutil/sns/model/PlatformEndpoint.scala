@@ -23,7 +23,7 @@ case class PlatformEndpoint private[awsutil] (arn: String, attributes: Map[Strin
   /** Arbitrary user data associated with the endpoint.  Amazon SNS does not use this data. */
   val customUserData = attributes.get("CustomUserData")
   /** Returns the push notification platform of this endpoint as extracted from the ARN. */
-  def platform: Platform = PlatformEndpointArn(arn).platform
+  def platform: Platform = PlatformEndpointArn.fromArnString(arn).platform
 
   /** Enables/disables delivery to the endpoint. */
   def setEnabled(enabled: Boolean)(implicit sns: StreamingSNSClient, m: Materializer): Future[Done] =

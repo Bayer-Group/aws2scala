@@ -63,8 +63,8 @@ class ArnSpec extends FreeSpec {
     "have an extractor that returns" - {
       "a generic result when no applicable partial function has been registered" in {
         forAll { arn: TestArn ⇒
-          Arn.unapply(arn.arnString) shouldBe
-            Some(Arn.GenericArn(arn.testPartition, arn.testNamespace, arn.testRegion, arn.testAccount, arn.testResource))
+          Arn.fromArnString(arn.arnString) shouldBe
+            Arn.GenericArn(arn.testPartition, arn.testNamespace, arn.testRegion, arn.testAccount, arn.testResource)
         }
       }
 
@@ -72,10 +72,10 @@ class ArnSpec extends FreeSpec {
         val testMatcher: PartialFunction[Arn.ArnParts, TestArn] = {
           case (partition, namespace, region, account, resource) ⇒ TestArn(partition, namespace, region, account, resource)
         }
-        Arn.registerArnMatchers(testMatcher)
+        Arn.registerArnPartialFunctions(testMatcher)
 
         forAll { arn: TestArn ⇒
-          Arn.unapply(arn.arnString) shouldBe Some(arn)
+          Arn.fromArnString(arn.arnString) shouldBe arn
         }
       }
     }

@@ -28,13 +28,13 @@ class RoleArnSpec extends FreeSpec {
 
     "can round-trip via an ARN" in {
       forAll { arn: RoleArn ⇒
-        RoleArn(arn.arnString) shouldBe arn
+        RoleArn.fromArnString(arn.arnString) shouldBe arn
       }
     }
 
     "will fail to parse an invalid ARN" in {
       an [IllegalArgumentException] shouldBe thrownBy {
-        RoleArn("arn:aws:iam::111222333444:root")
+        RoleArn.fromArnString("arn:aws:iam::111222333444:root")
       }
     }
   }

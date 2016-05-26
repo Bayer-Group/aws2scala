@@ -22,7 +22,13 @@ class SamlProviderArnSpec extends FreeSpec {
 
     "round-trip via an ARN" in {
       forAll { arn: SamlProviderArn ⇒
-        Arn.unapply(arn.arnString) shouldBe Some(arn)
+        SamlProviderArn.fromArnString(arn.arnString) shouldBe arn
+      }
+    }
+
+    "will fail to parse an invalid ARN" in {
+      an [IllegalArgumentException] shouldBe thrownBy {
+        SamlProviderArn.fromArnString("arn:aws:iam::111222333444:root")
       }
     }
   }

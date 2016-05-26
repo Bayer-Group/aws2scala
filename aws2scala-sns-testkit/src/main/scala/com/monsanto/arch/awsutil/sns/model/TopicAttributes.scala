@@ -30,7 +30,7 @@ case class TopicAttributes(arn: TopicArn,
 
 object TopicAttributes {
   def apply(map: Map[String,String]): TopicAttributes = {
-    val arn = TopicArn(map("TopicArn"))
+    val arn = TopicArn.fromArnString(map("TopicArn"))
     val displayName = map("DisplayName")
     val policy = Policy.fromJson(map("Policy"))
     val subscriptionsPending = map("SubscriptionsPending").toInt

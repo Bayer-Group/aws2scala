@@ -13,12 +13,18 @@ case class PolicyArn(account: Account, name: String, path: Path = Path.empty) ex
 }
 
 object PolicyArn {
-  /** Builds a policy ARN object from the given ARN string. */
-  def apply(arnString: String): PolicyArn = {
-    arnString match {
-      case Arn(policyArn: PolicyArn) ⇒ policyArn
-      case _ ⇒ throw new IllegalArgumentException(s"’$arnString‘ is not a valid policy ARN")
-    }
+  /** Utility to build/extract `PolicyArn` instances from strings. */
+  object fromArnString {
+    /** Builds an `PolicyArn` object from the given ARN string. */
+    def apply(arnString: String): PolicyArn =
+      unapply(arnString).getOrElse(throw new IllegalArgumentException(s"‘$arnString’ is not a valid policy ARN."))
+
+    /** Extracts an `PolicyArn` object from the given ARN string. */
+    def unapply(arnString: String): Option[PolicyArn] =
+      arnString match {
+        case Arn.fromArnString(accountArn: PolicyArn) ⇒ Some(accountArn)
+        case _                                        ⇒ None
+      }
   }
 
   private[identitymanagement] val policyArnPF: PartialFunction[Arn.ArnParts, PolicyArn] = {

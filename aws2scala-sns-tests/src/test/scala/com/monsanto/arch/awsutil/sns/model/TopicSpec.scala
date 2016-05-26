@@ -435,7 +435,7 @@ class TopicSpec extends FreeSpec with MockFactory with Materialised with FlowMoc
         deliveryPolicy ← arbitrary[Option[SubscriptionDeliveryPolicy]]
         effectiveDeliveryPolicy ← arbitrary[Option[SubscriptionDeliveryPolicy]]
       } yield {
-        val topicArn = TopicArn(topic.arn)
+        val topicArn = TopicArn.fromArnString(topic.arn)
         val arn = SubscriptionArn(topicArn.account, topicArn.region, topic.name, subscriptionId)
         val attrs = SubscriptionAttributes(arn, endpoint, confirmationWasAuthenticated, rawMessageDelivery,
           deliveryPolicy, effectiveDeliveryPolicy)
@@ -461,7 +461,7 @@ class TopicSpec extends FreeSpec with MockFactory with Materialised with FlowMoc
         subscriptionId ← SnsGen.subscriptionId
         endpoint ← arbitrary[SubscriptionEndpoint]
       } yield {
-        val topicArn = TopicArn(topic.arn)
+        val topicArn = TopicArn.fromArnString(topic.arn)
         val subscriptionArn = SubscriptionArn(topicArn.account, topicArn.region, topicArn.name, subscriptionId)
         SubscriptionSummary(Some(subscriptionArn.arnString), topic.arn, endpoint, topic.owner)
       }

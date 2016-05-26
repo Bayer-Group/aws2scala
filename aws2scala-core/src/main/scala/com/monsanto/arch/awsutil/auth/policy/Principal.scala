@@ -2,7 +2,7 @@ package com.monsanto.arch.awsutil.auth.policy
 
 import com.monsanto.arch.awsutil.identitymanagement.model.{RoleArn, SamlProviderArn, UserArn}
 import com.monsanto.arch.awsutil.securitytoken.model.AssumedRoleArn
-import com.monsanto.arch.awsutil.{Account, AccountArn, Arn}
+import com.monsanto.arch.awsutil.{Account, AccountArn}
 
 /** A principal specifies the user (IAM user, federated user, or assumed-role user), AWS account, AWS service, or other
   * principal entity that it allowed or denied access to a resource.
@@ -132,17 +132,17 @@ object Principal {
           Some(Principal.allWebProviders)
         case ("Federated", Principal.WebIdentityProvider.fromProvider(webIdentityProvider)) ⇒
           Some(Principal.webProvider(webIdentityProvider))
-        case ("Federated", Arn(samlProviderArn: SamlProviderArn)) ⇒
+        case ("Federated", SamlProviderArn.fromArnString(samlProviderArn)) ⇒
           Some(Principal.SamlProviderPrincipal(samlProviderArn))
-        case ("AWS", Arn(AccountArn(account))) ⇒
+        case ("AWS", AccountArn.fromArnString(AccountArn(account))) ⇒
           Some(Principal.AccountPrincipal(account))
         case ("AWS", Account.fromNumber(account)) ⇒
           Some(Principal.AccountPrincipal(account))
-        case ("AWS", Arn(userArn: UserArn)) ⇒
+        case ("AWS", UserArn.fromArnString(userArn)) ⇒
           Some(Principal.IamUserPrincipal(userArn))
-        case ("AWS", Arn(roleArn: RoleArn)) ⇒
+        case ("AWS", RoleArn.fromArnString(roleArn)) ⇒
           Some(Principal.IamRolePrincipal(roleArn))
-        case ("AWS", Arn(assumedRoleArn: AssumedRoleArn)) ⇒
+        case ("AWS", AssumedRoleArn.fromArnString(assumedRoleArn)) ⇒
           Some(Principal.StsAssumedRolePrincipal(assumedRoleArn))
         case _ ⇒
           None

@@ -28,13 +28,13 @@ class PlatformApplicationArnSpec extends FreeSpec {
 
     "can round-trip via an ARN" in {
       forAll { arn: PlatformApplicationArn ⇒
-        PlatformApplicationArn(arn.arnString) shouldBe arn
+        PlatformApplicationArn.fromArnString(arn.arnString) shouldBe arn
       }
     }
 
     "will fail to parse an invalid ARN" in {
       an [IllegalArgumentException] shouldBe thrownBy {
-        PlatformApplicationArn("arn:foo")
+        PlatformApplicationArn.fromArnString("arn:aws:iam::111222333444:root")
       }
     }
   }

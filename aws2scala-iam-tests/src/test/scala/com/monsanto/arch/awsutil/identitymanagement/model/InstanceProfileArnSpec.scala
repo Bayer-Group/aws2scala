@@ -29,13 +29,13 @@ class InstanceProfileArnSpec extends FreeSpec {
 
     "can round-trip via an ARN" in {
       forAll { arn: InstanceProfileArn ⇒
-        InstanceProfileArn(arn.arnString) shouldBe arn
+        InstanceProfileArn.fromArnString(arn.arnString) shouldBe arn
       }
     }
 
     "will fail to parse an invalid ARN" in {
       an [IllegalArgumentException] shouldBe thrownBy {
-        InstanceProfileArn("arn:aws:iam::111222333444:root")
+        InstanceProfileArn.fromArnString("arn:aws:iam::111222333444:root")
       }
     }
   }

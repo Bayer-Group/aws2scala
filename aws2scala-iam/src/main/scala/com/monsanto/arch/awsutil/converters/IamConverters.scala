@@ -8,7 +8,7 @@ import com.monsanto.arch.awsutil.identitymanagement.model._
 object IamConverters {
   implicit class AwsAttachRolePolicyRequest(val request: aws.AttachRolePolicyRequest) extends AnyVal {
     def asScala: AttachRolePolicyRequest =
-      AttachRolePolicyRequest(request.getRoleName, PolicyArn(request.getPolicyArn))
+      AttachRolePolicyRequest(request.getRoleName, PolicyArn.fromArnString(request.getPolicyArn))
   }
 
   implicit class ScalaAttachRolePolicyRequest(val request: AttachRolePolicyRequest) extends AnyVal {
@@ -20,7 +20,7 @@ object IamConverters {
 
   implicit class AwsAttachedPolicy(val attachedPolicy: aws.AttachedPolicy) extends AnyVal {
     def asScala: AttachedPolicy =
-      AttachedPolicy(PolicyArn(attachedPolicy.getPolicyArn), attachedPolicy.getPolicyName)
+      AttachedPolicy(PolicyArn.fromArnString(attachedPolicy.getPolicyArn), attachedPolicy.getPolicyName)
   }
 
   implicit class ScalaAttachedPolicy(val attachedPolicy: AttachedPolicy) extends AnyVal {

@@ -32,7 +32,7 @@ object StsScalaCheckImplicits {
   implicit lazy val shrinkAssumeRoleRequest: Shrink[AssumeRoleRequest] =
     Shrink { request ⇒
       val policy = request.policy.map(p ⇒ Policy.fromJson(p))
-      val roleArn = Arn.unapply(request.roleArn).get.asInstanceOf[RoleArn]
+      val roleArn = RoleArn.fromArnString(request.roleArn)
       Shrink.shrink(roleArn).map(x ⇒ request.copy(roleArn = x.arnString)) append
         Shrink.shrink(request.roleSessionName).filter(_.length > 1).map(x ⇒ request.copy(roleSessionName = x)) append
         Shrink.shrink(request.duration).map(x ⇒ request.copy(duration = x)) append
@@ -75,7 +75,7 @@ object StsScalaCheckImplicits {
 
   implicit lazy val shrinkAssumedRoleUser: Shrink[AssumedRoleUser] =
     Shrink { user ⇒
-      val arn = Arn.unapply(user.arn).get.asInstanceOf[AssumedRoleArn]
+      val arn = AssumedRoleArn.fromArnString(user.arn)
       val roleId = user.assumedRoleId.substring(0, user.assumedRoleId.lastIndexOf(s":${arn.sessionName}"))
       Shrink.shrink(arn).map(arn ⇒ AssumedRoleUser(arn.arnString, s"$roleId:${arn.sessionName}"))
     }

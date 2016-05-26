@@ -18,12 +18,19 @@ case class SubscriptionArn(account: Account,
 }
 
 object SubscriptionArn {
-  /** Builds a subscription ARN object from the given ARN string. */
-  def apply(arnString: String): SubscriptionArn = {
-    arnString match {
-      case Arn(arn: SubscriptionArn) ⇒ arn
-      case _ ⇒ throw new IllegalArgumentException(s"’$arnString‘ is not a valid subscription ARN")
-    }
+  /** Utility to build/extract `SubscriptionArn` instances from strings containing ARNs. */
+  object fromArnString {
+    /** Builds a `SubscriptionArn` object from the given ARN string. */
+    def apply(arnString: String): SubscriptionArn =
+      unapply(arnString)
+        .getOrElse(throw new IllegalArgumentException(s"‘$arnString’ is not a valid subscription ARN."))
+
+    /** Extracts a `SubscriptionArn` object from the given ARN string. */
+    def unapply(arnString: String): Option[SubscriptionArn] =
+      arnString match {
+        case Arn.fromArnString(arn: SubscriptionArn) ⇒ Some(arn)
+        case _                                       ⇒ None
+      }
   }
 
   private[sns] val subscriptionArnPF: PartialFunction[Arn.ArnParts, SubscriptionArn] = {

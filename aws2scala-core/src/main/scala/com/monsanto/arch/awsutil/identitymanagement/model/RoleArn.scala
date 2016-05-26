@@ -13,12 +13,19 @@ case class RoleArn(account: Account, name: String, path: Path = Path.empty) exte
 }
 
 object RoleArn {
-  /** Builds a role ARN object from the given ARN string. */
-  def apply(arnString: String): RoleArn =
-    arnString match {
-      case Arn(arn: RoleArn) ⇒ arn
-      case _ ⇒ throw new IllegalArgumentException(s"‘$arnString’ is not a valid role ARN.")
-    }
+  /** Utility to build/extract `RoleArn` instances from strings containing ARNs. */
+  object fromArnString {
+    /** Builds a `RoleArn` object from the given ARN string. */
+    def apply(arnString: String): RoleArn =
+      unapply(arnString).getOrElse(throw new IllegalArgumentException(s"‘$arnString’ is not a valid role ARN."))
+
+    /** Extracts a `RoleArn` object from the given ARN string. */
+    def unapply(arnString: String): Option[RoleArn] =
+      arnString match {
+        case Arn.fromArnString(arn: RoleArn) ⇒ Some(arn)
+        case _                               ⇒ None
+      }
+  }
 
   private[awsutil] val roleArnPF: PartialFunction[Arn.ArnParts, RoleArn] = {
     case (_, Arn.Namespace.IAM, None, Some(account), RoleResourceRegex(Path.fromPathString(path), name)) ⇒

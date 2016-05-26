@@ -13,12 +13,19 @@ case class UserArn(account: Account, name: String, path: Path = Path.empty) exte
 }
 
 object UserArn {
-  /** Builds a user ARN object from the given ARN string. */
-  def apply(arnString: String): UserArn =
-    arnString match {
-      case Arn(arn: UserArn) ⇒ arn
-      case _ ⇒ throw new IllegalArgumentException(s"‘$arnString’ is not a valid user ARN.")
-    }
+  /** Utility to build/extract `UserArn` instances from strings containing ARNs. */
+  object fromArnString {
+    /** Builds a `UserArn` object from the given ARN string. */
+    def apply(arnString: String): UserArn =
+      unapply(arnString).getOrElse(throw new IllegalArgumentException(s"‘$arnString’ is not a valid user ARN."))
+
+    /** Extracts a `UserArn` object from the given ARN string. */
+    def unapply(arnString: String): Option[UserArn] =
+      arnString match {
+        case Arn.fromArnString(arn: UserArn) ⇒ Some(arn)
+        case _                               ⇒ None
+      }
+  }
 
   private[awsutil] val userArnPF: PartialFunction[Arn.ArnParts, UserArn] = {
     case (_, Arn.Namespace.IAM, None, Some(account), UserResourceRegex(Path.fromPathString(path), name)) ⇒

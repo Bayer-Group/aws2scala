@@ -45,7 +45,7 @@ object Arn {
   private[awsutil] type ArnParts = (Partition, Arn.Namespace, Option[Region], Option[Account], String)
 
   /** The set of all possible partial functions that can extract an `Arn` subclass given the components of an ARN. */
-  private val subextractors: mutable.Set[PartialFunction[ArnParts,Arn]] =
+  private val arnPartialFunctions: mutable.Set[PartialFunction[ArnParts,Arn]] =
     mutable.LinkedHashSet(
       AccountArn.accountArnPF,
       AssumedRoleArn.assumeRoleArnPF,
@@ -55,49 +55,12 @@ object Arn {
     )
 
   /** Registers partial functions that can be used to extract `Arn` subclasses given a set of ARN parts. */
-  private[awsutil] def registerArnMatchers(matchers: PartialFunction[ArnParts,Arn]*): Unit = {
-    subextractors.synchronized {
-      subextractors ++= matchers
+  private[awsutil] def registerArnPartialFunctions(partialFunctions: PartialFunction[ArnParts,Arn]*): Unit = {
+    arnPartialFunctions.synchronized {
+      arnPartialFunctions ++= partialFunctions
     }
   }
 
-  /** Given a string, extract an ARN object instance. */
-  def unapply(str: String): Option[Arn] = {
-    // first, try to get the parts of the ARN
-    val maybeArnParts = str match {
-      // no region or account
-      case ArnRegex(Partition(partition), Arn.Namespace.fromId(namespace), "", "", resource) ⇒
-        Some((partition, namespace, None, None, resource))
-
-      // region, but no account
-      case ArnRegex(Partition(partition), Arn.Namespace.fromId(namespace), Region(region), "", resource) ⇒
-        Some((partition, namespace, Some(region), None, resource))
-
-      // account, but no region
-      case ArnRegex(Partition(partition), Arn.Namespace.fromId(namespace), "", accountId, resource) ⇒
-        Some((partition, namespace, None, Some(Account(accountId, partition)), resource))
-
-      // account and region
-      case ArnRegex(Partition(partition), Arn.Namespace.fromId(namespace), Region(region), accountId, resource) ⇒
-        Some((partition, namespace, Some(region), Some(Account(accountId, partition)), resource))
-
-      case _ ⇒ None
-    }
-    // now, extract an arn by finding it in the registered extractors, ending with GenericArn if no extractors
-    // are found.
-    maybeArnParts.flatMap { arnParts ⇒
-      subextractors.synchronized {
-        subextractors.view
-          .filter(_.isDefinedAt(arnParts))
-          .map(_.apply(arnParts))
-          .headOption
-          .orElse(Some((GenericArn.apply _).tupled.apply(arnParts)))
-      }
-    }
-  }
-
-  /** Regular expression to match the parts of a regular expression. */
-  private val ArnRegex = "^arn:([^:]+):([^:]+):([^:]*):([^:]*):(.+)$".r
 
   /** Generic ARN subclass that may be used when no registered matchers match a parsed ARN. */
   private[awsutil] case class GenericArn(_partition: Partition,
@@ -108,6 +71,54 @@ object Arn {
 
   /** Enumerated type for ARN namespaces. */
   sealed abstract class Namespace(val id: String)
+
+  /** Utility to extract/build an `Arn` instance from a string containing an ARN. */
+  object fromArnString {
+    def apply(arnString: String): Arn =
+      unapply(arnString).getOrElse(throw new IllegalArgumentException(s"’$arnString‘ is not a valid ARN."))
+
+    /** Given a string, extract an ARN object instance.  This extractor will attempt to return an `Arn` subclass
+      * that is specific to the ARN (if such a subclass has registered an applicable partial function).  If no
+      * such registered partial function exists, but the string is still an ARN, a generic ARN instance will
+      * be returned.
+      */
+    def unapply(arnString: String): Option[Arn] = {
+      // first, try to get the parts of the ARN
+      val maybeArnParts = arnString match {
+        // no region or account
+        case ArnRegex(Partition(partition), Arn.Namespace.fromId(namespace), "", "", resource) ⇒
+          Some((partition, namespace, None, None, resource))
+
+        // region, but no account
+        case ArnRegex(Partition(partition), Arn.Namespace.fromId(namespace), Region(region), "", resource) ⇒
+          Some((partition, namespace, Some(region), None, resource))
+
+        // account, but no region
+        case ArnRegex(Partition(partition), Arn.Namespace.fromId(namespace), "", accountId, resource) ⇒
+          Some((partition, namespace, None, Some(Account(accountId, partition)), resource))
+
+        // account and region
+        case ArnRegex(Partition(partition), Arn.Namespace.fromId(namespace), Region(region), accountId, resource) ⇒
+          Some((partition, namespace, Some(region), Some(Account(accountId, partition)), resource))
+
+        case _ ⇒ None
+      }
+      // now, extract an arn by finding it in the registered extractors, ending with GenericArn if no extractors
+      // are found.
+      maybeArnParts.flatMap { arnParts ⇒
+        arnPartialFunctions.synchronized {
+          arnPartialFunctions.view
+            .filter(_.isDefinedAt(arnParts))
+            .map(_.apply(arnParts))
+            .headOption
+            .orElse(Some((GenericArn.apply _).tupled.apply(arnParts)))
+        }
+      }
+    }
+
+    /** Regular expression to match the parts of a regular expression. */
+    private val ArnRegex = "^arn:([^:]+):([^:]+):([^:]*):([^:]*):(.+)$".r
+  }
 
   //noinspection SpellCheckingInspection
   object Namespace {

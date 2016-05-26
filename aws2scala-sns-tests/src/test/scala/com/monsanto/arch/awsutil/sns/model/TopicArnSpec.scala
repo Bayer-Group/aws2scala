@@ -24,13 +24,13 @@ class TopicArnSpec extends FreeSpec {
 
     "can round-trip via an ARN" in {
       forAll { arn: TopicArn ⇒
-        TopicArn(arn.arnString) shouldBe arn
+        TopicArn.fromArnString(arn.arnString) shouldBe arn
       }
     }
 
     "will fail to parse an invalid ARN" in {
       an [IllegalArgumentException] shouldBe thrownBy {
-        TopicArn("arn:aws:iam::111222333444:root")
+        TopicArn.fromArnString("arn:aws:iam::111222333444:root")
       }
     }
   }

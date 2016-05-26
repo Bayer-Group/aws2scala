@@ -12,7 +12,7 @@ import com.monsanto.arch.awsutil.{Arn, AwsClientProvider, AwsSettings}
 object SQS extends AwsClientProvider[StreamingSQSClient,AsyncSQSClient] {
   private[awsutil] def init(): Unit = {
     SQSAction.registerActions()
-    Arn.registerArnMatchers(QueueArn.queueArnPF)
+    Arn.registerArnPartialFunctions(QueueArn.queueArnPF)
   }
 
   override private[awsutil] def streamingClient(settings: AwsSettings,

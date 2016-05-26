@@ -56,7 +56,7 @@ object IamScalaCheckImplicits {
   implicit lazy val shrinkDetachRolePolicyRequest: Shrink[DetachRolePolicyRequest] =
     Shrink { request ⇒
       Shrink.shrink(request.roleName).filter(_.nonEmpty).map(x ⇒ request.copy(roleName = x)) append
-        Shrink.shrink(PolicyArn(request.policyArn)).map(x ⇒ request.copy(policyArn = x.arnString))
+        Shrink.shrink(PolicyArn.fromArnString(request.policyArn)).map(x ⇒ request.copy(policyArn = x.arnString))
     }
 
   implicit lazy val arbInstanceProfileArn: Arbitrary[InstanceProfileArn] =
@@ -109,7 +109,7 @@ object IamScalaCheckImplicits {
 
   implicit lazy val shrinkRole: Shrink[Role] = {
     Shrink { role ⇒
-      val RoleArn(account, name, path) = RoleArn(role.arn)
+      val RoleArn(account, name, path) = RoleArn.fromArnString(role.arn)
       val shrunkByName =
         Shrink.shrink(name)
           .filter(_.nonEmpty)
@@ -144,7 +144,7 @@ object IamScalaCheckImplicits {
 
   implicit lazy val shrinkUser: Shrink[User] =
     Shrink { user ⇒
-      val UserArn(account, name, path) = UserArn(user.arn)
+      val UserArn(account, name, path) = UserArn.fromArnString(user.arn)
       val shrunkByName =
         Shrink.shrink(name)
           .filter(_.nonEmpty)

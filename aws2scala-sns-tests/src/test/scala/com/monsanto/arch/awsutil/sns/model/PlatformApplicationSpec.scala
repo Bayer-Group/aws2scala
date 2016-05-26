@@ -160,7 +160,7 @@ class PlatformApplicationSpec extends FreeSpec with MockFactory with Materialise
       val args =
         for {
           app ← arbitrary[PlatformApplication]
-          attrs ← SnsGen.platformApplicationAttributes(PlatformApplicationArn(app.arn))
+          attrs ← SnsGen.platformApplicationAttributes(PlatformApplicationArn.fromArnString(app.arn))
         } yield (app, attrs)
       forAll(args) { case (platformApplication, newAttributes) ⇒
         implicit val sns = mock[StreamingSNSClient]("sns")
@@ -471,7 +471,7 @@ class PlatformApplicationSpec extends FreeSpec with MockFactory with Materialise
   }
 
   private def endpointForPlatformApplication(application: PlatformApplication): Gen[PlatformEndpoint] = {
-    val appArn = PlatformApplicationArn(application.arn)
+    val appArn = PlatformApplicationArn.fromArnString(application.arn)
     for {
       endpointId ← SnsGen.endpointId
       attributes ← SnsGen.platformEndpointAttributes

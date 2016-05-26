@@ -29,7 +29,7 @@ class SecurityTokenServiceIntegrationSpec extends FreeSpec with AwsIntegrationSp
   private val testPathPrefix = "/aws2scala-it-sts/"
   private val testPath = Path.fromPathString(s"$testPathPrefix$testId/")
   private val testRoleName = s"STSTestRole-$testId"
-  private val testRolePolicyArn = PolicyArn("arn:aws:iam::aws:policy/AmazonS3ReadOnlyAccess")
+  private val testRolePolicyArn = PolicyArn.fromArnString("arn:aws:iam::aws:policy/AmazonS3ReadOnlyAccess")
   private var testRole: Role = _
   private var credentials: Credentials = _
 
@@ -100,7 +100,7 @@ class SecurityTokenServiceIntegrationSpec extends FreeSpec with AwsIntegrationSp
       policy (
         statements (
           allow (
-            principals(Principal.iamUser(UserArn(user.arn))),
+            principals(Principal.iamUser(UserArn.fromArnString(user.arn))),
             actions(SecurityTokenServiceAction.AssumeRole)
           )
         )

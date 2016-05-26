@@ -13,12 +13,19 @@ case class InstanceProfileArn(account: Account, name: String, path: Path = Path.
 }
 
 object InstanceProfileArn {
-  /** Builds an instance profile ARN object from the given ARN string. */
-  def apply(arnString: String): InstanceProfileArn = {
-    arnString match {
-      case Arn(arn: InstanceProfileArn) ⇒ arn
-      case _ ⇒ throw new IllegalArgumentException(s"’$arnString‘ is not a valid instance profile ARN")
-    }
+  /** Utility to build/extract `InstanceProfileArn` instances from strings. */
+  object fromArnString {
+    /** Builds an `InstanceProfileArn` object from the given ARN string. */
+    def apply(arnString: String): InstanceProfileArn =
+      unapply(arnString)
+        .getOrElse(throw new IllegalArgumentException(s"‘$arnString’ is not a valid instance profile ARN."))
+
+    /** Extracts an `InstanceProfileArn` object from the given ARN string. */
+    def unapply(arnString: String): Option[InstanceProfileArn] =
+      arnString match {
+        case Arn.fromArnString(accountArn: InstanceProfileArn) ⇒ Some(accountArn)
+        case _                                                 ⇒ None
+      }
   }
 
   private[identitymanagement] val instanceProfileArnPF: PartialFunction[Arn.ArnParts, InstanceProfileArn] = {

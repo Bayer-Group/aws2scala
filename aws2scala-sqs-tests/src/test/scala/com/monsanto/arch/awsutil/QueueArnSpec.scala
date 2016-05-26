@@ -26,13 +26,13 @@ class QueueArnSpec extends FreeSpec {
 
     "round-trip via an ARN" in {
       forAll { arn: QueueArn ⇒
-        QueueArn(arn.arnString) shouldBe arn
+        QueueArn.fromArnString(arn.arnString) shouldBe arn
       }
     }
 
     "will fail to parse an invalid ARN" in {
       an [IllegalArgumentException] shouldBe thrownBy {
-        QueueArn("arn:aws:iam::111222333444:root")
+        QueueArn.fromArnString("arn:aws:iam::111222333444:root")
       }
     }
   }

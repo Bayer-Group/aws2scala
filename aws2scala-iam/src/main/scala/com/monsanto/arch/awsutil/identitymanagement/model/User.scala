@@ -23,7 +23,7 @@ case class User(path: String,
                 created: Date,
                 passwordLastUsed: Option[Date]) {
   /** Returns the AWS account ID to which the user belongs. */
-  def account: Account = UserArn(arn).account
+  def account: Account = UserArn.fromArnString(arn).account
 
   /** Builds the equivalent AWS `User` object from this object. */
   def toAws: AwsUser = {

@@ -21,13 +21,13 @@ class AccountArnSpec extends FreeSpec {
 
     "round-trip via an ARN string" in {
       forAll { arn: AccountArn ⇒
-        AccountArn(arn.arnString) shouldBe arn
+        AccountArn.fromArnString(arn.arnString) shouldBe arn
       }
     }
 
     "will fail to parse an invalid ARN" in {
       an [IllegalArgumentException] shouldBe thrownBy {
-        AccountArn("arn:aws:iam::111122223333:user/foo")
+        AccountArn.fromArnString("arn:aws:iam::111122223333:user/foo")
       }
     }
   }

@@ -36,7 +36,7 @@ case class Topic private[awsutil] (attributes: Map[String,String]) {
   val effectiveDeliveryPolicy: String = attributes("EffectiveDeliveryPolicy")
 
   /** Returns the name of the topic as extracted from the ARN. */
-  def name: String = TopicArn(arn).name
+  def name: String = TopicArn.fromArnString(arn).name
 
   /** Requests that AWS delete the topic. */
   def delete()(implicit sns: StreamingSNSClient, m: Materializer): Future[Done] =
@@ -268,7 +268,7 @@ object Topic {
 
   def apply(topicArn: String)(implicit sns: StreamingSNSClient, m: Materializer): Future[Topic] = {
     // though this looks superfluous, it does impose a check that the topic ARN can parse
-    val arn = TopicArn(topicArn).arnString
+    val arn = TopicArn.fromArnString(topicArn).arnString
     Source.single(arn).runWith(toTopic)
   }
 }

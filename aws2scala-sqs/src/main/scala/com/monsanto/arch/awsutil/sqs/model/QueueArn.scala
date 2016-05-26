@@ -16,12 +16,19 @@ case class QueueArn(account: Account,
 }
 
 object QueueArn {
-  /** Builds a queue ARN object from the given ARN string. */
-  def apply(arnString: String): QueueArn =
-    arnString match {
-      case Arn(arn: QueueArn) ⇒ arn
-      case _ ⇒ throw new IllegalArgumentException(s"‘$arnString’ is not a valid queue ARN.")
-    }
+  /** Utility to build/extract `QueueArn` instances from strings containing ARNs. */
+  object fromArnString {
+    /** Builds a `QueueArn` object from the given ARN string. */
+    def apply(arnString: String): QueueArn =
+      unapply(arnString).getOrElse(throw new IllegalArgumentException(s"‘$arnString’ is not a valid queue ARN."))
+
+    /** Extracts a `QueueArn` object from the given ARN string. */
+    def unapply(arnString: String): Option[QueueArn] =
+      arnString match {
+        case Arn.fromArnString(arn: QueueArn) ⇒ Some(arn)
+        case _                                ⇒ None
+      }
+  }
 
   private[awsutil] val queueArnPF: PartialFunction[Arn.ArnParts, QueueArn] = {
     case (_, Arn.Namespace.AmazonSQS, Some(region), Some(account), QueueResourceRegex(name)) ⇒

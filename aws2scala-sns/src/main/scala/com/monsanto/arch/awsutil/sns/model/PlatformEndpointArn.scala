@@ -20,12 +20,19 @@ case class PlatformEndpointArn(account: Account,
 }
 
 object PlatformEndpointArn {
-  /** Constructs a `PlatformEndpointArn` object from the given ARN string. */
-  def apply(arnString: String): PlatformEndpointArn = {
-    arnString match {
-      case Arn(arn: PlatformEndpointArn) ⇒ arn
-      case _ ⇒ throw new IllegalArgumentException(s"’$arnString‘ is not a valid platform endpoint ARN")
-    }
+  /** Utility to build/extract `PlatformEndpointArn` instances from strings containing ARNs. */
+  object fromArnString {
+    /** Builds a `PlatformEndpointArn` object from the given ARN string. */
+    def apply(arnString: String): PlatformEndpointArn =
+      unapply(arnString)
+        .getOrElse(throw new IllegalArgumentException(s"‘$arnString’ is not a valid platform endpoint ARN."))
+
+    /** Extracts a `PlatformEndpointArn` object from the given ARN string. */
+    def unapply(arnString: String): Option[PlatformEndpointArn] =
+      arnString match {
+        case Arn.fromArnString(arn: PlatformEndpointArn) ⇒ Some(arn)
+        case _                                           ⇒ None
+      }
   }
 
   private[sns] val platformEndpointArnPF: PartialFunction[Arn.ArnParts, PlatformEndpointArn] = {

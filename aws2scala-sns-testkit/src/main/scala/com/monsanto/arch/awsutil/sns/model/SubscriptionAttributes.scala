@@ -31,7 +31,7 @@ object SubscriptionAttributes {
       _: Option[SubscriptionDeliveryPolicy], _: Option[SubscriptionDeliveryPolicy])
 
   def apply(attrs: Map[String,String]): SubscriptionAttributes = {
-    val arn = SubscriptionArn(attrs("SubscriptionArn"))
+    val arn = SubscriptionArn.fromArnString(attrs("SubscriptionArn"))
     val subscriptionEndpoint = attrs("Protocol").asScala(attrs("Endpoint"))
     val confirmationWasAuthenticated = attrs("ConfirmationWasAuthenticated").toBoolean
     val rawMessageDelivery = attrs("RawMessageDelivery").toBoolean

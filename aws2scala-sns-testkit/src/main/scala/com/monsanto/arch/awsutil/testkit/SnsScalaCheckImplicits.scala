@@ -26,7 +26,7 @@ object SnsScalaCheckImplicits {
 
   implicit lazy val shrinkAddPermissionRequest: Shrink[AddPermissionRequest] =
     Shrink { request ⇒
-      val arn = TopicArn(request.topicArn)
+      val arn = TopicArn.fromArnString(request.topicArn)
       val accounts = request.accounts.map(id ⇒ Account(id, arn.partition))
       Shrink.shrink(arn).map(x ⇒ request.copy(topicArn = x.arnString)) append
         Shrink.shrink(request.label).filter(_.nonEmpty).map(x ⇒ request.copy(label = x)) append
@@ -73,7 +73,7 @@ object SnsScalaCheckImplicits {
 
   implicit lazy val shrinkPlatformApplication: Shrink[PlatformApplication] =
     Shrink { application ⇒
-      val applicationArn = PlatformApplicationArn(application.arn)
+      val applicationArn = PlatformApplicationArn.fromArnString(application.arn)
 
       def shrinkArn[T <: Arn: Shrink](key: String, maybeArn: Option[T]): Stream[PlatformApplication] = {
         Shrink.shrink(maybeArn)
@@ -85,12 +85,12 @@ object SnsScalaCheckImplicits {
       }
 
       Shrink.shrink(applicationArn).map(x ⇒ application.copy(arn = x.arnString)) append
-        shrinkArn("EventEndpointCreated", application.eventEndpointCreated.map(TopicArn(_))) append
-        shrinkArn("EventEndpointDeleted", application.eventEndpointDeleted.map(TopicArn(_))) append
-        shrinkArn("EventEndpointUpdated", application.eventEndpointUpdated.map(TopicArn(_))) append
-        shrinkArn("EventDeliveryFailure", application.eventDeliveryFailure.map(TopicArn(_))) append
-        shrinkArn("SuccessFeedbackRoleArn", application.successFeedbackRoleArn.map(RoleArn(_))) append
-        shrinkArn("FailureFeedbackRoleArn", application.failureFeedbackRoleArn.map(RoleArn(_))) append
+        shrinkArn("EventEndpointCreated", application.eventEndpointCreated.map(TopicArn.fromArnString(_))) append
+        shrinkArn("EventEndpointDeleted", application.eventEndpointDeleted.map(TopicArn.fromArnString(_))) append
+        shrinkArn("EventEndpointUpdated", application.eventEndpointUpdated.map(TopicArn.fromArnString(_))) append
+        shrinkArn("EventDeliveryFailure", application.eventDeliveryFailure.map(TopicArn.fromArnString(_))) append
+        shrinkArn("SuccessFeedbackRoleArn", application.successFeedbackRoleArn.map(RoleArn.fromArnString(_))) append
+        shrinkArn("FailureFeedbackRoleArn", application.failureFeedbackRoleArn.map(RoleArn.fromArnString(_))) append
         Shrink.shrink(application.successFeedbackSampleRate)
           .filter(_.forall(i ⇒ (i >= 0) && (i <= 100)))
           .collect {
@@ -125,7 +125,7 @@ object SnsScalaCheckImplicits {
 
   implicit lazy val shrinkPlatformEndpoint: Shrink[PlatformEndpoint] =
     Shrink { endpoint ⇒
-      Shrink.shrink(PlatformEndpointArn(endpoint.arn)).map(arn ⇒ endpoint.copy(arn = arn.arnString))
+      Shrink.shrink(PlatformEndpointArn.fromArnString(endpoint.arn)).map(arn ⇒ endpoint.copy(arn = arn.arnString))
     }
 
   implicit lazy val arbPlatformEndpointArn: Arbitrary[PlatformEndpointArn] =
@@ -160,12 +160,11 @@ object SnsScalaCheckImplicits {
   implicit lazy val shrinkPublishRequest: Shrink[PublishRequest] =
     Shrink { request ⇒
       val shrunkArn = {
-        val arn = Try(TopicArn(request.targetArn)).recoverWith {
-          case _: IllegalArgumentException ⇒ Try(PlatformEndpointArn(request.targetArn))
-        }.get
-        arn match {
-          case arn: TopicArn ⇒ Shrink.shrink(arn).map(x ⇒ request.copy(targetArn = x.arnString))
-          case arn: PlatformEndpointArn ⇒ Shrink.shrink(arn).map(x ⇒ request.copy(targetArn = x.arnString))
+        request.targetArn match {
+          case TopicArn.fromArnString(arn) ⇒
+            Shrink.shrink(arn).map(x ⇒ request.copy(targetArn = x.arnString))
+          case PlatformEndpointArn.fromArnString(arn) ⇒
+            Shrink.shrink(arn).map(x ⇒ request.copy(targetArn = x.arnString))
         }
       }
       val shrunkMessage = Shrink.shrink(request.message).filter(_.nonEmpty).map(x ⇒ request.copy(message = x))
@@ -190,7 +189,7 @@ object SnsScalaCheckImplicits {
 
   implicit lazy val shrinkRemovePermissionRequest: Shrink[RemovePermissionRequest] =
     Shrink { request ⇒
-      val arn = TopicArn(request.topicArn)
+      val arn = TopicArn.fromArnString(request.topicArn)
       Shrink.shrink(arn).map(x ⇒ request.copy(topicArn = x.arnString)) append
         Shrink.shrink(request.label).filter(_.nonEmpty).map(x ⇒ request.copy(label = x))
     }
