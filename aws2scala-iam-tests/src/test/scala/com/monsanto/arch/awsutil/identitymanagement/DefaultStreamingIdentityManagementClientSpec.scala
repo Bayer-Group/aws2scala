@@ -22,15 +22,7 @@ class DefaultStreamingIdentityManagementClientSpec extends FreeSpec with MockFac
   "the default StreamingIdentityManagementClient provides" - {
     "a role lister" in {
       forAll(maxSize(30)) { (maybePrefix: Option[Path], scalaRoles: List[Role]) ⇒
-        val awsRoles = scalaRoles.map { role ⇒
-          new aws.Role()
-            .withArn(role.arn)
-            .withAssumeRolePolicyDocument(role.assumeRolePolicyDocument)
-            .withCreateDate(role.created)
-            .withPath(role.path)
-            .withRoleId(role.id)
-            .withRoleName(role.name)
-        }
+        val awsRoles = scalaRoles.map(_.asAws)
         val iam = mock[AmazonIdentityManagementAsync]("iam")
         val streaming = new DefaultStreamingIdentityManagementClient(iam)
         val prefix = maybePrefix.map(_.pathString).orNull
@@ -80,7 +72,7 @@ class DefaultStreamingIdentityManagementClientSpec extends FreeSpec with MockFac
               )
               true
             })
-            .withAwsSuccess(new aws.CreateRoleResult().withRole(role.toAws))
+            .withAwsSuccess(new aws.CreateRoleResult().withRole(role.asAws))
         }
 
         val result = Source(requests).via(streaming.roleCreator).runWith(Sink.seq).futureValue

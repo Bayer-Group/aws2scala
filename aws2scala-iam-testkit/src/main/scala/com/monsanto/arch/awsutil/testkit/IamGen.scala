@@ -8,7 +8,6 @@ import com.monsanto.arch.awsutil.auth.policy.{Policy, PolicyDSL, Principal}
 import com.monsanto.arch.awsutil.identitymanagement.model._
 import com.monsanto.arch.awsutil.securitytoken.SecurityTokenService
 import com.monsanto.arch.awsutil.testkit.CoreScalaCheckImplicits._
-import com.monsanto.arch.awsutil.testkit.IamScalaCheckImplicits._
 import org.scalacheck.Arbitrary.arbitrary
 import org.scalacheck.Gen
 
@@ -20,10 +19,10 @@ object IamGen {
   def role(roleName: String, assumeRolePolicyDocument: Policy, path: Path = Path.empty): Gen[Role] =
     for {
       account ← arbitrary[Account]
-      id ← arbitrary[RoleId]
+      id ← roleId
     } yield {
       val arn = RoleArn(account, roleName, path)
-      Role(arn.arnString, roleName, path.pathString, id.value, assumeRolePolicyDocument.toString, new Date)
+      Role(arn, roleName, path, id, assumeRolePolicyDocument, new Date)
     }
 
   /** Generates a unique identifier for an instance profile. */

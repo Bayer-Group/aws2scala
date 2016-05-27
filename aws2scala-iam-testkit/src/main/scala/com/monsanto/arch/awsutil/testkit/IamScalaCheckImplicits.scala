@@ -97,35 +97,33 @@ object IamScalaCheckImplicits {
         account ← arbitrary[Account]
         name ← CoreGen.iamName
         path ← arbitrary[Path]
-        id ← arbitrary[RoleId]
-        policy ← arbitrary[Policy]
+        id ← IamGen.roleId
+        policy ← IamGen.assumeRolePolicy
         created ← arbitrary[Date]
       } yield {
         val arn = RoleArn(account, name, path)
-        Role(arn.arnString, name, path.pathString, id.value, policy.toString, created)
+        Role(arn, name, path, id, policy, created)
       }
     }
   }
 
   implicit lazy val shrinkRole: Shrink[Role] = {
     Shrink { role ⇒
-      val RoleArn(account, name, path) = RoleArn.fromArnString(role.arn)
+      val RoleArn(account, name, path) = role.arn
       val shrunkByName =
         Shrink.shrink(name)
           .filter(_.nonEmpty)
-          .map(name ⇒ role.copy(arn = RoleArn(account, name, path).arnString, name = name))
+          .map(name ⇒ role.copy(arn = RoleArn(account, name, path), name = name))
       val shrunkByPath =
         Shrink.shrink(path)
-          .map(path ⇒ role.copy(arn = RoleArn(account, name, path).arnString, path = path.toString))
+          .map(path ⇒ role.copy(arn = RoleArn(account, name, path), path = path))
       val shrunkByPolicy =
-        Shrink.shrink(Policy.fromJson(role.assumeRolePolicyDocument))
-          .filterNot(p ⇒ p.toJson == role.assumeRolePolicyDocument)
-          .map(policy ⇒ role.copy(assumeRolePolicyDocument = policy.toJson))
+        Shrink.shrink(role.assumeRolePolicyDocument)
+          .filterNot(p ⇒ p == role.assumeRolePolicyDocument)
+          .map(policy ⇒ role.copy(assumeRolePolicyDocument = policy))
       shrunkByName append shrunkByPath append shrunkByPolicy
     }
   }
-
-  implicit lazy val arbRoleId: Arbitrary[RoleId] = Arbitrary(IamGen.roleId.map(RoleId.apply))
 
   implicit lazy val arbUser: Arbitrary[User] =
     Arbitrary {

@@ -1,8 +1,8 @@
 package com.monsanto.arch.awsutil.identitymanagement.model
 
-import com.amazonaws.services.identitymanagement.model.{Role ⇒ AwsRole}
-
 import java.util.Date
+
+import com.monsanto.arch.awsutil.auth.policy.Policy
 
 /** Contains information about an IAM role.
   *
@@ -13,25 +13,9 @@ import java.util.Date
   * @param assumeRolePolicyDocument the policy that grants an entity permission to assume the role
   * @param created the date and time when the role was created
   */
-case class Role(arn: String,
+case class Role(arn: RoleArn,
                 name: String,
-                path: String,
+                path: Path,
                 id: String,
-                assumeRolePolicyDocument: String,
-                created: Date) {
-  /** Builds the equivalent AWS role object from this object. */
-  def toAws: AwsRole =
-    new AwsRole()
-      .withArn(arn)
-      .withRoleName(name)
-      .withPath(path)
-      .withRoleId(id)
-      .withAssumeRolePolicyDocument(assumeRolePolicyDocument)
-      .withCreateDate(created)
-}
-
-object Role {
-  /** Builds the equivalent Scala role object from the AWS object. */
-  def fromAws(aws: AwsRole): Role =
-    Role(aws.getArn, aws.getRoleName, aws.getPath, aws.getRoleId, aws.getAssumeRolePolicyDocument, aws.getCreateDate)
-}
+                assumeRolePolicyDocument: Policy,
+                created: Date)

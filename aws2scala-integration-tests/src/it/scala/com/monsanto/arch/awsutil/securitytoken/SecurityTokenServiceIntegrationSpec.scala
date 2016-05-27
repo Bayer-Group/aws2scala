@@ -41,7 +41,7 @@ class SecurityTokenServiceIntegrationSpec extends FreeSpec with AwsIntegrationSp
 
       eventually {
         logger.debug("Attempting to assume role…")
-        val result = async.assumeRole(AssumeRoleRequest(testRole.arn, "aws2scala-it-sts")).futureValue
+        val result = async.assumeRole(AssumeRoleRequest(testRole.arn.arnString, "aws2scala-it-sts")).futureValue
         logger.info(s"Assumed role with ID ${result.assumedRoleUser.assumedRoleId}")
         credentialsPromise.success(result.credentials)
       }

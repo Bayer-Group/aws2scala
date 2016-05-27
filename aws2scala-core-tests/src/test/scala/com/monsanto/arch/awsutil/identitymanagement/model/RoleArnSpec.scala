@@ -17,7 +17,7 @@ class RoleArnSpec extends FreeSpec {
 
     "produce the correct ARN" in {
       forAll { arn: RoleArn ⇒
-        val partition = arn.account.partition
+        val partition = arn.account.partition.id
         val account = arn.account.id
         val path = arn.path.pathString
         val roleName = arn.name

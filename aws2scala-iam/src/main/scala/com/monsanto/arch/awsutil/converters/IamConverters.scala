@@ -47,4 +47,26 @@ object IamConverters {
       awsRequest
     }
   }
+
+  implicit class AwsRole(val role: aws.Role) extends AnyVal {
+    def asScala: Role =
+      Role(
+        RoleArn.fromArnString(role.getArn),
+        role.getRoleName,
+        Path.fromPathString(role.getPath),
+        role.getRoleId,
+        Policy.fromJson(role.getAssumeRolePolicyDocument),
+        role.getCreateDate)
+  }
+
+  implicit class ScalaRole(val role: Role) extends AnyVal {
+    def asAws: aws.Role =
+      new aws.Role()
+        .withArn(role.arn.arnString)
+        .withRoleName(role.name)
+        .withPath(role.path.pathString)
+        .withRoleId(role.id)
+        .withAssumeRolePolicyDocument(role.assumeRolePolicyDocument.toJson)
+        .withCreateDate(role.created)
+  }
 }

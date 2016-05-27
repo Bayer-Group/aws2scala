@@ -5,7 +5,7 @@ import akka.stream.scaladsl.Flow
 import com.amazonaws.services.identitymanagement.AmazonIdentityManagementAsync
 import com.amazonaws.services.identitymanagement.model._
 import com.monsanto.arch.awsutil.converters.IamConverters._
-import com.monsanto.arch.awsutil.identitymanagement.model.{AttachRolePolicyRequest, CreateRoleRequest, DetachRolePolicyRequest, GetUserRequest, ListAttachedRolePoliciesRequest, ListRolesRequest, Role, User}
+import com.monsanto.arch.awsutil.identitymanagement.model.{AttachRolePolicyRequest, CreateRoleRequest, DetachRolePolicyRequest, GetUserRequest, ListAttachedRolePoliciesRequest, ListRolesRequest, User}
 import com.monsanto.arch.awsutil.{AWSFlow, AWSFlowAdapter}
 
 import scala.collection.JavaConverters._
@@ -15,14 +15,14 @@ private[awsutil] class DefaultStreamingIdentityManagementClient(aws: AmazonIdent
     Flow[ListRolesRequest]
       .map(_.toAws)
       .via[ListRolesResult,NotUsed](AWSFlow.pagedByMarker(aws.listRolesAsync))
-      .mapConcat(_.getRoles.asScala.map(Role.fromAws).toList)
+      .mapConcat(_.getRoles.asScala.map(_.asScala).toList)
       .named("IAM.roleLister")
 
   override val roleCreator =
     Flow[CreateRoleRequest]
       .map(_.asAws)
       .via[CreateRoleResult,NotUsed](AWSFlow.simple(aws.createRoleAsync))
-      .map(r ⇒ Role.fromAws(r.getRole))
+      .map(r ⇒ r.getRole.asScala)
       .named("IAM.roleCreator")
 
   override val roleDeleter =
