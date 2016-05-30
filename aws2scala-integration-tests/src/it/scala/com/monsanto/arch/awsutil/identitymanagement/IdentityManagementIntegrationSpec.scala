@@ -37,7 +37,7 @@ class IdentityManagementIntegrationSpec extends FreeSpec with AwsIntegrationSpec
     "create a role" in {
       val roleName = s"TestRole-$testId"
       val result = async.createRole(roleName, assumeRolePolicy(testUser), testPath).futureValue
-      result.arn shouldBe s"arn:aws:iam::${testUser.account.id}:role${testPath.pathString}$roleName"
+      result.arn shouldBe RoleArn(testUser.account, roleName, testPath)
 
       logger.info(s"Created role ${result.name} with ARN ${result.arn}")
 
