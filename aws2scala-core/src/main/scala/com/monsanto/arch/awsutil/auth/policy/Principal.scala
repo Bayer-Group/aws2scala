@@ -3,6 +3,8 @@ package com.monsanto.arch.awsutil.auth.policy
 import com.monsanto.arch.awsutil.identitymanagement.model.{RoleArn, SamlProviderArn, UserArn}
 import com.monsanto.arch.awsutil.securitytoken.model.AssumedRoleArn
 import com.monsanto.arch.awsutil.{Account, AccountArn}
+import com.typesafe.scalalogging.Logger
+import org.slf4j.LoggerFactory
 
 /** A principal specifies the user (IAM user, federated user, or assumed-role user), AWS account, AWS service, or other
   * principal entity that it allowed or denied access to a resource.
@@ -70,19 +72,78 @@ object Principal {
     */
   def stsAssumedRole(assumedRoleArn: AssumedRoleArn): Principal = StsAssumedRolePrincipal(assumedRoleArn)
 
+  /** Base class for all possible service values.
+    *
+    * @param id uniquely identifies the service
+    */
   sealed abstract class Service(val id: String)
 
+  //noinspection SpellCheckingInspection
   object Service {
-    case object AllServices extends Service("*")
-    case object AmazonEC2 extends Service("ec2.amazonaws.com")
-    case object AmazonElasticTranscoder extends Service("elastictranscoder.amazonaws.com")
-    case object AWSCloudHSM extends Service("cloudhsm.amazonaws.com")
-    case object AWSDataPipeline extends Service("datapipeline.amazonaws.com")
-    case object AWSOpsWorks extends Service("opsworks.amazonaws.com")
+    /** Tags a [[com.monsanto.arch.awsutil.auth.policy.Principal.Service Service]] to denote that there is an AWS
+      * enumeration value that corresponds to it.
+      */
+    sealed trait AwsEnumerated { this: Service ⇒ }
+
+    /** Matches all Amazon services. */
+    case object AllServices extends Service("*") with AwsEnumerated
+
+    /** Matches the Amazon API Gateway service. */
+    case object AmazonAPIGateway extends Service("apigateway.amazonaws.com")
+
+    /** Matches the Amazon Elastic Compute Cloud (EC2) service. */
+    case object AmazonEC2 extends Service("ec2.amazonaws.com") with AwsEnumerated
+
+    /** Matches the Amazon EC2 Container Service (ECS). */
+    case object AmazonEC2ContainerService extends Service("ecs.amazonaws.com")
+
+    /** Matches the Amazon EC2 Spot Fleet service. */
+    case object AmazonEC2SpotFleet extends Service("spotfleet.amazonaws.com")
+
+    /** Matches the Amazon Elastic MapReduce service. */
+    case object AmazonElasticMapReduce extends Service("elasticmapreduce.amazonaws.com")
+
+    /** Matches the Amazon Elastic Transcoder service. */
+    case object AmazonElasticTranscoder extends Service("elastictranscoder.amazonaws.com") with AwsEnumerated
+
+    /** Matches the Amazon Inspector service. */
+    case object AmazonInspector extends Service("inspector.amazonaws.com")
+
+    /** Matches the Amazon VPC Flow Logs service. */
+    case object AmazonVPCFlowLogs extends Service("vpc-flow-logs.amazonaws.com")
+
+    /** Matches the Amazon WorkSpaces service. */
+    case object AmazonWorkSpaces extends Service("workspaces.amazonaws.com")
+
+    /** Matches the AWS CloudHSM service. */
+    case object AWSCloudHSM extends Service("cloudhsm.amazonaws.com") with AwsEnumerated
+
+    /** Matches the AWS CloudTrail service. */
+    case object AWSCloudTrail extends Service("cloudtrail.amazonaws.com")
+
+    /** Matches the AWS Config service. */
+    case object AWSConfig extends Service("config.amazonaws.com")
+
+    /** Matches the AWS Data Pipeline service. */
+    case object AWSDataPipeline extends Service("datapipeline.amazonaws.com") with AwsEnumerated
+
+    /** Matches the AWS Lambda service. */
+    case object AWSLambda extends Service("lambda.amazonaws.com")
+
+    /** Matches the AWS OpsWorks service. */
+    case object AWSOpsWorks extends Service("opsworks.amazonaws.com") with AwsEnumerated
+
+    /** Matches the AWS Service Catalog service. */
+    case object AWSServiceCatalog extends Service("servicecatalog.amazonaws.com")
+
+    /** This is used in cases where we need a `Service` instance that is not one of the enumerated types. */
+    private[awsutil] case class GenericService(_id: String) extends Service(_id)
 
     /** All valid values for the enumeration. */
     val values: Seq[Service] =
-      Seq(AllServices, AmazonEC2, AmazonElasticTranscoder, AWSCloudHSM, AWSDataPipeline, AWSOpsWorks)
+      Seq(AllServices, AmazonAPIGateway, AmazonEC2, AmazonEC2ContainerService, AmazonEC2SpotFleet,
+        AmazonElasticMapReduce, AmazonElasticTranscoder, AmazonInspector, AmazonVPCFlowLogs, AmazonWorkSpaces,
+        AWSCloudHSM, AWSCloudTrail, AWSConfig, AWSDataPipeline, AWSLambda, AWSOpsWorks, AWSServiceCatalog)
 
     object fromId {
       def unapply(id: String): Option[Service] = values.find(_.id.equalsIgnoreCase(id))
@@ -128,6 +189,10 @@ object Principal {
           Some(Principal.allServices)
         case ("Service", Principal.Service.fromId(service)) ⇒
           Some(Principal.service(service))
+        case ("Service", serviceId) ⇒
+          val logger = Logger(LoggerFactory.getLogger(classOf[Principal].getName))
+          logger.warn(s"Using GenericService for service ID: $serviceId")
+          Some(Principal.service(Principal.Service.GenericService(serviceId)))
         case ("Federated", "*") ⇒
           Some(Principal.allWebProviders)
         case ("Federated", Principal.WebIdentityProvider.fromProvider(webIdentityProvider)) ⇒

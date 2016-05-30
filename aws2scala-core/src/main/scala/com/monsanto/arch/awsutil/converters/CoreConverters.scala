@@ -245,7 +245,7 @@ object CoreConverters {
   }
 
   implicit class AwsPrincipalService(val service: policy.Principal.Services) extends AnyVal {
-    def asScala: Principal.Service =
+    def asScala: Principal.Service with Principal.Service.AwsEnumerated =
       service match {
         case policy.Principal.Services.AllServices             ⇒ Principal.Service.AllServices
         case policy.Principal.Services.AmazonEC2               ⇒ Principal.Service.AmazonEC2
@@ -256,7 +256,7 @@ object CoreConverters {
       }
   }
 
-  implicit class ScalaPrincipalService(val service: Principal.Service) extends AnyVal {
+  implicit class ScalaPrincipalServiceWithAwsEnum(val service: Principal.Service with Principal.Service.AwsEnumerated) extends AnyVal {
     def asAws: policy.Principal.Services =
       service match {
         case Principal.Service.AllServices             ⇒ policy.Principal.Services.AllServices

@@ -11,11 +11,16 @@ import com.monsanto.arch.awsutil.testkit.CoreScalaCheckImplicits._
 import org.scalatest.FreeSpec
 import org.scalatest.Matchers._
 import org.scalatest.prop.GeneratorDrivenPropertyChecks._
-import org.scalatest.prop.TableDrivenPropertyChecks.{forAll ⇒ forAllIn, _}
+import org.scalatest.prop.TableDrivenPropertyChecks.{Table, forAll ⇒ forAllIn}
 
 class PrincipalSpec extends FreeSpec with AwsEnumerationBehaviours {
-  val services = Table("service", Principal.Service.values: _*)
-  val webIdentityProviders = Table("web identity provider", Principal.WebIdentityProvider.values: _*)
+  /** Contains all of the services. */
+  private val services = Table("service", Principal.Service.values: _*)
+  /** Contains all of the services with a matching AWS enumeration value. */
+  private val awsEnumeratedServices =
+    Table("service", Principal.Service.values.collect { case x: Principal.Service.AwsEnumerated ⇒ x }: _*)
+  /** Contains all web identity providers. */
+  private val webIdentityProviders = Table("web identity provider", Principal.WebIdentityProvider.values: _*)
 
   "a Principal" - {
     "can be round-tripped via" - {
@@ -30,6 +35,11 @@ class PrincipalSpec extends FreeSpec with AwsEnumerationBehaviours {
           Principal.fromProviderAndId(principal.provider, principal.id) shouldBe principal
         }
       }
+    }
+
+    "can be created from an unknown service ID" in {
+      Principal.fromProviderAndId("Service", "fubar.amazonaws.com") shouldBe
+        Principal.service(Principal.Service.GenericService("fubar.amazonaws.com"))
     }
 
     "converts" - {
@@ -144,12 +154,12 @@ class PrincipalSpec extends FreeSpec with AwsEnumerationBehaviours {
     "has a Service enumeration" - {
       behave like anAwsEnumeration(
         aws.Principal.Services.values,
-        Principal.Service.values,
-        (_ : Principal.Service).asAws,
+        awsEnumeratedServices,
+        (_ : Principal.Service with Principal.Service.AwsEnumerated).asAws,
         (_: aws.Principal.Services).asScala)
 
-      "with id values" in {
-        forAllIn(services) { service ⇒
+      "with id values that match the AWS service ID" in {
+        forAllIn(awsEnumeratedServices) { service ⇒
           service.id shouldBe service.asAws.getServiceId
         }
       }
