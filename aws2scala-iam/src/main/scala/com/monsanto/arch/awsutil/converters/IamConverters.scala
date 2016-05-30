@@ -1,5 +1,7 @@
 package com.monsanto.arch.awsutil.converters
 
+import java.net.URLDecoder
+
 import com.amazonaws.services.identitymanagement.{model ⇒ aws}
 import com.monsanto.arch.awsutil.auth.policy.Policy
 import com.monsanto.arch.awsutil.identitymanagement.model._
@@ -55,7 +57,14 @@ object IamConverters {
         role.getRoleName,
         Path.fromPathString(role.getPath),
         role.getRoleId,
-        Policy.fromJson(role.getAssumeRolePolicyDocument),
+        Policy.fromJson {
+          val rawPolicy = role.getAssumeRolePolicyDocument
+          if (rawPolicy.toLowerCase.startsWith("%7b")) {
+            URLDecoder.decode(rawPolicy, "UTF-8")
+          } else {
+            rawPolicy
+          }
+        },
         role.getCreateDate)
   }
 
