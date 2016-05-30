@@ -5,7 +5,7 @@ import akka.stream.scaladsl.Flow
 import com.amazonaws.services.identitymanagement.AmazonIdentityManagementAsync
 import com.amazonaws.services.identitymanagement.model._
 import com.monsanto.arch.awsutil.converters.IamConverters._
-import com.monsanto.arch.awsutil.identitymanagement.model.{AttachRolePolicyRequest, CreateRoleRequest, DetachRolePolicyRequest, GetUserRequest, ListAttachedRolePoliciesRequest, ListRolesRequest, User}
+import com.monsanto.arch.awsutil.identitymanagement.model.{AttachRolePolicyRequest, CreateRoleRequest, DetachRolePolicyRequest, GetUserRequest, ListAttachedRolePoliciesRequest, ListRolesRequest}
 import com.monsanto.arch.awsutil.{AWSFlow, AWSFlowAdapter}
 
 import scala.collection.JavaConverters._
@@ -58,6 +58,6 @@ private[awsutil] class DefaultStreamingIdentityManagementClient(aws: AmazonIdent
     Flow[GetUserRequest]
       .map(_.toAws)
       .via[GetUserResult,NotUsed](AWSFlow.simple(aws.getUserAsync))
-      .map(r ⇒ User.fromAws(r.getUser))
+      .map(r ⇒ r.getUser.asScala)
       .named("IAM.userGetter")
 }

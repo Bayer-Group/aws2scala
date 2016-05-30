@@ -3,7 +3,6 @@ package com.monsanto.arch.awsutil.testkit
 import java.util.Date
 
 import com.monsanto.arch.awsutil.Account
-import com.monsanto.arch.awsutil.auth.policy.Policy
 import com.monsanto.arch.awsutil.identitymanagement.IdentityManagement
 import com.monsanto.arch.awsutil.identitymanagement.model._
 import com.monsanto.arch.awsutil.testkit.CoreScalaCheckImplicits._
@@ -128,28 +127,22 @@ object IamScalaCheckImplicits {
   implicit lazy val arbUser: Arbitrary[User] =
     Arbitrary {
       for {
-        account ← arbitrary[Account]
-        name ← CoreGen.iamName
-        path ← arbitrary[Path]
-        id ← arbitrary[UserId]
+        arn ← arbitrary[UserArn]
+        id ← IamGen.userId
         created ← arbitrary[Date]
         passwordLastUsed ← arbitrary[Option[Date]]
-      } yield {
-        val arn = UserArn(account, name, path)
-        User(path.pathString, name, id.value, arn.arnString, created, passwordLastUsed)
-      }
+      } yield User(arn.path, arn.name, id, arn, created, passwordLastUsed)
     }
 
   implicit lazy val shrinkUser: Shrink[User] =
     Shrink { user ⇒
-      val UserArn(account, name, path) = UserArn.fromArnString(user.arn)
       val shrunkByName =
-        Shrink.shrink(name)
+        Shrink.shrink(user.name)
           .filter(_.nonEmpty)
-          .map(name ⇒ user.copy(arn = UserArn(account, name, path).arnString, name = name))
+          .map(n ⇒ user.copy(arn = user.arn.copy(name = n), name = n))
       val shrunkByPath =
-        Shrink.shrink(path)
-          .map(path ⇒ user.copy(arn = UserArn(account, name, path).arnString, path = path.pathString))
+        Shrink.shrink(user.path)
+          .map(p ⇒ user.copy(arn = user.arn.copy(path = p), path = p))
       val shrunkByPasswordLastUsed =
         Shrink.shrink(user.passwordLastUsed)
           .map(d ⇒ user.copy(passwordLastUsed = d))

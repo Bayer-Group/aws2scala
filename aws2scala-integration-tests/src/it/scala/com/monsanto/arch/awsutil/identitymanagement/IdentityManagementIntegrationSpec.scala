@@ -94,7 +94,7 @@ class IdentityManagementIntegrationSpec extends FreeSpec with AwsIntegrationSpec
     policy (
       statements (
         allow (
-          principals(Principal.iamUser(UserArn.fromArnString(user.arn))),
+          principals(Principal.iamUser(user.arn)),
           actions(SecurityTokenServiceAction.AssumeRole)
         )
       )

@@ -78,4 +78,23 @@ object IamConverters {
         .withAssumeRolePolicyDocument(role.assumeRolePolicyDocument.toJson)
         .withCreateDate(role.created)
   }
+
+  implicit class AwsUser(val user: aws.User) extends AnyVal {
+    def asScala: User =
+      User(
+        Path.fromPathString(user.getPath),
+        user.getUserName,
+        user.getUserId,
+        UserArn.fromArnString(user.getArn),
+        user.getCreateDate,
+        Option(user.getPasswordLastUsed))
+  }
+
+  implicit class ScalaUser(val user: User) extends AnyVal {
+    def asAws: aws.User = {
+      val awsUser = new aws.User(user.path.pathString, user.name, user.id, user.arn.arnString, user.created)
+      user.passwordLastUsed.foreach(d ⇒ awsUser.setPasswordLastUsed(d))
+      awsUser
+    }
+  }
 }

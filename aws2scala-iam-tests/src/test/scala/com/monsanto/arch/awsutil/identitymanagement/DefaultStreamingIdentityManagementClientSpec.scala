@@ -194,7 +194,7 @@ class DefaultStreamingIdentityManagementClientSpec extends FreeSpec with MockFac
               r should have ('userName (request.userName.orNull))
               true
             })
-            .withAwsSuccess(new aws.GetUserResult().withUser(user.toAws))
+            .withAwsSuccess(new aws.GetUserResult().withUser(user.asAws))
         }
 
         val result = Source(requests).via(streaming.userGetter).runWith(Sink.seq).futureValue
