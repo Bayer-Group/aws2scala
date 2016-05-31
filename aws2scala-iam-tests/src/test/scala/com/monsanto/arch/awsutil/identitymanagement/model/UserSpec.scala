@@ -26,5 +26,11 @@ class UserSpec extends FreeSpec {
         }
       }
     }
+
+    "exposes the account from the ARN" in {
+      forAll { user: User ⇒
+        user.account shouldBe user.arn.account
+      }
+    }
   }
 }
