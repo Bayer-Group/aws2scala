@@ -159,7 +159,7 @@ class DefaultStreamingIdentityManagementClientSpec extends FreeSpec with MockFac
               val marker = if (i == 0) null else i.toString
               r should have(
                 'roleName (request.roleName),
-                'pathPrefix (request.pathPrefix.orNull),
+                'pathPrefix (request.prefix.map(_.pathString).orNull),
                 'marker (marker)
               )
               true

@@ -70,6 +70,14 @@ object IamConverters {
     }
   }
 
+  implicit class ScalaListAttachedRolePoliciesRequest(val request: ListAttachedRolePoliciesRequest) extends AnyVal {
+    def asAws: aws.ListAttachedRolePoliciesRequest = {
+      val awsRequest = new aws.ListAttachedRolePoliciesRequest().withRoleName(request.roleName)
+      request.prefix.foreach(p ⇒ awsRequest.setPathPrefix(p.pathString))
+      awsRequest
+    }
+  }
+
   implicit class AwsRole(val role: aws.Role) extends AnyVal {
     def asScala: Role =
       Role(

@@ -48,7 +48,7 @@ private[awsutil] class DefaultStreamingIdentityManagementClient(aws: AmazonIdent
 
   override val attachedRolePolicyLister =
     Flow[ListAttachedRolePoliciesRequest]
-      .map(_.toAws)
+      .map(_.asAws)
       .via[ListAttachedRolePoliciesResult,NotUsed](AWSFlow.pagedByMarker(aws.listAttachedRolePoliciesAsync))
       .mapConcat(_.getAttachedPolicies.asScala.toList)
       .map(_.asScala)

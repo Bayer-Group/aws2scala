@@ -46,8 +46,8 @@ private[awsutil] class DefaultAsyncIdentityManagementClient(streaming: Streaming
       .via(streaming.attachedRolePolicyLister)
       .runWith(Sink.seq)
 
-  override def listAttachedRolePolicies(roleName: String, pathPrefix: String)(implicit m: Materializer) =
-    Source.single(ListAttachedRolePoliciesRequest(roleName, pathPrefix))
+  override def listAttachedRolePolicies(roleName: String, prefix: Path)(implicit m: Materializer) =
+    Source.single(ListAttachedRolePoliciesRequest(roleName, prefix))
       .via(streaming.attachedRolePolicyLister)
       .runWith(Sink.seq)
 

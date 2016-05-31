@@ -157,14 +157,14 @@ object IamScalaCheckImplicits {
         for {
           roleName ← CoreGen.iamName
           prefix ← arbitrary[Path]
-        } yield ListAttachedRolePoliciesRequest(roleName, prefix.pathString)
+        } yield ListAttachedRolePoliciesRequest(roleName, prefix)
       Gen.oneOf(noPathPrefixRequest, pathPrefixRequest)
     }
 
   implicit lazy val shrinkListAttachedRolePoliciesRequest: Shrink[ListAttachedRolePoliciesRequest] =
     Shrink { request ⇒
       Shrink.shrink(request.roleName).filter(_.nonEmpty).map(x ⇒ request.copy(roleName = x)) append
-        Shrink.shrink(request.pathPrefix).map(x ⇒ request.copy(pathPrefix = x))
+        Shrink.shrink(request.prefix).map(p ⇒ request.copy(prefix = p))
     }
 
   implicit lazy val arbGetUserRequest: Arbitrary[GetUserRequest] =

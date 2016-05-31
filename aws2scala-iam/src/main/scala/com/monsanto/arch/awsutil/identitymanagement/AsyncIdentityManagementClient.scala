@@ -45,7 +45,7 @@ trait AsyncIdentityManagementClient extends AsyncAwsClient {
   def listAttachedRolePolicies(roleName: String)(implicit m: Materializer): Future[Seq[AttachedPolicy]]
 
   /** Lists all managed policies attached to the given role that match the given path prefix. */
-  def listAttachedRolePolicies(roleName: String, pathPrefix: String)
+  def listAttachedRolePolicies(roleName: String, prefix: Path)
                               (implicit m: Materializer): Future[Seq[AttachedPolicy]]
 
   /* Gets the information for the current IAM user. */
