@@ -18,5 +18,11 @@ class CreatePolicyRequestSpec extends FreeSpec {
         )
       }
     }
+
+    "round-trip via an AWS request" in {
+      forAll { request: CreatePolicyRequest ⇒
+        request.asAws.asScala shouldBe request
+      }
+    }
   }
 }

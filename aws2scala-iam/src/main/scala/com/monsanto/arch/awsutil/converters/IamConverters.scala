@@ -32,6 +32,15 @@ object IamConverters {
         .withPolicyName(attachedPolicy.name)
   }
 
+  implicit class AwsCreatePolicyRequest(val request: aws.CreatePolicyRequest) extends AnyVal {
+    def asScala: CreatePolicyRequest =
+      CreatePolicyRequest(
+        request.getPolicyName,
+        policy.Policy.fromJson(request.getPolicyDocument),
+        Option(request.getDescription),
+        Option(request.getPath).map(Path.fromPathString(_)).getOrElse(Path.empty))
+  }
+
   implicit class ScalaCreatePolicyRequest(val request: CreatePolicyRequest) extends AnyVal {
     def asAws: aws.CreatePolicyRequest =
       new aws.CreatePolicyRequest()
