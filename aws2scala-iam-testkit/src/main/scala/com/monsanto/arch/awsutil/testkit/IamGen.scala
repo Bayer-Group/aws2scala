@@ -54,6 +54,12 @@ object IamGen {
       )
     }
 
+  /** Generates a friendly name for a policy. */
+  val policyName: Gen[String] = {
+    val policyChars = ('a' to 'z') ++ ('A' to 'Z') ++ ('0' to '9') :+ '=' :+ ',' :+ '.' :+ '@' :+ '-'
+    UtilGen.stringOf(Gen.oneOf(policyChars), 1, 128)
+  }
+
   /** Used to generate IAM unique identifiers. */
   private def id(prefix: String): Gen[String] =
     Gen.listOfN(18, UtilGen.base36Char)
