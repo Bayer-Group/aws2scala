@@ -3,7 +3,7 @@ package com.monsanto.arch.awsutil.converters
 import java.net.URLDecoder
 
 import com.amazonaws.services.identitymanagement.{model ⇒ aws}
-import com.monsanto.arch.awsutil.auth.policy.Policy
+import com.monsanto.arch.awsutil.auth.policy
 import com.monsanto.arch.awsutil.identitymanagement.model._
 
 /** Provides converters between ''aws2scala-iam'' objects and their AWS Java SDK counterparts. */
@@ -45,7 +45,7 @@ object IamConverters {
     def asScala: CreateRoleRequest =
       CreateRoleRequest(
         request.getRoleName,
-        Policy.fromJson(request.getAssumeRolePolicyDocument),
+        policy.Policy.fromJson(request.getAssumeRolePolicyDocument),
         Option(request.getPath).map(Path.fromPathString(_)))
   }
 
@@ -95,6 +95,36 @@ object IamConverters {
     }
   }
 
+  implicit class AwsIamPolicy(val policy: aws.Policy) extends AnyVal {
+    def asScala: Policy =
+      Policy(
+        policy.getPolicyName,
+        policy.getPolicyId,
+        PolicyArn.fromArnString(policy.getArn),
+        Path.fromPathString(policy.getPath),
+        policy.getDefaultVersionId,
+        policy.getAttachmentCount.toInt,
+        policy.getIsAttachable.booleanValue(),
+        Option(policy.getDescription),
+        policy.getCreateDate,
+        policy.getUpdateDate)
+  }
+
+  implicit class ScalaIamPolicy(val policy: Policy) extends AnyVal {
+    def asAws: aws.Policy =
+      new aws.Policy()
+        .withPolicyName(policy.name)
+        .withPolicyId(policy.id)
+        .withArn(policy.arn.arnString)
+        .withPath(policy.path.pathString)
+        .withDefaultVersionId(policy.defaultVersionId)
+        .withAttachmentCount(Integer.valueOf(policy.attachmentCount))
+        .withIsAttachable(java.lang.Boolean.valueOf(policy.attachable))
+        .withDescription(policy.description.orNull)
+        .withCreateDate(policy.created)
+        .withUpdateDate(policy.updated)
+  }
+
   implicit class AwsRole(val role: aws.Role) extends AnyVal {
     def asScala: Role =
       Role(
@@ -102,7 +132,7 @@ object IamConverters {
         role.getRoleName,
         Path.fromPathString(role.getPath),
         role.getRoleId,
-        Policy.fromJson {
+        policy.Policy.fromJson {
           val rawPolicy = role.getAssumeRolePolicyDocument
           if (rawPolicy.toLowerCase.startsWith("%7b")) {
             URLDecoder.decode(rawPolicy, "UTF-8")

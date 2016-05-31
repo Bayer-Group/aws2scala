@@ -1,6 +1,6 @@
 package com.monsanto.arch.awsutil.identitymanagement.model
 
-import com.monsanto.arch.awsutil.auth.policy.Policy
+import com.monsanto.arch.awsutil.auth.policy
 
 /** Requests creation of a new managed policy.
   *
@@ -10,6 +10,6 @@ import com.monsanto.arch.awsutil.auth.policy.Policy
   * @param path the path for the policy
   */
 case class CreatePolicyRequest(name: String,
-                               document: Policy,
+                               document: policy.Policy,
                                description: Option[String],
                                path: Path)

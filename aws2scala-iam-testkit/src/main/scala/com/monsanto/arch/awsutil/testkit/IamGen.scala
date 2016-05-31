@@ -3,8 +3,9 @@ package com.monsanto.arch.awsutil.testkit
 import java.util.Date
 
 import com.monsanto.arch.awsutil.Account
+import com.monsanto.arch.awsutil.auth.policy
 import com.monsanto.arch.awsutil.auth.policy.action.SecurityTokenServiceAction
-import com.monsanto.arch.awsutil.auth.policy.{Policy, PolicyDSL, Principal}
+import com.monsanto.arch.awsutil.auth.policy.{PolicyDSL, Principal}
 import com.monsanto.arch.awsutil.identitymanagement.model._
 import com.monsanto.arch.awsutil.securitytoken.SecurityTokenService
 import com.monsanto.arch.awsutil.testkit.CoreScalaCheckImplicits._
@@ -16,7 +17,7 @@ object IamGen {
   SecurityTokenService.init()
 
   /** Generates a role from the given name, policy, and path. */
-  def role(roleName: String, assumeRolePolicyDocument: Policy, path: Path = Path.empty): Gen[Role] =
+  def role(roleName: String, assumeRolePolicyDocument: policy.Policy, path: Path = Path.empty): Gen[Role] =
     for {
       account ← arbitrary[Account]
       id ← roleId
@@ -38,13 +39,13 @@ object IamGen {
   val userId: Gen[String] = id("AID")
 
   /** Generates a simple assume role policy with a random principal. */
-  val assumeRolePolicy: Gen[Policy] =
+  val assumeRolePolicy: Gen[policy.Policy] =
     for {
       principal ← arbitrary[Principal]
     } yield {
       import PolicyDSL._
 
-      policy (
+      PolicyDSL.policy (
         statements (
           allow (
             principals(principal),
@@ -54,11 +55,8 @@ object IamGen {
       )
     }
 
-  /** Generates a friendly name for a policy. */
-  val policyName: Gen[String] = {
-    val policyChars = ('a' to 'z') ++ ('A' to 'Z') ++ ('0' to '9') :+ '=' :+ ',' :+ '.' :+ '@' :+ '-'
-    UtilGen.stringOf(Gen.oneOf(policyChars), 1, 128)
-  }
+  /** Generates a unique identifier for a managed policy. */
+  val policyId: Gen[String] = id("ANP")
 
   /** Used to generate IAM unique identifiers. */
   private def id(prefix: String): Gen[String] =

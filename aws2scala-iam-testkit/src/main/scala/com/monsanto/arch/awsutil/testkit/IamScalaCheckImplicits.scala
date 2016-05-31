@@ -3,7 +3,7 @@ package com.monsanto.arch.awsutil.testkit
 import java.util.Date
 
 import com.monsanto.arch.awsutil.Account
-import com.monsanto.arch.awsutil.auth.policy.Policy
+import com.monsanto.arch.awsutil.auth.policy
 import com.monsanto.arch.awsutil.identitymanagement.IdentityManagement
 import com.monsanto.arch.awsutil.identitymanagement.model._
 import com.monsanto.arch.awsutil.testkit.CoreScalaCheckImplicits._
@@ -194,8 +194,8 @@ object IamScalaCheckImplicits {
   implicit lazy val arbCreatePolicyRequest: Arbitrary[CreatePolicyRequest] =
     Arbitrary {
       for {
-        name ← IamGen.policyName
-        policy ← arbitrary[Policy]
+        name ← CoreGen.iamName
+        policy ← arbitrary[policy.Policy]
         path ← arbitrary[Path]
         description ← arbitrary[Option[String]].suchThat(_.forall(_.length < 1000))
       } yield CreatePolicyRequest(name, policy, description, path)
@@ -207,5 +207,20 @@ object IamScalaCheckImplicits {
         Shrink.shrink(request.document).map(d ⇒ request.copy(document = d)) append
         Shrink.shrink(request.path).map(p ⇒ request.copy(path = p)) append
         Shrink.shrink(request.description).map(d ⇒ request.copy(description = d))
+    }
+
+  implicit lazy val arbIamPolicy: Arbitrary[Policy] =
+    Arbitrary {
+      for {
+        arn ← arbitrary[PolicyArn]
+        id ← IamGen.policyId
+        defaultVersionId ← Gen.posNum[Int].map(n ⇒ s"v$n")
+        attachmentCount ← Gen.choose(0, 1024)
+        attachable ← arbitrary[Boolean]
+        description ← arbitrary[Option[String]]
+        created ← arbitrary[Date]
+        updated ← arbitrary[Date].suchThat(u ⇒ u.equals(created) || u.after(created))
+      } yield Policy(arn.name, id, arn, arn.path, defaultVersionId, attachmentCount, attachable, description,
+        created, updated)
     }
 }
