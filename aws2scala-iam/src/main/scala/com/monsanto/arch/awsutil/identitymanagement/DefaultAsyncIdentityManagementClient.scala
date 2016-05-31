@@ -60,4 +60,20 @@ private[awsutil] class DefaultAsyncIdentityManagementClient(streaming: Streaming
     Source.single(GetUserRequest.forUserName(name))
       .via(streaming.userGetter)
       .runWith(Sink.head)
+
+  override def createPolicy(name: String, document: Policy)(implicit m: Materializer) =
+    Source.single(CreatePolicyRequest(name, document, None, Path.empty))
+      .via(streaming.policyCreator)
+      .runWith(Sink.head)
+
+  override def createPolicy(name: String, document: Policy, description: String)(implicit m: Materializer) =
+    Source.single(CreatePolicyRequest(name, document, Some(description), Path.empty))
+      .via(streaming.policyCreator)
+      .runWith(Sink.head)
+
+  override def createPolicy(name: String, document: Policy, description: String, path: Path)
+                           (implicit m: Materializer) =
+    Source.single(CreatePolicyRequest(name, document, Some(description), path))
+      .via(streaming.policyCreator)
+      .runWith(Sink.head)
 }

@@ -1,6 +1,7 @@
 package com.monsanto.arch.awsutil.identitymanagement
 
 import akka.Done
+import com.monsanto.arch.awsutil.auth.policy.Policy
 import com.monsanto.arch.awsutil.identitymanagement.model._
 import com.monsanto.arch.awsutil.test_support.AdaptableScalaFutures._
 import com.monsanto.arch.awsutil.test_support.Samplers.{EnhancedGen, arbitrarySample}
@@ -200,6 +201,65 @@ class DefaultAsyncIdentityManagementClientSpec extends FreeSpec with MockFactory
 
         val result = async.getUser(name).futureValue
         result shouldBe user
+      }
+    }
+
+    "create new managed policies" - {
+      "using a name and policy" in {
+        forAll(
+          CoreGen.iamName → "name",
+          arbitrary[Policy] → "document",
+          arbitrary[ManagedPolicy] → "managedPolicy"
+        ) { (name, document, managedPolicy) ⇒
+          val streaming = mock[StreamingIdentityManagementClient]("streaming")
+          val async = new DefaultAsyncIdentityManagementClient(streaming)
+
+          (streaming.policyCreator _)
+            .expects()
+            .returningFlow(CreatePolicyRequest(name, document, None, Path.empty), managedPolicy)
+
+          val result = async.createPolicy(name, document).futureValue
+          result shouldBe managedPolicy
+        }
+      }
+
+      "using a name, policy, and description" in {
+        forAll(
+          CoreGen.iamName → "name",
+          arbitrary[Policy] → "document",
+          arbitrary[String] → "description",
+          arbitrary[ManagedPolicy] → "managedPolicy"
+        ) { (name, document, description, managedPolicy) ⇒
+          val streaming = mock[StreamingIdentityManagementClient]("streaming")
+          val async = new DefaultAsyncIdentityManagementClient(streaming)
+
+          (streaming.policyCreator _)
+            .expects()
+            .returningFlow(CreatePolicyRequest(name, document, Some(description), Path.empty), managedPolicy)
+
+          val result = async.createPolicy(name, document, description).futureValue
+          result shouldBe managedPolicy
+        }
+      }
+
+      "using name, policy, description, and path" in {
+        forAll(
+          CoreGen.iamName → "name",
+          arbitrary[Policy] → "document",
+          arbitrary[String] → "description",
+          arbitrary[Path] → "path",
+          arbitrary[ManagedPolicy] → "managedPolicy"
+        ) { (name, document, description, path, managedPolicy) ⇒
+          val streaming = mock[StreamingIdentityManagementClient]("streaming")
+          val async = new DefaultAsyncIdentityManagementClient(streaming)
+
+          (streaming.policyCreator _)
+            .expects()
+            .returningFlow(CreatePolicyRequest(name, document, Some(description), path), managedPolicy)
+
+          val result = async.createPolicy(name, document, description, path).futureValue
+          result shouldBe managedPolicy
+        }
       }
     }
   }

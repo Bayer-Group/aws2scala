@@ -53,4 +53,31 @@ trait AsyncIdentityManagementClient extends AsyncAwsClient {
 
   /* Gets the information for the IAM user with the given name. */
   def getUser(name: String)(implicit m: Materializer): Future[User]
+
+  /** Creates a new managed policy.
+    *
+    * @param name the name for the new managed policy
+    * @param document the policy which will become the value for the managed policy
+    */
+  def createPolicy(name: String, document: Policy)
+                  (implicit m: Materializer): Future[ManagedPolicy]
+
+  /** Creates a new managed policy.
+    *
+    * @param name the name for the new managed policy
+    * @param document the policy which will become the value for the managed policy
+    * @param description a user-friendly description for the managed policy
+    */
+  def createPolicy(name: String, document: Policy, description: String)
+                  (implicit m: Materializer): Future[ManagedPolicy]
+
+  /** Creates a new managed policy.
+    *
+    * @param name the name for the new managed policy
+    * @param document the policy which will become the value for the managed policy
+    * @param description a user-friendly description for the managed policy
+    * @param path the path at which to place the managed policy
+    */
+  def createPolicy(name: String, document: Policy, description: String, path: Path)
+                  (implicit m: Materializer): Future[ManagedPolicy]
 }
