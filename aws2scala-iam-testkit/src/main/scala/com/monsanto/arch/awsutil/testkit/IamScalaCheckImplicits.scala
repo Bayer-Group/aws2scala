@@ -150,8 +150,6 @@ object IamScalaCheckImplicits {
       shrunkByName append shrunkByPath append shrunkByPasswordLastUsed
     }
 
-  implicit lazy val arbUserId: Arbitrary[UserId] = Arbitrary(IamGen.userId.map(UserId.apply))
-
   implicit lazy val arbListAttachedRolePoliciesRequest: Arbitrary[ListAttachedRolePoliciesRequest] =
     Arbitrary {
       val noPathPrefixRequest = CoreGen.iamName.map(ListAttachedRolePoliciesRequest(_: String))
