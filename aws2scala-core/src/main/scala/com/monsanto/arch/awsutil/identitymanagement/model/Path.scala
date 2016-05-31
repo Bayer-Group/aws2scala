@@ -7,6 +7,12 @@ package com.monsanto.arch.awsutil.identitymanagement.model
 case class Path(elements: Seq[String]) {
   /** Returns a string representing the path. */
   val pathString = if (elements.isEmpty) "/" else elements.mkString("/", "/", "/")
+
+  /** Allows appending to a path using the `/` character. */
+  def /(element: String): Path = {
+    require(!element.contains("/"), "A path element may not contain a slash.")
+    Path(elements :+ element)
+  }
 }
 
 object Path {
@@ -19,12 +25,9 @@ object Path {
       *
       * @throws java.lang.IllegalArgumentException if `pathString` cannot be parsed
       */
-    def apply(pathString: String): Path = {
-      pathString match {
-        case Path.fromPathString(p) ⇒ p
-        case _                  ⇒ throw new IllegalArgumentException(s"‘$pathString’ cannot be parsed as a valid path.")
-      }
-    }
+    def apply(pathString: String): Path =
+      unapply(pathString)
+        .getOrElse(throw new IllegalArgumentException(s"‘$pathString’ cannot be parsed as a valid path."))
 
     /** Extracts a `Path` from a path string. */
     def unapply(str: String): Option[Path] = {
