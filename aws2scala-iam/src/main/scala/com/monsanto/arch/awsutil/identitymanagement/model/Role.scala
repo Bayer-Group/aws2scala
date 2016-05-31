@@ -2,7 +2,7 @@ package com.monsanto.arch.awsutil.identitymanagement.model
 
 import java.util.Date
 
-import com.monsanto.arch.awsutil.auth.policy
+import com.monsanto.arch.awsutil.auth.policy.Policy
 
 /** Contains information about an IAM role.
   *
@@ -17,5 +17,5 @@ case class Role(arn: RoleArn,
                 name: String,
                 path: Path,
                 id: String,
-                assumeRolePolicyDocument: policy.Policy,
+                assumeRolePolicyDocument: Policy,
                 created: Date)

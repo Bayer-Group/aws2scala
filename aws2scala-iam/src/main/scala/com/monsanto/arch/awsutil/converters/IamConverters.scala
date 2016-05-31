@@ -3,7 +3,7 @@ package com.monsanto.arch.awsutil.converters
 import java.net.URLDecoder
 
 import com.amazonaws.services.identitymanagement.{model ⇒ aws}
-import com.monsanto.arch.awsutil.auth.policy
+import com.monsanto.arch.awsutil.auth.policy.Policy
 import com.monsanto.arch.awsutil.identitymanagement.model._
 
 /** Provides converters between ''aws2scala-iam'' objects and their AWS Java SDK counterparts. */
@@ -36,7 +36,7 @@ object IamConverters {
     def asScala: CreatePolicyRequest =
       CreatePolicyRequest(
         request.getPolicyName,
-        policy.Policy.fromJson(request.getPolicyDocument),
+        Policy.fromJson(request.getPolicyDocument),
         Option(request.getDescription),
         Option(request.getPath).map(Path.fromPathString(_)).getOrElse(Path.empty))
   }
@@ -54,7 +54,7 @@ object IamConverters {
     def asScala: CreateRoleRequest =
       CreateRoleRequest(
         request.getRoleName,
-        policy.Policy.fromJson(request.getAssumeRolePolicyDocument),
+        Policy.fromJson(request.getAssumeRolePolicyDocument),
         Option(request.getPath).map(Path.fromPathString(_)))
   }
 
@@ -105,8 +105,8 @@ object IamConverters {
   }
 
   implicit class AwsIamPolicy(val policy: aws.Policy) extends AnyVal {
-    def asScala: Policy =
-      Policy(
+    def asScala: ManagedPolicy =
+      ManagedPolicy(
         policy.getPolicyName,
         policy.getPolicyId,
         PolicyArn.fromArnString(policy.getArn),
@@ -119,7 +119,7 @@ object IamConverters {
         policy.getUpdateDate)
   }
 
-  implicit class ScalaIamPolicy(val policy: Policy) extends AnyVal {
+  implicit class ScalaIamPolicy(val policy: ManagedPolicy) extends AnyVal {
     def asAws: aws.Policy =
       new aws.Policy()
         .withPolicyName(policy.name)
@@ -141,7 +141,7 @@ object IamConverters {
         role.getRoleName,
         Path.fromPathString(role.getPath),
         role.getRoleId,
-        policy.Policy.fromJson {
+        Policy.fromJson {
           val rawPolicy = role.getAssumeRolePolicyDocument
           if (rawPolicy.toLowerCase.startsWith("%7b")) {
             URLDecoder.decode(rawPolicy, "UTF-8")

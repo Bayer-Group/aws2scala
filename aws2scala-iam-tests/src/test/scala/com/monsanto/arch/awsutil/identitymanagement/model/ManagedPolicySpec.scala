@@ -6,10 +6,10 @@ import org.scalatest.FreeSpec
 import org.scalatest.Matchers._
 import org.scalatest.prop.GeneratorDrivenPropertyChecks._
 
-class PolicySpec extends FreeSpec {
-  "a Policy should" - {
+class ManagedPolicySpec extends FreeSpec {
+  "a ManagedPolicy should" - {
     "round-trip via its AWS equivalent" in {
-      forAll { policy: Policy ⇒
+      forAll { policy: ManagedPolicy ⇒
         policy.asAws.asScala shouldBe policy
       }
     }

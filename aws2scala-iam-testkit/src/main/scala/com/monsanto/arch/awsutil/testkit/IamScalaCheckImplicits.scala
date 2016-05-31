@@ -3,7 +3,7 @@ package com.monsanto.arch.awsutil.testkit
 import java.util.Date
 
 import com.monsanto.arch.awsutil.Account
-import com.monsanto.arch.awsutil.auth.policy
+import com.monsanto.arch.awsutil.auth.policy.Policy
 import com.monsanto.arch.awsutil.identitymanagement.IdentityManagement
 import com.monsanto.arch.awsutil.identitymanagement.model._
 import com.monsanto.arch.awsutil.testkit.CoreScalaCheckImplicits._
@@ -195,7 +195,7 @@ object IamScalaCheckImplicits {
     Arbitrary {
       for {
         name ← CoreGen.iamName
-        policy ← arbitrary[policy.Policy]
+        policy ← arbitrary[Policy]
         path ← arbitrary[Path]
         description ← arbitrary[Option[String]].suchThat(_.forall(_.length < 1000))
       } yield CreatePolicyRequest(name, policy, description, path)
@@ -209,7 +209,7 @@ object IamScalaCheckImplicits {
         Shrink.shrink(request.description).map(d ⇒ request.copy(description = d))
     }
 
-  implicit lazy val arbIamPolicy: Arbitrary[Policy] =
+  implicit lazy val arbManagedPolicy: Arbitrary[ManagedPolicy] =
     Arbitrary {
       for {
         arn ← arbitrary[PolicyArn]
@@ -220,7 +220,14 @@ object IamScalaCheckImplicits {
         description ← arbitrary[Option[String]]
         created ← arbitrary[Date]
         updated ← arbitrary[Date].suchThat(u ⇒ u.equals(created) || u.after(created))
-      } yield Policy(arn.name, id, arn, arn.path, defaultVersionId, attachmentCount, attachable, description,
+      } yield ManagedPolicy(arn.name, id, arn, arn.path, defaultVersionId, attachmentCount, attachable, description,
         created, updated)
+    }
+
+  implicit lazy val shrinkManagedPolicy: Shrink[ManagedPolicy] =
+    Shrink { policy ⇒
+      Shrink.shrink(policy.arn).map(a ⇒ policy.copy(name = a.name, arn = a, path = a.path)) append
+        Shrink.shrink(policy.attachmentCount).filter(_ >= 0).map(x ⇒ policy.copy(attachmentCount = x)) append
+        Shrink.shrink(policy.description).map(x ⇒ policy.copy(description = x))
     }
 }

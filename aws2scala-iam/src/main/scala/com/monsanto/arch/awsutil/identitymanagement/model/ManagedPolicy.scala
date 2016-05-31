@@ -17,13 +17,13 @@ import java.util.Date
   *                contains the date and time when the policy was created.  When a policy has more than one version,
   *                this field contains the date and time when the most recent policy version was created.
   */
-case class Policy(name: String,
-                  id: String,
-                  arn: PolicyArn,
-                  path: Path,
-                  defaultVersionId: String,
-                  attachmentCount: Int,
-                  attachable: Boolean,
-                  description: Option[String],
-                  created: Date,
-                  updated: Date)
+case class ManagedPolicy(name: String,
+                         id: String,
+                         arn: PolicyArn,
+                         path: Path,
+                         defaultVersionId: String,
+                         attachmentCount: Int,
+                         attachable: Boolean,
+                         description: Option[String],
+                         created: Date,
+                         updated: Date)

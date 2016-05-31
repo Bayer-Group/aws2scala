@@ -204,7 +204,7 @@ class DefaultStreamingIdentityManagementClientSpec extends FreeSpec with MockFac
   }
 
   "a policy creator" in {
-    forAll { (request: CreatePolicyRequest, policy: Policy) ⇒
+    forAll { (request: CreatePolicyRequest, policy: ManagedPolicy) ⇒
       val iam = mock[AmazonIdentityManagementAsync]("iam")
       val streaming = new DefaultStreamingIdentityManagementClient(iam)
 

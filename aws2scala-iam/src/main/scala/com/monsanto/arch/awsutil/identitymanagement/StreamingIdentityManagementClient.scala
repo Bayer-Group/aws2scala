@@ -30,5 +30,5 @@ trait StreamingIdentityManagementClient extends StreamingAwsClient {
   def userGetter: Flow[GetUserRequest, User, NotUsed]
 
   /** Returns a flow that will process a request to create a policy and emit the resulting policy. */
-  def policyCreator: Flow[CreatePolicyRequest, Policy, NotUsed]
+  def policyCreator: Flow[CreatePolicyRequest, ManagedPolicy, NotUsed]
 }
