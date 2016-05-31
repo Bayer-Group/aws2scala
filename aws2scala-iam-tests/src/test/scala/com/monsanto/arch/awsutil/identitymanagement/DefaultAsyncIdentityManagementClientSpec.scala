@@ -95,9 +95,9 @@ class DefaultAsyncIdentityManagementClientSpec extends FreeSpec with MockFactory
 
         (streaming.roleLister _)
           .expects()
-          .returningConcatFlow(ListRolesRequest.withPathPrefix(prefix.pathString), roles)
+          .returningConcatFlow(ListRolesRequest.withPrefix(prefix), roles)
 
-        val result = async.listRoles(prefix.pathString).futureValue
+        val result = async.listRoles(prefix).futureValue
         result shouldBe roles
       }
     }

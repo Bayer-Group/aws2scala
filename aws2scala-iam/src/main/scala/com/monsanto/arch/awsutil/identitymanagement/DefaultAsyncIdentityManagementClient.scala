@@ -26,8 +26,8 @@ private[awsutil] class DefaultAsyncIdentityManagementClient(streaming: Streaming
       .via(streaming.roleLister)
       .runWith(Sink.seq)
 
-  override def listRoles(pathPrefix: String)(implicit m: Materializer) =
-    Source.single(ListRolesRequest.withPathPrefix(pathPrefix))
+  override def listRoles(prefix: Path)(implicit m: Materializer) =
+    Source.single(ListRolesRequest.withPrefix(prefix))
       .via(streaming.roleLister)
       .runWith(Sink.seq)
 

@@ -13,7 +13,7 @@ import scala.collection.JavaConverters._
 private[awsutil] class DefaultStreamingIdentityManagementClient(aws: AmazonIdentityManagementAsync) extends StreamingIdentityManagementClient {
   override val roleLister =
     Flow[ListRolesRequest]
-      .map(_.toAws)
+      .map(_.asAws)
       .via[ListRolesResult,NotUsed](AWSFlow.pagedByMarker(aws.listRolesAsync))
       .mapConcat(_.getRoles.asScala.map(_.asScala).toList)
       .named("IAM.roleLister")

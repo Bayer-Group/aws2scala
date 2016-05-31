@@ -26,8 +26,8 @@ class SecurityTokenServiceIntegrationSpec extends FreeSpec with AwsIntegrationSp
   private val iam = awsClient.streaming(IdentityManagement)
   private val async = awsClient.async(SecurityTokenService)
 
-  private val testPathPrefix = "/aws2scala-it-sts/"
-  private val testPath = Path.fromPathString(s"$testPathPrefix$testId/")
+  private val testPathPrefix = Path.empty / "aws2scala-it-sts"
+  private val testPath = testPathPrefix / testId
   private val testRoleName = s"STSTestRole-$testId"
   private val testRolePolicyArn = PolicyArn.fromArnString("arn:aws:iam::aws:policy/AmazonS3ReadOnlyAccess")
   private var testRole: Role = _

@@ -10,7 +10,7 @@ import com.amazonaws.services.sqs.AmazonSQSClient
 import com.monsanto.arch.awsutil.cloudformation.CloudFormation
 import com.monsanto.arch.awsutil.cloudformation.model.DeleteStackRequest
 import com.monsanto.arch.awsutil.identitymanagement.IdentityManagement
-import com.monsanto.arch.awsutil.identitymanagement.model.{DetachRolePolicyRequest, ListAttachedRolePoliciesRequest, ListRolesRequest}
+import com.monsanto.arch.awsutil.identitymanagement.model.{DetachRolePolicyRequest, ListAttachedRolePoliciesRequest, ListRolesRequest, Path}
 import com.monsanto.arch.awsutil.impl.AkkaStreamUtils.Implicits._
 import com.monsanto.arch.awsutil.rds.RDS
 import com.monsanto.arch.awsutil.s3.S3
@@ -177,11 +177,11 @@ trait IntegrationCleanup { this: FreeSpec with StrictLogging with AwsIntegration
     }
   }
 
-  protected def cleanupIAMRoles(pathPrefix: String): Unit = {
+  protected def cleanupIAMRoles(prefix: Path): Unit = {
     "cleans up old IAM roles" in {
       val iam = awsClient.streaming(IdentityManagement)
       val deletedCount =
-        Source.single(ListRolesRequest.withPathPrefix(pathPrefix))
+        Source.single(ListRolesRequest.withPrefix(prefix))
           .via(iam.roleLister)
           .filter(role ⇒ role.created.before(oneHourAgo))
           .buffer(100, OverflowStrategy.backpressure)

@@ -19,8 +19,8 @@ class IdentityManagementIntegrationSpec extends FreeSpec with AwsIntegrationSpec
   private val iamReadOnlyPolicy =
     AttachedPolicy(PolicyArn.fromArnString("arn:aws:iam::aws:policy/IAMReadOnlyAccess"), "IAMReadOnlyAccess")
 
-  private val testPathPrefix = "/aws2scala-it-iam/"
-  private val testPath = Path.fromPathString(s"$testPathPrefix$testId/")
+  private val testPathPrefix = Path.empty / "aws2scala-it-iam"
+  private val testPath = testPathPrefix / testId
   private var testUser: User = _
   private var testRole: Role = _
 
@@ -60,7 +60,7 @@ class IdentityManagementIntegrationSpec extends FreeSpec with AwsIntegrationSpec
       }
 
       "with a prefix" in {
-        val result = async.listRoles(testPath.pathString).futureValue
+        val result = async.listRoles(testPath).futureValue
         (result should contain (testRole)) (decided by roleId)
       }
     }

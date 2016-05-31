@@ -26,7 +26,7 @@ class DefaultStreamingIdentityManagementClientSpec extends FreeSpec with MockFac
         val iam = mock[AmazonIdentityManagementAsync]("iam")
         val streaming = new DefaultStreamingIdentityManagementClient(iam)
         val prefix = maybePrefix.map(_.pathString).orNull
-        val request = maybePrefix.map(p ⇒ ListRolesRequest.withPathPrefix(p.pathString)).getOrElse(ListRolesRequest.allRoles)
+        val request = maybePrefix.map(p ⇒ ListRolesRequest.withPrefix(p)).getOrElse(ListRolesRequest.allRoles)
 
         val pages = if (awsRoles.isEmpty) List(awsRoles) else awsRoles.grouped(5).toList
 

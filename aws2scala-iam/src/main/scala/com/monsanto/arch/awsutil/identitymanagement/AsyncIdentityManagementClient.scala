@@ -33,7 +33,7 @@ trait AsyncIdentityManagementClient extends AsyncAwsClient {
   def listRoles()(implicit m: Materializer): Future[Seq[Role]]
 
   /** Lists all roles with the given path prefix. */
-  def listRoles(pathPrefix: String)(implicit m: Materializer): Future[Seq[Role]]
+  def listRoles(prefix: Path)(implicit m: Materializer): Future[Seq[Role]]
 
   /** Attaches the managed policy to a role. */
   def attachRolePolicy(roleName: String, policyArn: PolicyArn)(implicit m: Materializer): Future[Done]

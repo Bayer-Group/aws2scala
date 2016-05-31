@@ -78,6 +78,14 @@ object IamConverters {
     }
   }
 
+  implicit class ScalaListRolesRequest(val request: ListRolesRequest) extends AnyVal {
+    def asAws: aws.ListRolesRequest = {
+      val awsRequest = new aws.ListRolesRequest
+      request.prefix.foreach(p ⇒ awsRequest.setPathPrefix(p.pathString))
+      awsRequest
+    }
+  }
+
   implicit class AwsRole(val role: aws.Role) extends AnyVal {
     def asScala: Role =
       Role(
