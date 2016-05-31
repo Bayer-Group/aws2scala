@@ -86,7 +86,7 @@ class SecurityTokenServiceIntegrationSpec extends FreeSpec with AwsIntegrationSp
   override protected def afterAll() = {
     try {
       val deletedRole =
-        Source.single(DetachRolePolicyRequest(testRole.name, testRolePolicyArn.arnString))
+        Source.single(DetachRolePolicyRequest(testRole.name, testRolePolicyArn))
           .via(iam.rolePolicyDetacher)
           .via(iam.roleDeleter)
           .runWith(Sink.head)

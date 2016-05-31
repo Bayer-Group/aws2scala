@@ -76,7 +76,7 @@ class IdentityManagementIntegrationSpec extends FreeSpec with AwsIntegrationSpec
     }
 
     "detach a policy from a role" in {
-      val result = async.detachRolePolicy(testRole.name, iamReadOnlyPolicy.arn.arnString).futureValue
+      val result = async.detachRolePolicy(testRole.name, iamReadOnlyPolicy.arn).futureValue
       result shouldBe Done
     }
 

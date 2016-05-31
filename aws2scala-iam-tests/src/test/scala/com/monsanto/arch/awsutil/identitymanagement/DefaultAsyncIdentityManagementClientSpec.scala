@@ -129,9 +129,9 @@ class DefaultAsyncIdentityManagementClientSpec extends FreeSpec with MockFactory
 
         (streaming.rolePolicyDetacher _)
           .expects()
-          .returningFlow(DetachRolePolicyRequest(roleName, policyArn.arnString), roleName)
+          .returningFlow(DetachRolePolicyRequest(roleName, policyArn), roleName)
 
-        val result = async.detachRolePolicy(roleName, policyArn.arnString).futureValue
+        val result = async.detachRolePolicy(roleName, policyArn).futureValue
         result shouldBe Done
       }
     }

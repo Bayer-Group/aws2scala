@@ -191,7 +191,7 @@ trait IntegrationCleanup { this: FreeSpec with StrictLogging with AwsIntegration
               .via(iam.attachedRolePolicyLister)
               .map { policy ⇒
                 logger.info(s"Detaching ${policy.name} from ${role.name}")
-                DetachRolePolicyRequest(role.name, policy.arn.arnString)
+                DetachRolePolicyRequest(role.name, policy.arn)
               }
               .via(iam.rolePolicyDetacher)
               .fold(0)((count, _) ⇒ count + 1)

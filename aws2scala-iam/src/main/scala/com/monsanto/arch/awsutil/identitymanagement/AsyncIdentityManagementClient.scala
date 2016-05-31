@@ -39,7 +39,7 @@ trait AsyncIdentityManagementClient extends AsyncAwsClient {
   def attachRolePolicy(roleName: String, policyArn: PolicyArn)(implicit m: Materializer): Future[Done]
 
   /** Detaches the managed policy from a role. */
-  def detachRolePolicy(roleName: String, policyArn: String)(implicit m: Materializer): Future[Done]
+  def detachRolePolicy(roleName: String, policyArn: PolicyArn)(implicit m: Materializer): Future[Done]
 
   /** Lists all managed policies attached to the given role. */
   def listAttachedRolePolicies(roleName: String)(implicit m: Materializer): Future[Seq[AttachedPolicy]]

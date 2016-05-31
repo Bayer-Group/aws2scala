@@ -41,7 +41,7 @@ private[awsutil] class DefaultStreamingIdentityManagementClient(aws: AmazonIdent
 
   override val rolePolicyDetacher =
     Flow[DetachRolePolicyRequest]
-      .map(_.toAws)
+      .map(_.asAws)
       .via(AWSFlow.simple(AWSFlowAdapter.devoid(aws.detachRolePolicyAsync)))
       .map(_.getRoleName)
       .named("IAM.rolePolicyDetacher")

@@ -1,6 +1,7 @@
 package com.monsanto.arch.awsutil.identitymanagement.model
 
 import com.amazonaws.services.identitymanagement.{model ⇒ aws}
+import com.monsanto.arch.awsutil.converters.IamConverters._
 import com.monsanto.arch.awsutil.testkit.CoreGen
 import com.monsanto.arch.awsutil.testkit.IamScalaCheckImplicits._
 import org.scalacheck.Arbitrary.arbitrary
@@ -19,13 +20,13 @@ class DetachRolePolicyRequestSpec extends FreeSpec {
           .withPolicyArn(policyArn.arnString)
           .withRoleName(roleName)
 
-        DetachRolePolicyRequest.fromAws(request).toAws shouldBe request
+        request.asScala.asAws shouldBe request
       }
     }
 
     "via its AWS equivalent" in {
       forAll { request: DetachRolePolicyRequest ⇒
-        DetachRolePolicyRequest.fromAws(request.toAws) shouldBe request
+        request.asAws.asScala shouldBe request
       }
     }
   }

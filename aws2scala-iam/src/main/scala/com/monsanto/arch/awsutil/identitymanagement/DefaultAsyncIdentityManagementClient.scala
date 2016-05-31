@@ -36,7 +36,7 @@ private[awsutil] class DefaultAsyncIdentityManagementClient(streaming: Streaming
       .via(streaming.rolePolicyAttacher)
       .runWith(Sink.ignore)
 
-  override def detachRolePolicy(roleName: String, policyArn: String)(implicit m: Materializer) =
+  override def detachRolePolicy(roleName: String, policyArn: PolicyArn)(implicit m: Materializer) =
     Source.single(DetachRolePolicyRequest(roleName, policyArn))
       .via(streaming.rolePolicyDetacher)
       .runWith(Sink.ignore)

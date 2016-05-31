@@ -50,6 +50,18 @@ object IamConverters {
     }
   }
 
+  implicit class AwsDetachRolePolicyRequest(val request: aws.DetachRolePolicyRequest) extends AnyVal {
+    def asScala: DetachRolePolicyRequest =
+      DetachRolePolicyRequest(request.getRoleName, PolicyArn.fromArnString(request.getPolicyArn))
+  }
+
+  implicit class ScalaDetachRolePolicyRequest(val request: DetachRolePolicyRequest) extends AnyVal {
+    def asAws: aws.DetachRolePolicyRequest =
+      new aws.DetachRolePolicyRequest()
+        .withRoleName(request.roleName)
+        .withPolicyArn(request.policyArn.arnString)
+  }
+
   implicit class AwsRole(val role: aws.Role) extends AnyVal {
     def asScala: Role =
       Role(
