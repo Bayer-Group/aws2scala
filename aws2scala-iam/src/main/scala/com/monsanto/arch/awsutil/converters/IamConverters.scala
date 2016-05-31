@@ -62,6 +62,14 @@ object IamConverters {
         .withPolicyArn(request.policyArn.arnString)
   }
 
+  implicit class ScalaGetUserRequest(val request: GetUserRequest) extends AnyVal {
+    def asAws: aws.GetUserRequest = {
+      val awsRequest = new aws.GetUserRequest
+      request.userName.foreach(u ⇒ awsRequest.setUserName(u))
+      awsRequest
+    }
+  }
+
   implicit class AwsRole(val role: aws.Role) extends AnyVal {
     def asScala: Role =
       Role(

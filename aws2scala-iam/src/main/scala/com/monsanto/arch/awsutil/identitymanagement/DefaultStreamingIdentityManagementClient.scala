@@ -56,7 +56,7 @@ private[awsutil] class DefaultStreamingIdentityManagementClient(aws: AmazonIdent
 
   override val userGetter =
     Flow[GetUserRequest]
-      .map(_.toAws)
+      .map(_.asAws)
       .via[GetUserResult,NotUsed](AWSFlow.simple(aws.getUserAsync))
       .map(r ⇒ r.getUser.asScala)
       .named("IAM.userGetter")
