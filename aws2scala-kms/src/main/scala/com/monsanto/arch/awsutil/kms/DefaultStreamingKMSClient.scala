@@ -5,6 +5,7 @@ import akka.stream.FlowShape
 import akka.stream.scaladsl._
 import com.amazonaws.AmazonServiceException
 import com.amazonaws.services.kms.{AWSKMSAsync, model ⇒ aws}
+import com.monsanto.arch.awsutil.converters.KmsConverters._
 import com.monsanto.arch.awsutil.kms.model._
 import com.monsanto.arch.awsutil.{AWSFlow, AWSFlowAdapter}
 
@@ -15,7 +16,7 @@ private[awsutil] class DefaultStreamingKMSClient(kms: AWSKMSAsync) extends Strea
     Flow[CreateKeyRequest]
       .map(_.toAws)
       .via[aws.CreateKeyResult, NotUsed](AWSFlow.simple(kms.createKeyAsync))
-      .map(result ⇒ KeyMetadata(result.getKeyMetadata))
+      .map(result ⇒ result.getKeyMetadata.asScala)
       .named("KMS.keyCreator")
 
   override val keyDeletionScheduler =
@@ -57,7 +58,7 @@ private[awsutil] class DefaultStreamingKMSClient(kms: AWSKMSAsync) extends Strea
       .map(asKeyIdentifier)
       .map(id ⇒ new aws.DescribeKeyRequest().withKeyId(id))
       .via[aws.DescribeKeyResult,NotUsed](AWSFlow.simple(kms.describeKeyAsync))
-      .map(result ⇒ Some(KeyMetadata(result.getKeyMetadata)))
+      .map(result ⇒ Some(result.getKeyMetadata.asScala))
       .recover { case e: AmazonServiceException if e.getErrorCode == "NotFoundException" ⇒ None }
       .named("KMS.keyDescriber")
 

@@ -1,10 +1,40 @@
 package com.monsanto.arch.awsutil.converters
 
 import com.amazonaws.services.kms.{model ⇒ aws}
-import com.monsanto.arch.awsutil.kms.model.{KeyState, KeyUsage}
+import com.monsanto.arch.awsutil.kms.model.{KeyArn, KeyMetadata, KeyState, KeyUsage}
 
 /** Utility for converting ''aws2scala-kms'' objects to/from their AWS counterparts. */
 object KmsConverters {
+  implicit class AwsKeyMetadata(val metadata: aws.KeyMetadata) extends AnyVal {
+    def asScala: KeyMetadata = {
+      val arn = KeyArn.fromArnString(metadata.getArn)
+      KeyMetadata(
+        arn.account,
+        metadata.getKeyId,
+        arn,
+        metadata.getCreationDate,
+        metadata.isEnabled.booleanValue(),
+        Option(metadata.getDescription),
+        KeyUsage.fromName(metadata.getKeyUsage),
+        KeyState.fromName(metadata.getKeyState),
+        Option(metadata.getDeletionDate))
+    }
+  }
+
+  implicit class ScalaKeyMetadata(val metadata: KeyMetadata) extends AnyVal {
+    def asAws: aws.KeyMetadata =
+      new aws.KeyMetadata()
+        .withArn(metadata.arn.arnString)
+        .withAWSAccountId(metadata.account.id)
+        .withCreationDate(metadata.creationDate)
+        .withDeletionDate(metadata.deletionDate.orNull)
+        .withDescription(metadata.description.orNull)
+        .withEnabled(java.lang.Boolean.valueOf(metadata.enabled))
+        .withKeyId(metadata.id)
+        .withKeyState(metadata.state.asAws)
+        .withKeyUsage(metadata.usage.asAws)
+  }
+
   implicit class AwsKeyState(val keyState: aws.KeyState) extends AnyVal {
     def asScala: KeyState =
       keyState match {
