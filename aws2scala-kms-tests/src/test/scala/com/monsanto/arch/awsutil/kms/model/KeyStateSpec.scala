@@ -1,38 +1,38 @@
 package com.monsanto.arch.awsutil.kms.model
 
-import com.amazonaws.services.kms.model.{KeyState ⇒ AWSKeyState}
-import org.scalatest.{FreeSpec, Matchers}
+import com.amazonaws.services.kms.{model ⇒ aws}
+import com.monsanto.arch.awsutil.converters.KmsConverters._
+import com.monsanto.arch.awsutil.test_support.AwsEnumerationBehaviours
+import org.scalatest.FreeSpec
+import org.scalatest.Matchers._
+import org.scalatest.prop.TableDrivenPropertyChecks.{Table, forAll}
 
-class KeyStateSpec extends FreeSpec {
-  import Matchers._
+class KeyStateSpec extends FreeSpec with AwsEnumerationBehaviours {
+  "a KeyState should" - {
+    val keyStates = Table("key state", KeyState.values: _*)
 
-  def scalafiedEnum(scala: KeyState, aws: AWSKeyState): Unit = {
-    "should have the same string representation as in AWS" in {
-      scala.toString shouldBe aws.toString
+    "have an ID that matches AWS string enumeration name" in {
+      forAll(keyStates) { keyState ⇒
+        keyState.name shouldBe keyState.asAws.name()
+      }
     }
 
-    "should be convertible to the correct AWS type" in {
-      scala.toAws shouldBe aws
+    "be buildable from an identifier string" in {
+      forAll(keyStates) { keyState ⇒
+        KeyState.fromName(keyState.name) shouldBe keyState
+      }
     }
 
-    "should be convertible from an AWS string" in {
-      KeyState(aws.toString) shouldBe scala
-    }
-
-    "should be convertible from the AWS type" in {
-      KeyState(aws) shouldBe scala
+    "not be buildable from an invalid identifier string" in {
+      an [IllegalArgumentException] shouldBe thrownBy {
+        KeyState.fromName("foo")
+      }
     }
   }
 
-  "the Enabled state" - {
-    behave like scalafiedEnum(KeyState.Enabled, AWSKeyState.Enabled)
-  }
-
-  "the Disabled state" - {
-    behave like scalafiedEnum(KeyState.Disabled, AWSKeyState.Disabled)
-  }
-
-  "the PendingDeletion state" - {
-    behave like scalafiedEnum(KeyState.PendingDeletion, AWSKeyState.PendingDeletion)
-  }
+  behave like anAwsEnumeration(
+    aws.KeyState.values(),
+    KeyState.values,
+    (_: KeyState).asAws,
+    (_: aws.KeyState).asScala)
 }

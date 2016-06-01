@@ -23,7 +23,7 @@ case class KeyMetadata(arn: String,
     aws.setDescription(description.orNull)
     aws.setEnabled(enabled)
     aws.setKeyId(id)
-    aws.setKeyState(state.toAws)
+    aws.setKeyState(state.asAws)
     aws.setKeyUsage(usage.asAws)
     aws
   }
@@ -39,6 +39,6 @@ object KeyMetadata {
       Option(aws.getDescription),
       aws.isEnabled,
       aws.getKeyId,
-      KeyState(aws.getKeyState),
+      KeyState.fromName(aws.getKeyState),
       KeyUsage.fromName(aws.getKeyUsage))
 }
