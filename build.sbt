@@ -46,7 +46,7 @@ lazy val commonSettings = Seq(
   ),
   apiMappingsJava ++= Map(
     ("com.typesafe", "config") → "http://typesafehub.github.io/config/latest/api"
-  ) ++ createAwsApiMappings("core", "cloudformation", "ec2", "kms", "rds", "s3", "sns", "sts"),
+  ) ++ createAwsApiMappings("core", "cloudformation", "ec2", "iam", "kms", "rds", "s3", "sns", "sts"),
 
   // coverage
   coverageExcludedPackages := "com\\.monsanto\\.arch\\.awsutil\\.test_support\\..*;com\\.monsanto\\.arch\\.awsutil\\.testkit\\..*",
