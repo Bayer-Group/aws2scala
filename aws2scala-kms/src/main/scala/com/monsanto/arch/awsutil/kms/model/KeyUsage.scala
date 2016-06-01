@@ -1,24 +1,25 @@
 package com.monsanto.arch.awsutil.kms.model
 
-import com.amazonaws.services.kms.{model ⇒ aws}
-
-sealed trait KeyUsage extends AnyRef {
-  /** Returns the AWS enumeration value corresponding to the Key usage type. */
-  def toAws: aws.KeyUsageType
-
-  /** Ensures that the string representation matches the one AWS uses. */
-  override def toString = toAws.toString
-}
+/** Parent class for all key usage types.
+  *
+  * @param name the unique name of the key usage
+  */
+sealed abstract class KeyUsage(val name: String)
 
 object KeyUsage {
-  case object EncryptDecrypt extends KeyUsage {
-    val toAws = aws.KeyUsageType.ENCRYPT_DECRYPT
+  /** The key may be used encryption and decryption. */
+  case object EncryptDecrypt extends KeyUsage("ENCRYPT_DECRYPT")
+
+  /** All valid values for the enumeration. */
+  val values: Seq[KeyUsage] = Seq(EncryptDecrypt)
+
+  /** Utility for building/extracting a `KeyUsage` instance from an identifier string. */
+  object fromName {
+    /** Returns a `KeyUsage` instance from a string containing its identifier. */
+    def apply(name: String): KeyUsage =
+      unapply(name).getOrElse(throw new IllegalArgumentException(s"’$name‘ is not a valid key usage."))
+
+    /** Extracts a `KeyUsage` instance from a string containing its identifier. */
+    def unapply(name: String): Option[KeyUsage] = values.find(_.name == name)
   }
-
-  def apply(str: String): KeyUsage = apply(aws.KeyUsageType.fromValue(str))
-
-  def apply(awsKeyUsage: aws.KeyUsageType): KeyUsage =
-    awsKeyUsage match {
-      case aws.KeyUsageType.ENCRYPT_DECRYPT ⇒ EncryptDecrypt
-    }
 }

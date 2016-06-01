@@ -1,6 +1,7 @@
 package com.monsanto.arch.awsutil.kms.model
 
 import com.amazonaws.services.kms.model.{CreateKeyRequest ⇒ AWSCreateKeyRequest}
+import com.monsanto.arch.awsutil.converters.KmsConverters._
 
 /** A rough analogue to AWS‘ own `CreateKeyRequest`, with one major distinction: it includes an alias.
   *
@@ -16,7 +17,7 @@ case class CreateKeyRequest(alias: String,
   /** Returns an AWS `CreateKeyRequest` object corresponding to this request. */
   def toAws: AWSCreateKeyRequest = {
     val request = new AWSCreateKeyRequest
-    request.setKeyUsage(keyUsage.toAws)
+    request.setKeyUsage(keyUsage.asAws)
     description.foreach(d ⇒ request.setDescription(d))
     policy.foreach(p ⇒ request.setPolicy(p))
     request

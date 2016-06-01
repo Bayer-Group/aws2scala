@@ -1,26 +1,38 @@
 package com.monsanto.arch.awsutil.kms.model
 
 import com.amazonaws.services.kms.model.KeyUsageType
-import org.scalatest.{FreeSpec, Matchers}
+import com.monsanto.arch.awsutil.converters.KmsConverters._
+import com.monsanto.arch.awsutil.test_support.AwsEnumerationBehaviours
+import org.scalatest.FreeSpec
+import org.scalatest.Matchers._
+import org.scalatest.prop.TableDrivenPropertyChecks.{Table, forAll}
 
-class KeyUsageSpec extends FreeSpec {
-  import Matchers._
+class KeyUsageSpec extends FreeSpec with AwsEnumerationBehaviours {
+  "a KeyUsage should" - {
+    val keyUsages = Table("key usage", KeyUsage.values: _*)
 
-  "the EncryptDecrypt key usage should" - {
-    "have the same string representation as in AWS" in {
-      KeyUsage.EncryptDecrypt.toString shouldBe KeyUsageType.ENCRYPT_DECRYPT.toString
+    "have an ID that matches AWS string enumeration name" in {
+      forAll(keyUsages) { keyUsage ⇒
+        keyUsage.name shouldBe keyUsage.asAws.name()
+      }
     }
 
-    "be built from a string" in {
-      KeyUsage(KeyUsageType.ENCRYPT_DECRYPT.toString) shouldBe KeyUsage.EncryptDecrypt
+    "be buildable from an identifier string" in {
+      forAll(keyUsages) { keyUsage ⇒
+        KeyUsage.fromName(keyUsage.name) shouldBe keyUsage
+      }
     }
 
-    "be built from an AWS type" in {
-      KeyUsage(KeyUsageType.ENCRYPT_DECRYPT) shouldBe KeyUsage.EncryptDecrypt
-    }
-
-    "convert to the correct AWS type" in {
-      KeyUsage.EncryptDecrypt.toAws shouldBe KeyUsageType.ENCRYPT_DECRYPT
+    "not be buildable from an invalid identifier string" in {
+      an [IllegalArgumentException] shouldBe thrownBy {
+        KeyUsage.fromName("foo")
+      }
     }
   }
+
+  behave like anAwsEnumeration(
+    KeyUsageType.values(),
+    KeyUsage.values,
+    (_: KeyUsage).asAws,
+    (_: KeyUsageType).asScala)
 }

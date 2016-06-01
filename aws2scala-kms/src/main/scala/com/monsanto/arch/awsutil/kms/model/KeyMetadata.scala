@@ -1,7 +1,9 @@
 package com.monsanto.arch.awsutil.kms.model
 
-import com.amazonaws.services.kms.model.{KeyMetadata ⇒ AWSKeyMetadata}
 import java.util.Date
+
+import com.amazonaws.services.kms.model.{KeyMetadata ⇒ AWSKeyMetadata}
+import com.monsanto.arch.awsutil.converters.KmsConverters._
 
 case class KeyMetadata(arn: String,
                        accountId: String,
@@ -22,7 +24,7 @@ case class KeyMetadata(arn: String,
     aws.setEnabled(enabled)
     aws.setKeyId(id)
     aws.setKeyState(state.toAws)
-    aws.setKeyUsage(usage.toAws)
+    aws.setKeyUsage(usage.asAws)
     aws
   }
 }
@@ -38,5 +40,5 @@ object KeyMetadata {
       aws.isEnabled,
       aws.getKeyId,
       KeyState(aws.getKeyState),
-      KeyUsage(aws.getKeyUsage))
+      KeyUsage.fromName(aws.getKeyUsage))
 }
