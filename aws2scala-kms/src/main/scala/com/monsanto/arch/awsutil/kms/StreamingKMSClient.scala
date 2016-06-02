@@ -38,7 +38,7 @@ trait StreamingKMSClient extends StreamingAwsClient {
 
   /** An Akka flow that given a key creation request will create the key and the corresponding alias. Emits the
     * resulting key metadata. */
-  def keyWithAliasCreator: Flow[CreateKeyRequest, KeyMetadata, NotUsed]
+  def keyWithAliasCreator: Flow[CreateKeyWithAliasRequest, KeyMetadata, NotUsed]
 
   /** An Akka source that will list all keys and their corresponding aliases. */
   def lister: Source[ListEntry, NotUsed]

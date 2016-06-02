@@ -1,7 +1,7 @@
 package com.monsanto.arch.awsutil.converters
 
 import com.amazonaws.services.kms.{model ⇒ aws}
-import com.monsanto.arch.awsutil.kms.model.{KeyArn, KeyMetadata, KeyState, KeyUsage}
+import com.monsanto.arch.awsutil.kms.model._
 
 /** Utility for converting ''aws2scala-kms'' objects to/from their AWS counterparts. */
 object KmsConverters {
@@ -65,5 +65,13 @@ object KmsConverters {
       keyUsage match {
         case KeyUsage.EncryptDecrypt ⇒ aws.KeyUsageType.ENCRYPT_DECRYPT
       }
+  }
+
+  implicit class ScalaCreateKeyRequest(val request: CreateKeyWithAliasRequest) extends AnyVal {
+    def asAws: aws.CreateKeyRequest =
+      new aws.CreateKeyRequest()
+        .withKeyUsage(request.keyUsage.asAws)
+        .withPolicy(request.policy.map(_.toJson).orNull)
+        .withDescription(request.description.orNull)
   }
 }

@@ -13,8 +13,8 @@ import scala.collection.JavaConverters._
 
 private[awsutil] class DefaultStreamingKMSClient(kms: AWSKMSAsync) extends StreamingKMSClient {
   private val keyCreator =
-    Flow[CreateKeyRequest]
-      .map(_.toAws)
+    Flow[CreateKeyWithAliasRequest]
+      .map(_.asAws)
       .via[aws.CreateKeyResult, NotUsed](AWSFlow.simple(kms.createKeyAsync))
       .map(result ⇒ result.getKeyMetadata.asScala)
       .named("KMS.keyCreator")
@@ -91,7 +91,7 @@ private[awsutil] class DefaultStreamingKMSClient(kms: AWSKMSAsync) extends Strea
       GraphDSL.create() { implicit b ⇒
         import GraphDSL.Implicits._
 
-        val inputCopy = b.add(Broadcast[CreateKeyRequest](2))
+        val inputCopy = b.add(Broadcast[CreateKeyWithAliasRequest](2))
         val metadataCopy = b.add(Broadcast[KeyMetadata](2))
         val aliasInputs = b.add(Zip[String,String])
         val outputSync = b.add(ZipWith[KeyMetadata, String, KeyMetadata]((a,b) ⇒ a))

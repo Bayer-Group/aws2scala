@@ -8,7 +8,7 @@ import akka.stream.scaladsl.{Sink, Source}
 import com.amazonaws.AmazonServiceException
 import com.amazonaws.handlers.AsyncHandler
 import com.amazonaws.services.kms.AWSKMSAsync
-import com.amazonaws.services.kms.model.{CreateKeyRequest ⇒ AWSCreateKeyRequest, DataKeySpec ⇒ AWSDataKeySpec, DecryptRequest ⇒ AWSDecryptRequest, EncryptRequest ⇒ AWSEncryptRequest, GenerateDataKeyRequest ⇒ AWSGenerateDataKeyRequest, KeyMetadata ⇒ _, KeyState ⇒ _, _}
+import com.amazonaws.services.kms.model.{DataKeySpec ⇒ AWSDataKeySpec, DecryptRequest ⇒ AWSDecryptRequest, EncryptRequest ⇒ AWSEncryptRequest, GenerateDataKeyRequest ⇒ AWSGenerateDataKeyRequest, KeyMetadata ⇒ _, KeyState ⇒ _, _}
 import com.monsanto.arch.awsutil.converters.KmsConverters._
 import com.monsanto.arch.awsutil.kms.model._
 import com.monsanto.arch.awsutil.test_support.AdaptableScalaFutures._
@@ -36,58 +36,6 @@ class DefaultKMSClientSpec extends FreeSpec with Materialised with MockFactory w
   }
 
   "the default KMS client can" - {
-    "create keys" - {
-      val keyMetadata = arbitrarySample[KeyMetadata]
-      def withCreateKeyFixture(description: String, policy: String)(test: Fixture ⇒ Any): Unit = {
-        withFixture { f ⇒
-          (f.awsClient.createKeyAsync(_: AWSCreateKeyRequest, _: AsyncHandler[AWSCreateKeyRequest, CreateKeyResult]))
-            .expects(whereRequest(request ⇒
-              request.getPolicy == policy &&
-                request.getDescription == description &&
-                request.getKeyUsage == KeyUsageType.ENCRYPT_DECRYPT.toString
-            ))
-            .withAwsSuccess(new CreateKeyResult().withKeyMetadata(keyMetadata.asAws))
-          (f.awsClient.createAliasAsync(_: CreateAliasRequest, _: AsyncHandler[CreateAliasRequest,Void]))
-            .expects(whereRequest(request ⇒
-              request.getAliasName == s"alias/$alias" &&
-                request.getTargetKeyId == keyMetadata.id
-            ))
-            .withVoidAwsSuccess()
-
-          test(f)
-        }
-      }
-
-      val description = "a description"
-      val policy = "a policy"
-
-      "with no optional arguments" in withCreateKeyFixture(null, null) { f ⇒
-        val result = f.asyncClient.createKey(alias).futureValue
-        result shouldBe keyMetadata
-      }
-
-      "using a alias that already includes the `alias/` prefix" in withCreateKeyFixture(null, null) { f ⇒
-        val result = f.asyncClient.createKey(s"alias/$alias").futureValue
-        result shouldBe keyMetadata
-      }
-
-      "with a description" in withCreateKeyFixture(description, null) { f ⇒
-        val result = f.asyncClient.createKey(alias, description).futureValue
-        result shouldBe keyMetadata
-      }
-
-      "with a policy" in withCreateKeyFixture(null, policy) { f ⇒
-        val result = f.asyncClient.createKey(CreateKeyRequest(alias, policy = Some(policy))).futureValue
-        result shouldBe keyMetadata
-      }
-
-      "with a description and a policy" in withCreateKeyFixture(description, policy) { f ⇒
-        val request = CreateKeyRequest(alias, description = Some(description), policy = Some(policy))
-        val result = f.asyncClient.createKey(request).futureValue
-        result shouldBe keyMetadata
-      }
-    }
-
     "schedule deletion of a key" in withFixture { f ⇒
       val keyId = "someKeyId"
       val days = 15
