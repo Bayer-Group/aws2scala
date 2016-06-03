@@ -8,10 +8,10 @@ import scala.concurrent.Future
 
 private[awsutil] class DefaultAsyncKMSClient(streamingClient: StreamingKMSClient) extends AsyncKMSClient {
   override def createKey(alias: String)(implicit m: Materializer): Future[KeyMetadata] =
-    createKey(CreateKeyWithAliasRequest(alias, None, None, KeyUsage.EncryptDecrypt))
+    createKey(CreateKeyWithAliasRequest(alias, None, None, KeyUsage.EncryptDecrypt, None))
 
   override def createKey(alias: String, description: String)(implicit m: Materializer): Future[KeyMetadata] =
-    createKey(CreateKeyWithAliasRequest(alias, None, Some(description), KeyUsage.EncryptDecrypt))
+    createKey(CreateKeyWithAliasRequest(alias, None, Some(description), KeyUsage.EncryptDecrypt, None))
 
   override def createKey(createKeyRequest: CreateKeyWithAliasRequest)(implicit m: Materializer): Future[KeyMetadata] =
     Source.single(createKeyRequest)

@@ -8,8 +8,10 @@ import com.monsanto.arch.awsutil.auth.policy.Policy
   * @param policy the policy to attach to the CMK
   * @param description an optional description for the CMK
   * @param keyUsage the intended use of the CMK
+  * @param bypassPolicyLockoutSafetyCheck a flag to indicate whether to bypass the key policy lockout safety check
   */
 case class CreateKeyWithAliasRequest(alias: String,
                                      policy: Option[Policy],
                                      description: Option[String],
-                                     keyUsage: KeyUsage)
+                                     keyUsage: KeyUsage,
+                                     bypassPolicyLockoutSafetyCheck: Option[Boolean])

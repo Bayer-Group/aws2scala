@@ -10,6 +10,9 @@ class CreateKeyWithAliasRequestSpec extends FreeSpec {
   "a CreateKeyWithAliasRequest should" - {
     "convert to a correct AWS CreateKeyRequest object" in {
       forAll { request: CreateKeyWithAliasRequest ⇒
+        val awsRequest = request.asAws
+        awsRequest.getBypassPolicyLockoutSafetyCheck shouldBe
+          request.bypassPolicyLockoutSafetyCheck.map(java.lang.Boolean.valueOf).orNull
         request.asAws should have (
           'Description (request.description.orNull),
           'KeyUsage (request.keyUsage.name),

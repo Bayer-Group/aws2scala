@@ -17,7 +17,8 @@ object KmsScalaCheckImplicits {
         policy ← Gen.option(arbitrary[Policy])
         description ← arbitrary[Option[String]].suchThat(_.forall(_.length < 8192))
         keyUsage ← arbitrary[KeyUsage]
-      } yield CreateKeyWithAliasRequest(alias, policy, description, keyUsage)
+        bypassBlahBlahBlah ← arbitrary[Option[Boolean]]
+      } yield CreateKeyWithAliasRequest(alias, policy, description, keyUsage, bypassBlahBlahBlah)
     }
 
   implicit lazy val shrinkCreateKeyWithAliasRequest: Shrink[CreateKeyWithAliasRequest] =

@@ -73,5 +73,7 @@ object KmsConverters {
         .withKeyUsage(request.keyUsage.asAws)
         .withPolicy(request.policy.map(_.toJson).orNull)
         .withDescription(request.description.orNull)
+        .withBypassPolicyLockoutSafetyCheck(
+          request.bypassPolicyLockoutSafetyCheck.map(java.lang.Boolean.valueOf).orNull)
   }
 }

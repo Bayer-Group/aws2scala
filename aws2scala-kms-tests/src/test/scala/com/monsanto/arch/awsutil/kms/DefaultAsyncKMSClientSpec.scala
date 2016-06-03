@@ -25,7 +25,7 @@ class DefaultAsyncKMSClientSpec extends FreeSpec with MockFactory with Materiali
           (streaming.keyWithAliasCreator _)
             .expects()
             .returningFlow(
-              CreateKeyWithAliasRequest(alias, None, None, KeyUsage.EncryptDecrypt),
+              CreateKeyWithAliasRequest(alias, None, None, KeyUsage.EncryptDecrypt, None),
               metadata)
 
           val result = async.createKey(alias).futureValue
@@ -45,7 +45,7 @@ class DefaultAsyncKMSClientSpec extends FreeSpec with MockFactory with Materiali
           (streaming.keyWithAliasCreator _)
             .expects()
             .returningFlow(
-              CreateKeyWithAliasRequest(alias, None, Some(description), KeyUsage.EncryptDecrypt),
+              CreateKeyWithAliasRequest(alias, None, Some(description), KeyUsage.EncryptDecrypt, None),
               metadata)
 
           val result = async.createKey(alias, description).futureValue
