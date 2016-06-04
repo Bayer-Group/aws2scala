@@ -68,6 +68,12 @@ object CoreScalaCheckImplicits {
         Shrink.shrink(statement.conditions).map(x ⇒ statement.copy(conditions = x))
     }
 
+  implicit val arbStatements: Arbitrary[Seq[Statement]] =
+    Arbitrary(UtilGen.nonEmptyListOfSqrtN(arbitrary[Statement]))
+
+  implicit val shrinkStatements: Shrink[Seq[Statement]] =
+    Shrink(statements ⇒ Shrink.shrinkContainer[Seq,Statement].shrink(statements).filter(_.nonEmpty))
+
   implicit lazy val arbStatementEffect: Arbitrary[Statement.Effect] =
     Arbitrary(Gen.oneOf(Statement.Effect.values))
 

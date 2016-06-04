@@ -2,9 +2,8 @@ package com.monsanto.arch.awsutil.auth.policy
 
 import com.monsanto.arch.awsutil.auth.policy.PolicyDSL._
 import com.monsanto.arch.awsutil.testkit.CoreScalaCheckImplicits._
-import com.monsanto.arch.awsutil.testkit.UtilGen
 import org.scalacheck.Arbitrary.arbitrary
-import org.scalacheck.{Arbitrary, Gen, Shrink}
+import org.scalacheck.Gen
 import org.scalatest.FreeSpec
 import org.scalatest.Matchers._
 import org.scalatest.prop.GeneratorDrivenPropertyChecks.forAll
@@ -152,7 +151,7 @@ class PolicyDSLSpec extends FreeSpec {
 
         "two statement lists" in {
           forAll { (statements1: Seq[Statement], statements2: Seq[Statement]) ⇒
-            the [IllegalArgumentException] thrownBy {
+            the [IllegalStateException] thrownBy {
               policy(
                 statements1,
                 statements2
@@ -163,7 +162,7 @@ class PolicyDSLSpec extends FreeSpec {
 
         "two identifiers" in {
           forAll(Gen.identifier, Gen.identifier) { (id1, id2) ⇒
-            the [IllegalArgumentException] thrownBy {
+            the [IllegalStateException] thrownBy {
               policy(
                 id(id1),
                 id(id2)
@@ -174,7 +173,7 @@ class PolicyDSLSpec extends FreeSpec {
 
         "two versions" in {
           forAll { (v1: Policy.Version, v2: Policy.Version) ⇒
-            the [IllegalArgumentException] thrownBy {
+            the [IllegalStateException] thrownBy {
               policy(
                 version(v1),
                 version(v2)
@@ -347,7 +346,7 @@ class PolicyDSLSpec extends FreeSpec {
       "fail to create policies with duplicated" - {
         "statement identifiers" in {
           forAll(Gen.identifier, Gen.identifier) { (id1, id2) ⇒
-            the [IllegalArgumentException] thrownBy {
+            the [IllegalStateException] thrownBy {
               allow (
                 id(id1),
                 id(id2)
@@ -358,33 +357,33 @@ class PolicyDSLSpec extends FreeSpec {
 
         "principal lists" in {
           forAll { (p1: Set[Principal], p2: Set[Principal]) ⇒
-            the [IllegalArgumentException] thrownBy {
+            the [IllegalStateException] thrownBy {
               allow ( p1, p2 )
-            } should have message "A statement may only have one principal list."
+            } should have message "A statement may only have one set of principals."
           }
         }
 
         "action lists" in {
           forAll { (a1: Seq[Action], a2: Seq[Action]) ⇒
-            the [IllegalArgumentException] thrownBy {
+            the [IllegalStateException] thrownBy {
               allow ( a1, a2 )
-            } should have message "A statement may only have one action list."
+            } should have message "A statement may only have one list of actions."
           }
         }
 
         "resource lists" in {
           forAll { (r1: Seq[Resource], r2: Seq[Resource]) ⇒
-            the [IllegalArgumentException] thrownBy {
+            the [IllegalStateException] thrownBy {
               allow ( r1, r2 )
-            } should have message "A statement may only have one resource list."
+            } should have message "A statement may only have one list of resources."
           }
         }
 
         "condition lists" in {
           forAll { (c1: Set[Condition], c2: Set[Condition]) ⇒
-            the [IllegalArgumentException] thrownBy {
+            the [IllegalStateException] thrownBy {
               allow ( c1, c2 )
-            } should have message "A statement may only have one condition list."
+            } should have message "A statement may only have one set of conditions."
           }
         }
       }
@@ -496,7 +495,7 @@ class PolicyDSLSpec extends FreeSpec {
       "fail to create policies with duplicated" - {
         "statement identifiers" in {
           forAll(Gen.identifier, Gen.identifier) { (id1, id2) ⇒
-            the [IllegalArgumentException] thrownBy {
+            the [IllegalStateException] thrownBy {
               deny (
                 id(id1),
                 id(id2)
@@ -507,33 +506,33 @@ class PolicyDSLSpec extends FreeSpec {
 
         "principal lists" in {
           forAll { (p1: Set[Principal], p2: Set[Principal]) ⇒
-            the [IllegalArgumentException] thrownBy {
+            the [IllegalStateException] thrownBy {
               deny ( p1, p2 )
-            } should have message "A statement may only have one principal list."
+            } should have message "A statement may only have one set of principals."
           }
         }
 
         "action lists" in {
           forAll { (a1: Seq[Action], a2: Seq[Action]) ⇒
-            the [IllegalArgumentException] thrownBy {
+            the [IllegalStateException] thrownBy {
               deny ( a1, a2 )
-            } should have message "A statement may only have one action list."
+            } should have message "A statement may only have one list of actions."
           }
         }
 
         "resource lists" in {
           forAll { (r1: Seq[Resource], r2: Seq[Resource]) ⇒
-            the [IllegalArgumentException] thrownBy {
+            the [IllegalStateException] thrownBy {
               deny ( r1, r2 )
-            } should have message "A statement may only have one resource list."
+            } should have message "A statement may only have one list of resources."
           }
         }
 
         "condition lists" in {
           forAll { (c1: Set[Condition], c2: Set[Condition]) ⇒
-            the [IllegalArgumentException] thrownBy {
+            the [IllegalStateException] thrownBy {
               deny ( c1, c2 )
-            } should have message "A statement may only have one condition list."
+            } should have message "A statement may only have one set of conditions."
           }
         }
       }
@@ -541,10 +540,4 @@ class PolicyDSLSpec extends FreeSpec {
   }
 
   private val versions = Table("version", Policy.Version.values: _*)
-
-  implicit val arbStatements: Arbitrary[Seq[Statement]] =
-    Arbitrary(UtilGen.nonEmptyListOfSqrtN(arbitrary[Statement]))
-
-  implicit val shrinkStatements: Shrink[Seq[Statement]] =
-    Shrink(statements ⇒ Shrink.shrinkContainer[Seq,Statement].shrink(statements).filter(_.nonEmpty))
 }

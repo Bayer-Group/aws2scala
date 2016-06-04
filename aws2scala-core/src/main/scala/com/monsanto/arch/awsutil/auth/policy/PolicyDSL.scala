@@ -80,23 +80,26 @@ object PolicyDSL {
   /** Allows construction of a policy using only a list of statements. */
   def policy(statements: Seq[Statement]): Policy =
     PolicyBuilder.newBuilder
-      .addComponent(statements)(PolicyBuilder.Component.statementsComponent)
-      .build()
+      .addComponent(statements)(PolicyComponent.statementsComponent)
+      .result
+      .addDefaultVersion
 
   /** Allows construction of a policy with two components, at least one of which must be a statement list. */
-  def policy[T: PolicyBuilder.Component, U: PolicyBuilder.Component](t: T, u: U): Policy =
+  def policy[T: PolicyComponent, U: PolicyComponent](t: T, u: U): Policy =
     PolicyBuilder.newBuilder
       .addComponent(t)
       .addComponent(u)
-      .build()
+      .result
+      .addDefaultVersion
 
   /** Allows construction of a policy with a statement list, a version, and an identifier. */
-  def policy[T: PolicyBuilder.Component, U: PolicyBuilder.Component, V: PolicyBuilder.Component](t: T, u: U, v: V): Policy =
+  def policy[T: PolicyComponent, U: PolicyComponent, V: PolicyComponent](t: T, u: U, v: V): Policy =
     PolicyBuilder.newBuilder
       .addComponent(t)
       .addComponent(u)
       .addComponent(v)
-      .build()
+      .result
+      .addDefaultVersion
 
   /** Used as an argument to `policy`, `allow`, and `deny` to set a policy’s or statement’s identifier. */
   def id(str: String): Identifier = new Identifier(str)
@@ -113,102 +116,112 @@ object PolicyDSL {
   /** Creates a statement with the effect `Allow` and the given component.  A statement component may be a statement
     * identifier (Sid), principal list, action list, resource list, or a condition list.
     */
-  def allow[T: StatementBuilder.Component](t: T): Statement =
-    StatementBuilder.allow
+  def allow[T: StatementComponent](t: T): Statement =
+    StatementBuilder.newBuilder
+      .withEffect(Statement.Effect.Allow)
       .addComponent(t)
-      .build()
+      .result
 
   /** Creates a statement with the effect `Allow` and the two given components.  A statement component may be a
     * statement identifier (Sid), principal list, action list, resource list, or a condition list.
     */
-  def allow[T: StatementBuilder.Component, U: StatementBuilder.Component](t: T, u: U): Statement =
-    StatementBuilder.allow
+  def allow[T: StatementComponent, U: StatementComponent](t: T, u: U): Statement =
+    StatementBuilder.newBuilder
+      .withEffect(Statement.Effect.Allow)
       .addComponent(t)
       .addComponent(u)
-      .build()
+      .result
 
   /** Creates a statement with the effect `Allow` and the three given components.  A statement component may be a
     * statement identifier (Sid), principal list, action list, resource list, or a condition list.
     */
-  def allow[T: StatementBuilder.Component, U: StatementBuilder.Component, V: StatementBuilder.Component](t: T, u: U, v: V): Statement =
-    StatementBuilder.allow
+  def allow[T: StatementComponent, U: StatementComponent, V: StatementComponent](t: T, u: U, v: V): Statement =
+    StatementBuilder.newBuilder
+      .withEffect(Statement.Effect.Allow)
       .addComponent(t)
       .addComponent(u)
       .addComponent(v)
-      .build()
+      .result
 
   /** Creates a statement with the effect `Allow` and the four given components.  A statement component may be a
     * statement identifier (Sid), principal list, action list, resource list, or a condition list.
     */
-  def allow[T: StatementBuilder.Component, U: StatementBuilder.Component, V: StatementBuilder.Component, W: StatementBuilder.Component](t: T, u: U, v: V, w: W): Statement =
-    StatementBuilder.allow
+  def allow[T: StatementComponent, U: StatementComponent, V: StatementComponent, W: StatementComponent](t: T, u: U, v: V, w: W): Statement =
+    StatementBuilder.newBuilder
+      .withEffect(Statement.Effect.Allow)
       .addComponent(t)
       .addComponent(u)
       .addComponent(v)
       .addComponent(w)
-      .build()
+      .result
 
   /** Creates a statement with the effect `Allow` and all of the five component types.  A statement component may be a
     * statement identifier (Sid), principal list, action list, resource list, or a condition list.
     */
-  def allow[T: StatementBuilder.Component, U: StatementBuilder.Component, V: StatementBuilder.Component, W: StatementBuilder.Component, X: StatementBuilder.Component](t: T, u: U, v: V, w: W, x: X): Statement =
-    StatementBuilder.allow
+  def allow[T: StatementComponent, U: StatementComponent, V: StatementComponent, W: StatementComponent, X: StatementComponent](t: T, u: U, v: V, w: W, x: X): Statement =
+    StatementBuilder.newBuilder
+      .withEffect(Statement.Effect.Allow)
       .addComponent(t)
       .addComponent(u)
       .addComponent(v)
       .addComponent(w)
       .addComponent(x)
-      .build()
+      .result
 
   /** Creates a statement with the effect `Deny` and the given component.  A statement component may be a statement
     * identifier (Sid), principal list, action list, resource list, or a condition list.
     */
-  def deny[T: StatementBuilder.Component](t: T): Statement =
-    StatementBuilder.deny
+  def deny[T: StatementComponent](t: T): Statement =
+    StatementBuilder.newBuilder
+      .withEffect(Statement.Effect.Deny)
       .addComponent(t)
-      .build()
+      .result
 
   /** Creates a statement with the effect `Allow` and the two given components.  A statement component may be a
     * statement identifier (Sid), principal list, action list, resource list, or a condition list.
     */
-  def deny[T: StatementBuilder.Component, U: StatementBuilder.Component](t: T, u: U): Statement =
-    StatementBuilder.deny
+  def deny[T: StatementComponent, U: StatementComponent](t: T, u: U): Statement =
+    StatementBuilder.newBuilder
+      .withEffect(Statement.Effect.Deny)
       .addComponent(t)
       .addComponent(u)
-      .build()
+      .result
 
   /** Creates a statement with the effect `Allow` and the three given components.  A statement component may be a
     * statement identifier (Sid), principal list, action list, resource list, or a condition list.
     */
-  def deny[T: StatementBuilder.Component, U: StatementBuilder.Component, V: StatementBuilder.Component](t: T, u: U, v: V): Statement =
-    StatementBuilder.deny
+  def deny[T: StatementComponent, U: StatementComponent, V: StatementComponent](t: T, u: U, v: V): Statement =
+    StatementBuilder.newBuilder
+      .withEffect(Statement.Effect.Deny)
       .addComponent(t)
       .addComponent(u)
       .addComponent(v)
-      .build()
+      .result
 
   /** Creates a statement with the effect `Allow` and the four given components.  A statement component may be a
     * statement identifier (Sid), principal list, action list, resource list, or a condition list.
     */
-  def deny[T: StatementBuilder.Component, U: StatementBuilder.Component, V: StatementBuilder.Component, W: StatementBuilder.Component](t: T, u: U, v: V, w: W): Statement =
-    StatementBuilder.deny
+  def deny[T: StatementComponent, U: StatementComponent, V: StatementComponent, W: StatementComponent](t: T, u: U, v: V, w: W): Statement =
+    StatementBuilder.newBuilder
+      .withEffect(Statement.Effect.Deny)
       .addComponent(t)
       .addComponent(u)
       .addComponent(v)
       .addComponent(w)
-      .build()
+      .result
 
   /** Creates a statement with the effect `Deny` and all of the five component types.  A statement component may be a
     * statement identifier (Sid), principal list, action list, resource list, or a condition list.
     */
-  def deny[T: StatementBuilder.Component, U: StatementBuilder.Component, V: StatementBuilder.Component, W: StatementBuilder.Component, X: StatementBuilder.Component](t: T, u: U, v: V, w: W, x: X): Statement =
-    StatementBuilder.deny
+  def deny[T: StatementComponent, U: StatementComponent, V: StatementComponent, W: StatementComponent, X: StatementComponent](t: T, u: U, v: V, w: W, x: X): Statement =
+    StatementBuilder.newBuilder
+      .withEffect(Statement.Effect.Deny)
       .addComponent(t)
       .addComponent(u)
       .addComponent(v)
       .addComponent(w)
       .addComponent(x)
-      .build()
+      .result
 
   /** Used within an `allow` or `deny` to set the principals in a statement. */
   def principals(principals: Principal*): Set[Principal] = principals.toSet
@@ -222,214 +235,93 @@ object PolicyDSL {
   /** Used within an `allow` or `deny` to set the conditions in a statement. */
   def conditions(conditions: Condition*): Set[Condition] = conditions.toSet
 
-  /** Used by the DSL to build policy objects. */
-  class PolicyBuilder private(version: Option[Policy.Version],
-                              id: Option[String],
-                              statements: Option[Seq[Statement]]) {
-    /** Adds a component to the policy. */
-    private[policy] def addComponent[T: PolicyBuilder.Component](component: T): PolicyBuilder =
-      implicitly[PolicyBuilder.Component[T]].applyTo(this, component)
-
-    /** Builds the policy.  Note that the policy must have a policy must have a statement list. */
-    private[policy] def build(): Policy = {
-      require(statements.isDefined, "A policy should have a list of statements.")
-      Policy(
-        version.orElse(Some(Policy.Version.`2012-10-17`)),
-        id,
-        statements.get)
-    }
-
-    /** Returns a new builder with the version set.  It is an error to invoke this on a builder that already has a
-      * version.
-      */
-    private def withVersion(version: Policy.Version): PolicyBuilder = {
-      if (this.version.isDefined) {
-        throw new IllegalArgumentException("A policy may only have one version.")
-      }
-      new PolicyBuilder(Some(version),id, statements)
-    }
-
-    /** Returns a new builder with the policy identifier set.  It is an error to invoke this on a builder that
-      * already has a policy identifier.
-      */
-    private def withId(id: String): PolicyBuilder = {
-      if (this.id.isDefined) {
-        throw new IllegalArgumentException("A policy may only have one identifier.")
-      }
-      new PolicyBuilder(version, Some(id), statements)
-    }
-
-    /** Returns a new builder with the statement list set.  It is an error to invoke this on a builder that
-      * already has a statement list or if the statement list is empty.
-      */
-    private def withStatements(statements: Seq[Statement]): PolicyBuilder = {
-      if (this.statements.isDefined) {
-        throw new IllegalArgumentException("A policy may only have one list of statements.")
-      }
-      if (statements.isEmpty) {
-        throw new IllegalArgumentException("The policy’s statement list may not be empty.")
-      }
-      new PolicyBuilder(version, id, Some(statements))
-    }
+  private implicit class PolicyBuilderComponentSupport(val builder: PolicyBuilder) extends AnyVal {
+    def addComponent[T: PolicyComponent](component: T): PolicyBuilder =
+      implicitly[PolicyComponent[T]].addTo(builder, component)
   }
 
-  object PolicyBuilder {
-    /** Handy constant for getting a new builder instance. */
-    private[policy] val newBuilder: PolicyBuilder = new PolicyBuilder(None, None, None)
-
-    /** Type class for setting a value on the policy builder. */
-    trait Component[T] {
-      def applyTo(builder: PolicyBuilder, component: T): PolicyBuilder
-    }
-
-    object Component {
-      /** Helper for setting a statement list on a policy builder. */
-      implicit val statementsComponent: Component[Seq[Statement]] =
-        new Component[Seq[Statement]] {
-          override def applyTo(builder: PolicyBuilder, statements: Seq[Statement]): PolicyBuilder =
-            builder.withStatements(statements)
-        }
-
-      /** Helper for setting a policy identifier on a policy builder. */
-      implicit val idComponent: Component[Identifier] =
-        new Component[Identifier] {
-          override def applyTo(builder: PolicyBuilder, id: Identifier): PolicyBuilder = builder.withId(id.value)
-        }
-
-      /** Helper for setting a version on a policy builder. */
-      implicit val versionComponent: Component[Policy.Version] =
-        new Component[Policy.Version] {
-          override def applyTo(builder: PolicyBuilder, policyVersion: Policy.Version): PolicyBuilder =
-            builder.withVersion(policyVersion)
-        }
-    }
-
-    /** Type-safe wrapper for a policy identifier. */
-    class Id private[policy] (private[policy] val value: String)
+  /** Type class for setting a value on the policy builder. */
+  trait PolicyComponent[T] {
+    def addTo(builder: PolicyBuilder, component: T): PolicyBuilder
   }
 
-  /** Used by the DSL to build `Statement` objects. */
-  class StatementBuilder private (sid: Option[String],
-                                  principals: Option[Set[Principal]],
-                                  effect: Statement.Effect,
-                                  actions: Option[Seq[Action]],
-                                  resources: Option[Seq[Resource]],
-                                  conditions: Option[Set[Condition]]) {
+  object PolicyComponent {
+    /** Helper for setting a statement list on a policy builder. */
+    implicit val statementsComponent: PolicyComponent[Seq[Statement]] =
+      new PolicyComponent[Seq[Statement]] {
+        override def addTo(builder: PolicyBuilder, statements: Seq[Statement]): PolicyBuilder =
+          builder.withStatements(statements)
+      }
+
+    /** Helper for setting a policy identifier on a policy builder. */
+    implicit val idComponent: PolicyComponent[Identifier] =
+      new PolicyComponent[Identifier] {
+        override def addTo(builder: PolicyBuilder, id: Identifier): PolicyBuilder = builder.withId(id.value)
+      }
+
+    /** Helper for setting a version on a policy builder. */
+    implicit val versionComponent: PolicyComponent[Policy.Version] =
+      new PolicyComponent[Policy.Version] {
+        override def addTo(builder: PolicyBuilder, policyVersion: Policy.Version): PolicyBuilder =
+          builder.withVersion(policyVersion)
+      }
+  }
+
+  private implicit class StatementBuilderComponentSupport(val builder: StatementBuilder) extends AnyVal {
     /** Adds a component to the statement builder. */
-    private[policy] def addComponent[T: StatementBuilder.Component](component: T): StatementBuilder =
-      implicitly[StatementBuilder.Component[T]].addTo(this, component)
-
-    /** Returns a new builder with the statement identifier set.  It is an error to invoke this on a builder that
-      * already has a statement identifier.
-      */
-    private def withSid(identifier: String): StatementBuilder = {
-      if (sid.isDefined) {
-        throw new IllegalArgumentException("A statement may only have one identifier.")
-      }
-      new StatementBuilder(Some(identifier), principals, effect, actions, resources, conditions)
-    }
-
-    /** Returns a new builder with the principals set.  It is an error to invoke this on a builder that
-      * already has principals.
-      */
-    private def withPrincipals(principals: Set[Principal]): StatementBuilder = {
-      if (this.principals.isDefined) {
-        throw new IllegalArgumentException("A statement may only have one principal list.")
-      }
-      new StatementBuilder(sid, Some(principals), effect, actions, resources, conditions)
-    }
-
-    /** Returns a new builder with the actions set.  It is an error to invoke this on a builder that
-      * already has actions.
-      */
-    private def withActions(actions: Seq[Action]): StatementBuilder = {
-      if (this.actions.isDefined) {
-        throw new IllegalArgumentException("A statement may only have one action list.")
-      }
-      new StatementBuilder(sid, principals, effect, Some(actions), resources, conditions)
-    }
-
-    /** Returns a new builder with the resources set.  It is an error to invoke this on a builder that
-      * already has resources.
-      */
-    private def withResources(resources: Seq[Resource]): StatementBuilder = {
-      if (this.resources.isDefined) {
-        throw new IllegalArgumentException("A statement may only have one resource list.")
-      }
-      new StatementBuilder(sid, principals, effect, actions, Some(resources), conditions)
-    }
-
-    /** Returns a new builder with the conditions set.  It is an error to invoke this on a builder that
-      * already has conditions.
-      */
-    private def withConditions(conditions: Set[Condition]): StatementBuilder = {
-      if (this.conditions.isDefined) {
-        throw new IllegalArgumentException("A statement may only have one condition list.")
-      }
-      new StatementBuilder(sid, principals, effect, actions, resources, Some(conditions))
-    }
-
-    /** Builds a `Statement` instance from the accumulated state. */
-    private[policy] def build(): Statement =
-      Statement(
-        sid,
-        principals.getOrElse(Set.empty),
-        effect,
-        actions.getOrElse(Seq.empty),
-        resources.getOrElse(Seq.empty),
-        conditions.getOrElse(Set.empty))
+    def addComponent[T: StatementComponent](component: T): StatementBuilder =
+      implicitly[StatementComponent[T]].addTo(builder, component)
   }
 
-  object StatementBuilder {
-    /** Handy constant to start building a statement with an `Allow` effect. */
-    private[policy] val allow: StatementBuilder =
-      new StatementBuilder(None, None, Statement.Effect.Allow, None, None, None)
+  /** Type class for adding state to the statement builder. */
+  trait StatementComponent[T] {
+    def addTo(builder: StatementBuilder, component: T): StatementBuilder
+  }
 
-    /** Handy constant to start building a statement with an `Deny` effect. */
-    private[policy] val deny: StatementBuilder =
-      new StatementBuilder(None, None, Statement.Effect.Deny, None, None, None)
-
-    /** Type class for adding state to the statement builder. */
-    trait Component[T] {
-      def addTo(builder: StatementBuilder, component: T): StatementBuilder
+  object StatementComponent {
+    /** Helper for setting a statement identifier on a statement builder. */
+    implicit val idComponent: StatementComponent[Identifier] = new StatementComponent[Identifier] {
+      override def addTo(builder: StatementBuilder, id: Identifier): StatementBuilder = builder.withSid(id.value)
     }
 
-    object Component {
-      /** Helper for setting a statement identifier on a statement builder. */
-      implicit val idComponent: Component[Identifier] = new Component[Identifier] {
-        override def addTo(builder: StatementBuilder, id: Identifier): StatementBuilder = builder.withSid(id.value)
+    /** Helper for setting a principal list on a statement builder. */
+    implicit val principalsComponent: StatementComponent[Set[Principal]] =
+      new StatementComponent[Set[Principal]] {
+        override def addTo(builder: StatementBuilder, principals: Set[Principal]): StatementBuilder =
+          builder.withPrincipals(principals)
       }
 
-      /** Helper for setting a principal list on a statement builder. */
-      implicit val principalsComponent: Component[Set[Principal]] =
-        new Component[Set[Principal]] {
-          override def addTo(builder: StatementBuilder, principals: Set[Principal]): StatementBuilder =
-            builder.withPrincipals(principals)
-        }
+    /** Helper for setting an action list on a statement builder. */
+    implicit val actionsComponent: StatementComponent[Seq[Action]] =
+      new StatementComponent[Seq[Action]] {
+        override def addTo(builder: StatementBuilder, actions: Seq[Action]): StatementBuilder =
+          builder.withActions(actions)
+      }
 
-      /** Helper for setting an action list on a statement builder. */
-      implicit val actionsComponent: Component[Seq[Action]] =
-        new Component[Seq[Action]] {
-          override def addTo(builder: StatementBuilder, actions: Seq[Action]): StatementBuilder =
-            builder.withActions(actions)
-        }
+    /** Helper for setting a resource list on a statement builder. */
+    implicit val resourcesComponent: StatementComponent[Seq[Resource]] =
+      new StatementComponent[Seq[Resource]] {
+        override def addTo(builder: StatementBuilder, resources: Seq[Resource]): StatementBuilder =
+          builder.withResources(resources)
+      }
 
-      /** Helper for setting a resource list on a statement builder. */
-      implicit val resourcesComponent: Component[Seq[Resource]] =
-        new Component[Seq[Resource]] {
-          override def addTo(builder: StatementBuilder, resources: Seq[Resource]): StatementBuilder =
-            builder.withResources(resources)
-        }
-
-      /** Helper for setting a condition list on a statement builder. */
-      implicit val conditionsComponent: Component[Set[Condition]] =
-        new Component[Set[Condition]] {
-          override def addTo(builder: StatementBuilder, conditions: Set[Condition]): StatementBuilder =
-            builder.withConditions(conditions)
-        }
-    }
+    /** Helper for setting a condition list on a statement builder. */
+    implicit val conditionsComponent: StatementComponent[Set[Condition]] =
+      new StatementComponent[Set[Condition]] {
+        override def addTo(builder: StatementBuilder, conditions: Set[Condition]): StatementBuilder =
+          builder.withConditions(conditions)
+      }
   }
 
   /** Simple type-safe wrapper for a statement or policy identifier. */
   class Identifier private[policy] (private[policy] val value: String)
+
+  private implicit class PolicyWithDefaults(val policy: Policy) extends AnyVal {
+    def addDefaultVersion: Policy =
+      if (policy.version.isEmpty) {
+        policy.copy(version = Some(Policy.Version.`2012-10-17`))
+      } else {
+        policy
+      }
+  }
 }
