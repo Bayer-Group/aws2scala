@@ -1,13 +1,14 @@
 package com.monsanto.arch.awsutil.sns.model
 
-import com.amazonaws.util.json.JSONObject
 import com.monsanto.arch.awsutil.sns.model.AwsConverters._
 import com.monsanto.arch.awsutil.testkit.SnsScalaCheckImplicits._
 import com.monsanto.arch.awsutil.testkit.{SnsGen, UtilGen}
 import org.scalacheck.Arbitrary.arbitrary
+import org.scalactic.Equality
 import org.scalatest.FreeSpec
 import org.scalatest.Matchers._
 import org.scalatest.prop.GeneratorDrivenPropertyChecks._
+import spray.json.{JsObject, JsString, pimpString}
 
 class PublishRequestSpec extends FreeSpec {
   "a PublishRequest should" - {
@@ -27,9 +28,7 @@ class PublishRequestSpec extends FreeSpec {
     "be created from" - {
       implicit class Map2JsonString(messageMap: Map[String,String]) {
         def asJson: String = {
-          val jsonMessage = new JSONObject()
-          messageMap.foreach(entry ⇒ jsonMessage.put(entry._1, entry._2))
-          jsonMessage.toString
+          JsObject(messageMap.mapValues(JsString(_))).compactPrint
         }
       }
 
@@ -82,8 +81,9 @@ class PublishRequestSpec extends FreeSpec {
           SnsGen.targetArn → "targetArn",
           SnsGen.messageMap → "messageMap"
         ) { (targetArn, messageMap) ⇒
-          PublishRequest(targetArn.arnString, messageMap) shouldBe
+          PublishRequest(targetArn.arnString, messageMap) should equal (
             PublishRequest(targetArn.arnString, messageMap.asJson, None, Some("json"), Map.empty)
+          ) (decided by parsingMessageAsJson)
         }
       }
 
@@ -93,8 +93,9 @@ class PublishRequestSpec extends FreeSpec {
           SnsGen.messageMap → "messageMap",
           UtilGen.nonEmptyString → "subject"
         ) { (targetArn, messageMap, subject) ⇒
-          PublishRequest(targetArn.arnString, messageMap, subject) shouldBe
+          PublishRequest(targetArn.arnString, messageMap, subject) should equal (
             PublishRequest(targetArn.arnString, messageMap.asJson, Some(subject), Some("json"), Map.empty)
+          ) (decided by parsingMessageAsJson)
         }
       }
 
@@ -104,8 +105,9 @@ class PublishRequestSpec extends FreeSpec {
           SnsGen.messageMap → "messageMap",
           arbitrary[Map[String,MessageAttributeValue]] → "attributes"
         ) { (targetArn, messageMap, attributes) ⇒
-          PublishRequest(targetArn.arnString, messageMap, attributes) shouldBe
+          PublishRequest(targetArn.arnString, messageMap, attributes) should equal (
             PublishRequest(targetArn.arnString, messageMap.asJson, None, Some("json"), attributes)
+          ) (decided by parsingMessageAsJson)
         }
       }
 
@@ -116,8 +118,9 @@ class PublishRequestSpec extends FreeSpec {
           UtilGen.nonEmptyString → "subject",
           arbitrary[Map[String,MessageAttributeValue]] → "attributes"
         ) { (targetArn, messageMap, subject, attributes) ⇒
-          PublishRequest(targetArn.arnString, messageMap, subject, attributes) shouldBe
+          PublishRequest(targetArn.arnString, messageMap, subject, attributes) should equal (
             PublishRequest(targetArn.arnString, messageMap.asJson, Some(subject), Some("json"), attributes)
+          ) (decided by parsingMessageAsJson)
         }
       }
 
@@ -126,8 +129,8 @@ class PublishRequestSpec extends FreeSpec {
           arbitrary[PlatformEndpoint] → "endpoint",
           SnsGen.jsonMessagePayload → "jsonMessage"
         ) { (endpoint, jsonMessage) ⇒
-          PublishRequest(endpoint, jsonMessage.toString()) shouldBe
-            PublishRequest(endpoint.arn, Map(endpoint.platform.name → jsonMessage.toString()).asJson, None, Some("json"), Map.empty)
+          PublishRequest(endpoint, jsonMessage) shouldBe
+            PublishRequest(endpoint.arn, Map(endpoint.platform.name → jsonMessage).asJson, None, Some("json"), Map.empty)
         }
       }
 
@@ -137,10 +140,23 @@ class PublishRequestSpec extends FreeSpec {
           SnsGen.jsonMessagePayload → "jsonMessage",
           arbitrary[Map[String,MessageAttributeValue]] → "attributes"
         ) { (endpoint, jsonMessage, attributes) ⇒
-          PublishRequest(endpoint, jsonMessage.toString(), attributes) shouldBe
-              PublishRequest(endpoint.arn, Map(endpoint.platform.name → jsonMessage.toString()).asJson, None, Some("json"), attributes)
+          PublishRequest(endpoint, jsonMessage, attributes) shouldBe
+              PublishRequest(endpoint.arn, Map(endpoint.platform.name → jsonMessage).asJson, None, Some("json"), attributes)
         }
       }
     }
+  }
+
+  val parsingMessageAsJson: Equality[PublishRequest] = new Equality[PublishRequest] {
+    override def areEqual(a: PublishRequest, b: Any): Boolean =
+      b match {
+        case PublishRequest(targetArn, message, subject, messageStructure, attributes) ⇒
+          targetArn == a.targetArn &&
+            message.parseJson == a.message.parseJson &&
+            subject == a.subject &&
+            messageStructure == a.messageStructure &&
+            attributes == a.attributes
+        case _ ⇒ false
+      }
   }
 }

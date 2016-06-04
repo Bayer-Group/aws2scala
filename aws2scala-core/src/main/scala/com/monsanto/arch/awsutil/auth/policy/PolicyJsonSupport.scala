@@ -1,128 +1,170 @@
 package com.monsanto.arch.awsutil.auth.policy
 
-import com.amazonaws.util.json.{JSONArray, JSONObject}
+import java.io.StringWriter
 
-import scala.collection.JavaConverters._
+import com.fasterxml.jackson.core._
 
 private[awsutil] object PolicyJsonSupport {
+  private val jsonFactory = new JsonFactory
+
   def policyToJson(policy: Policy): String = {
-    val jsonObject = new JSONObject()
-    jsonObject.putOpt("Version", policy.version.map(_.id).orNull)
-    jsonObject.putOpt("Id", policy.id.orNull)
-    jsonObject.put("Statement", policy.statements.map(statementToJson).asJavaCollection)
-    jsonObject.toString
+    val jsonWriter = new StringWriter
+    val generator = jsonFactory.createGenerator(jsonWriter)
+    try {
+      generator.writeStartObject()
+      policy.version.foreach(v ⇒ generator.writeStringField("Version", v.id))
+      policy.id.foreach(id ⇒ generator.writeStringField("Id", id))
+      generator.writeFieldName("Statement")
+      generator.writeStartArray()
+      policy.statements.foreach(statementToJson(generator, _))
+      generator.writeEndArray()
+      generator.writeEndObject()
+    } finally {
+      generator.close()
+      jsonWriter.close()
+    }
+    jsonWriter.toString
   }
 
   def jsonToPolicy(jsonString: String): Policy = {
-    val json = new JSONObject(jsonString)
-    val version = Option(json.optString("Version", null)).map(Policy.Version.fromId(_))
-    val id = Option(json.optString("Id", null))
-    val statements = json.getJSONArray("Statement").asScala[JSONObject].map(jsonToStatement).toList
-    Policy(version, id, statements)
+    val parser = jsonFactory.createParser(jsonString)
+    var builder = PolicyBuilder.newBuilder
+
+    if (parser.nextToken() != JsonToken.START_OBJECT) {
+      throwBadToken(parser, "a policy object")
+    }
+    while (parser.nextToken() != JsonToken.END_OBJECT) {
+      parser.getCurrentName match {
+        case "Version" ⇒
+          if (parser.nextToken() == JsonToken.VALUE_STRING) {
+            builder = builder.withVersion(Policy.Version.fromId(parser.getValueAsString))
+          } else {
+            throwBadToken(parser, "a string statement effect")
+          }
+        case "Id" ⇒
+          if (parser.nextToken() == JsonToken.VALUE_STRING) {
+            builder = builder.withId(parser.getValueAsString)
+          } else {
+            throwBadToken(parser, "a string policy identifier")
+          }
+        case "Statement" ⇒
+          if (parser.nextToken() != JsonToken.START_ARRAY) {
+            throwBadToken(parser, "a statement array")
+          }
+          val statements = Seq.newBuilder[Statement]
+          while (parser.nextToken() != JsonToken.END_ARRAY) {
+            statements += jsonToStatement(parser)
+          }
+          builder = builder.withStatements(statements.result())
+        case x ⇒
+          throwBadValue(parser, "Version, Id, or Statement", x)
+      }
+    }
+    builder.result
   }
 
-  def statementToJson(statement: Statement): JSONObject = {
-    val jsonObject = new JSONObject
-    jsonObject.putOpt("Sid", statement.id.orNull)
-    jsonObject.putOpt("Principal", principalsToJson(statement.principals).orNull)
-    jsonObject.put("Effect", statement.effect.name)
-    jsonObject.putOpt("Action", actionsToJson(statement.actions).orNull)
-    jsonObject.putOpt("Resource", resourcesToJson(statement.resources).orNull)
-    jsonObject.putOpt("Condition", conditionsToJson(statement.conditions).orNull)
-    jsonObject
+  def statementToJson(generator: JsonGenerator, statement: Statement): Unit = {
+    generator.writeStartObject()
+    statement.id.foreach(id ⇒ generator.writeStringField("Sid", id))
+    generator.writeFieldIfNonEmpty("Principal", statement.principals, principalsToJson)
+    generator.writeStringField("Effect", statement.effect.name)
+    generator.writeFieldIfNonEmpty("Action", statement.actions, actionsToJson)
+    generator.writeFieldIfNonEmpty("Resource", statement.resources, resourcesToJson)
+    generator.writeFieldIfNonEmpty("Condition", statement.conditions, conditionsToJson)
+    generator.writeEndObject()
   }
 
-  def jsonToStatement(jsonObject: JSONObject): Statement = {
-    val sid  = Option(jsonObject.optString("Sid", null))
-    val principals = jsonToPrincipals(Option(jsonObject.opt("Principal")))
-    val effect = Statement.Effect.fromName(jsonObject.getString("Effect"))
-    val actions = jsonToActions(Option(jsonObject.opt("Action")))
-    val resources = jsonToResources(Option(jsonObject.opt("Resource")))
-    val conditions = jsonToConditions(Option(jsonObject.opt("Condition").asInstanceOf[JSONObject]))
-    Statement(sid, principals, effect, actions, resources, conditions)
+  def jsonToStatement(parser: JsonParser): Statement = {
+    if (!(parser.getCurrentToken == JsonToken.START_OBJECT) && !(parser.getCurrentToken == null && parser.nextToken() == JsonToken.START_OBJECT)) {
+      throwBadToken(parser, "a statement object")
+    }
+    var builder = StatementBuilder.newBuilder
+    while (parser.nextToken() != JsonToken.END_OBJECT) {
+      parser.getCurrentName match {
+        case "Sid" ⇒
+          if (parser.nextToken() == JsonToken.VALUE_STRING) {
+            builder = builder.withSid(parser.getValueAsString)
+          } else {
+            throwBadToken(parser, "a string statement identifier")
+          }
+        case "Principal" ⇒
+          builder = builder.withPrincipals(jsonToPrincipals(parser))
+        case "Effect" ⇒
+          if (parser.nextToken() == JsonToken.VALUE_STRING) {
+            builder = builder.withEffect(Statement.Effect.fromName(parser.getValueAsString))
+          } else {
+            throwBadToken(parser, "a string statement effect")
+          }
+        case "Action" ⇒
+          builder = builder.withActions(jsonToActions(parser))
+        case "Resource" ⇒
+          builder = builder.withResources(jsonToResources(parser))
+        case "Condition" ⇒
+          builder = builder.withConditions(jsonToConditions(parser))
+        case x ⇒
+          throwBadValue(parser, "Sid, Principal, Effect, Action, Resource, or Condition", x)
+      }
+    }
+    builder.result
   }
 
-  def principalsToJson(principals: Set[Principal]): Option[AnyRef] = {
+  def principalsToJson(generator: JsonGenerator, principals: Set[Principal]): Unit = {
     if (principals.isEmpty) {
-      None
+      generator.writeNull()
     } else if (principals == Statement.allPrincipals) {
-      Some("*")
+      generator.writeString("*")
     } else {
-      val jsonObject = new JSONObject()
+      generator.writeStartObject()
       principals.groupBy(_.provider).foreach { grouped ⇒
         val provider = grouped._1
         val ids = grouped._2.map(_.id).toList
-        ids match {
-          case id :: Nil ⇒
-            jsonObject.put(provider, id)
-          case _ ⇒
-            jsonObject.put(provider, new JSONArray(ids.asJavaCollection))
-        }
+        generator.writeCollapsibleStringsField(provider, ids)
       }
-      Some(jsonObject)
+      generator.writeEndObject()
     }
   }
 
-  def jsonToPrincipals(jsonObject: Option[AnyRef]): Set[Principal] = {
-    jsonObject match {
-      case None ⇒
+  def jsonToPrincipals(parser: JsonParser): Set[Principal] = {
+    parser.nextToken() match {
+      case JsonToken.VALUE_NULL ⇒
         Set.empty
-      case Some("*") ⇒
-        Statement.allPrincipals
-      case Some(jo: JSONObject) ⇒
-        jo.asScala.flatMap { entry ⇒
-          val (provider, value) = entry
-          value match {
-            case id: String ⇒
-              Seq(Principal.fromProviderAndId(provider, id))
-            case ids: JSONArray ⇒
-              ids.asScala[String].map(id ⇒ Principal.fromProviderAndId(provider, id))
-          }
-        }.toSet
-      case _ ⇒ throw new IllegalArgumentException(s"$jsonObject is not a valid principals JSON value.")
+      case JsonToken.VALUE_STRING ⇒
+        parser.getValueAsString match {
+          case "*" ⇒ Statement.allPrincipals
+          case x ⇒ throwBadValue(parser, "‘*’", x)
+        }
+      case JsonToken.START_OBJECT ⇒
+        val builder = Set.newBuilder[Principal]
+        while (parser.nextToken() != JsonToken.END_OBJECT) {
+          val provider = parser.getCurrentName
+          val ids = parser.readCollapsibleStringValue()
+          builder ++= ids.map(id ⇒ Principal.fromProviderAndId(provider, id))
+        }
+        builder.result()
+      case _ ⇒
+        throwBadToken(parser, "either null, the string ’*‘, or an object")
     }
   }
 
-  def actionsToJson(actions: Seq[Action]): Option[AnyRef] =
-    actions.toList match {
-      case Nil           ⇒ None
-      case action :: Nil ⇒ Some(action.name)
-      case _             ⇒ Some(new JSONArray(actions.map(_.name).asJavaCollection))
+  def actionsToJson(generator: JsonGenerator, actions: Seq[Action]): Unit =
+    generator.writeCollapsibleStrings(actions.map(_.name))
+
+  def jsonToActions(parser: JsonParser): Seq[Action] =
+    parser.readCollapsibleStringValue(true).collect {
+      case Action.fromName(action) ⇒ action
+      case name                    ⇒ Action.NamedAction(name)
     }
 
-  def jsonToActions(json: Option[AnyRef]): Seq[Action] = {
-    def getAction(name: String): Action =
-      name match {
-        case Action.fromName(action) ⇒ action
-        case _                       ⇒ Action.NamedAction(name)
-      }
+  def resourcesToJson(generator: JsonGenerator, resources: Seq[Resource]): Unit =
+    generator.writeCollapsibleStrings(resources.map(_.id))
 
-    json match {
-      case None                   ⇒ Seq.empty
-      case Some(name: String)     ⇒ Seq(getAction(name))
-      case Some(names: JSONArray) ⇒ names.asScala[String].map(getAction)
-      case Some(x)                ⇒ throw new IllegalArgumentException(s"$x is not a valid actions JSON value.")
-    }
-  }
+  def jsonToResources(parser: JsonParser): Seq[Resource] =
+    parser.readCollapsibleStringValue(true).map(Resource(_))
 
-  def resourcesToJson(resources: Seq[Resource]): Option[AnyRef] =
-    resources.toList match {
-      case Nil             ⇒ None
-      case resource :: Nil ⇒ Some(resource.id)
-      case _               ⇒ Some(new JSONArray(resources.map(_.id).asJavaCollection))
-    }
 
-  def jsonToResources(json: Option[AnyRef]): Seq[Resource] =
-    json match {
-      case None                     ⇒ Seq.empty
-      case Some(id: String)         ⇒ Seq(Resource(id))
-      case Some(jsArray: JSONArray) ⇒ jsArray.asScala[String].map(Resource(_))
-      case Some(x)                  ⇒ throw new IllegalArgumentException(s"$x is not a valid resources JSON value.")
-    }
-
-  def conditionsToJson(conditions: Set[Condition]): Option[JSONObject] = {
+  def conditionsToJson(generator: JsonGenerator, conditions: Set[Condition]): Unit =
     if (conditions.isEmpty) {
-      None
+      generator.writeNull()
     } else {
       val comparisonValuesByTypeAndKey =
         conditions
@@ -134,59 +176,106 @@ private[awsutil] object PolicyJsonSupport {
                   byTypeAndKeyConditions.toList.flatMap(_.comparisonValues).distinct
               }
           }
-      val result = new JSONObject()
+      generator.writeStartObject()
       comparisonValuesByTypeAndKey.foreach { typeEntry ⇒
         val (comparisonType, byTypeEntry) = typeEntry
-        val typeResult = new JSONObject()
+        generator.writeFieldName(comparisonType)
+        generator.writeStartObject()
         byTypeEntry.foreach { keyEntry ⇒
           val (key, values) = keyEntry
-          values match {
-            case Nil ⇒
-              // maybe do something?
-            case value :: Nil ⇒
-              typeResult.put(key, value)
-            case _ ⇒
-              val jsArray = new JSONArray()
-              values.foreach(v ⇒ jsArray.put(v))
-              typeResult.put(key, jsArray)
+          generator.writeCollapsibleStringsField(key, values)
+        }
+        generator.writeEndObject()
+      }
+      generator.writeEndObject()
+    }
+
+  def jsonToConditions(parser: JsonParser): Set[Condition] =
+    parser.nextToken() match {
+      case JsonToken.VALUE_NULL ⇒
+        Set.empty
+      case JsonToken.START_OBJECT ⇒
+        val conditions = Set.newBuilder[Condition]
+        while(parser.nextToken() != JsonToken.END_OBJECT) {
+          val comparisonType = parser.getCurrentName
+          if (parser.nextToken() != JsonToken.START_OBJECT) {
+            throwBadToken(parser, "a JSON object")
+          }
+          while(parser.nextToken() != JsonToken.END_OBJECT) {
+            val key = parser.getCurrentName
+            val values = parser.readCollapsibleStringValue()
+            conditions += Condition.fromParts(key, comparisonType, values)
           }
         }
-        result.put(comparisonType, typeResult)
+        conditions.result()
+      case _ ⇒
+        throwBadToken(parser, "a condition object")
+    }
+
+  implicit class EnhancedJsonGenerator(val generator: JsonGenerator) extends AnyVal {
+    def writeCollapsibleStrings(strings: Seq[String]): Unit =
+      strings.length match {
+        case 0 ⇒ generator.writeNull()
+        case 1 ⇒ generator.writeString(strings.head)
+        case _ ⇒
+          generator.writeStartArray()
+          strings.foreach(generator.writeString)
+          generator.writeEndArray()
       }
-      Some(result)
+
+    def writeCollapsibleStringsField(name: String, strings: Seq[String]): Unit = {
+      generator.writeFieldName(name)
+      writeCollapsibleStrings(strings)
+    }
+
+    def writeFieldIfNonEmpty[T <: TraversableOnce[_]](name: String,
+                                                      collection: T,
+                                                      serializer: (JsonGenerator, T) ⇒ Unit): Unit = {
+      if (collection.nonEmpty) {
+        generator.writeFieldName(name)
+        serializer(generator, collection)
+      }
     }
   }
 
-  def jsonToConditions(json: Option[JSONObject]): Set[Condition] =
-    json match {
-      case None ⇒ Set.empty
-      case Some(jsonObject) ⇒
-        jsonObject.asScala.flatMap { typeMapping ⇒
-          val (comparisonType, keysAndValues: JSONObject) = typeMapping
-          keysAndValues.asScala.map { keyAndValues ⇒
-            val (key, jsonValues) = keyAndValues
-            jsonValues match {
-              case value: String ⇒
-                Condition.fromParts(key, comparisonType, Seq(value))
-              case values: JSONArray ⇒
-                Condition.fromParts(key, comparisonType, values.asScala[String].toList)
+  implicit class EnhancedJsonParser(val parser: JsonParser) extends AnyVal {
+    def readCollapsibleStringValue(nullOk: Boolean): Seq[String] = {
+      parser.nextToken() match {
+        case JsonToken.VALUE_STRING ⇒
+          Seq(parser.getValueAsString)
+        case JsonToken.START_ARRAY ⇒
+          val strings = Seq.newBuilder[String]
+          while (parser.nextToken() != JsonToken.END_ARRAY) {
+            if (parser.getCurrentToken == JsonToken.VALUE_STRING) {
+              strings += parser.getValueAsString
+            } else {
+              throwBadToken(parser, "a string array value")
             }
           }
-        }.toSet
-    }
-
-  private implicit class JsonArrayConverter(val array: JSONArray) extends AnyVal {
-    def asScala[T]: Seq[T] = for (i ← 0.until(array.length())) yield array.get(i).asInstanceOf[T]
-  }
-
-  private implicit class JsonObjectConverter(val jsObject: JSONObject) extends AnyVal {
-    def asScala: Seq[(String,AnyRef)] = {
-      val names = jsObject.names()
-      for (i ← 0.until(jsObject.length())) yield {
-        val key = names.get(i).toString
-        val value = jsObject.get(key)
-        (key, value)
+          strings.result()
+        case JsonToken.VALUE_NULL ⇒
+          if (nullOk) {
+            Seq.empty
+          } else {
+            throwBadToken(parser, "null, a string, or an array of strings")
+          }
+        case _ ⇒
+          throwBadToken(parser, "a string or an array of strings")
       }
     }
+
+    def readCollapsibleStringValue(): Seq[String] = readCollapsibleStringValue(false)
+  }
+
+  private def throwBadToken(jsonParser: JsonParser, expected: String): Nothing = {
+    throw new JsonParseException(
+      s"Expected $expected, but got ‘${jsonParser.getCurrentToken}’",
+      jsonParser.getTokenLocation)
+  }
+
+  private def throwBadValue[T](jsonParser: JsonParser, expected: String, actual: T): Nothing = {
+    throw new JsonParseException(
+      s"Expected $expected, but got $actual",
+      jsonParser.getCurrentLocation)
   }
 }

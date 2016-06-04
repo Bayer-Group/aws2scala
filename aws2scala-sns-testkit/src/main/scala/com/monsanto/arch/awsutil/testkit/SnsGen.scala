@@ -2,7 +2,8 @@ package com.monsanto.arch.awsutil.testkit
 
 import java.util.UUID
 
-import com.amazonaws.util.json.JSONObject
+import com.fasterxml.jackson.core.JsonParseException
+import com.fasterxml.jackson.databind.ObjectMapper
 import com.monsanto.arch.awsutil.identitymanagement.model.{Path, RoleArn}
 import com.monsanto.arch.awsutil.regions.Region
 import com.monsanto.arch.awsutil.sns.model._
@@ -12,7 +13,6 @@ import com.monsanto.arch.awsutil.{Account, Arn}
 import org.scalacheck.Arbitrary.arbitrary
 import org.scalacheck.Gen
 
-import scala.collection.JavaConverters._
 import scala.util.Try
 
 object SnsGen {
@@ -155,10 +155,27 @@ object SnsGen {
     UtilGen.stringOf(Gen.oneOf(topicChars), 1, 256).suchThat(_.nonEmpty)
   }
 
-  val jsonMessagePayload: Gen[JSONObject] = {
-    val keyGen = UtilGen.stringOf(Gen.alphaChar, 1, 64)
-    val valueGen = UtilGen.asciiChar
-    Gen.mapOf(Gen.zip(keyGen, valueGen)).map(x ⇒ new JSONObject(x.asJava))
+  val jsonMessagePayload: Gen[String] = {
+    val keyGen = Gen.identifier
+    val valueGen = Gen.identifier
+    val jsonObjectGen =
+      Gen.mapOf(Gen.zip(keyGen, valueGen)).map { data ⇒
+        val om = new ObjectMapper()
+        val obj = om.createObjectNode()
+        data.foreach { entry ⇒
+          obj.put(entry._1, entry._2)
+        }
+        obj.toString
+      }
+
+    jsonObjectGen.suchThat { json ⇒
+      val om = new ObjectMapper()
+      try {
+        om.readTree(json).isObject
+      } catch {
+        case _: JsonParseException ⇒ false
+      }
+    }
   }
 
   val confirmationToken: Gen[String] =
@@ -168,7 +185,7 @@ object SnsGen {
     val protocols = Seq("http", "https", "email", "email-json", "sms", "sqs", "lambda",
       "ADM", "APNS", "APNS_SANDBOX", "BAIDU", "GCM", "MPNS", "WNS")
     val protocol = Gen.oneOf(protocols)
-    val message = Gen.oneOf(SnsGen.jsonMessagePayload.map(_.toString), Gen.identifier)
+    val message = Gen.oneOf(SnsGen.jsonMessagePayload, Gen.identifier)
     val generator =
       for {
         size ← Gen.choose(0, protocols.size)

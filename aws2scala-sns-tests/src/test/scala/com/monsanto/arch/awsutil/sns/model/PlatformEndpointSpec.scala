@@ -218,8 +218,7 @@ class PlatformEndpointSpec extends FreeSpec with MockFactory with Materialised w
           arbitrary[PlatformEndpoint] → "endpoint",
           SnsGen.jsonMessagePayload → "jsonMessage",
           SnsGen.messageId → "messageId"
-        ) { (endpoint, jsonMessage, messageId) ⇒
-          val message = jsonMessage.toString
+        ) { (endpoint, message, messageId) ⇒
           implicit val sns = mock[StreamingSNSClient]("sns")
 
           (sns.publisher _)
@@ -237,8 +236,7 @@ class PlatformEndpointSpec extends FreeSpec with MockFactory with Materialised w
           SnsGen.jsonMessagePayload → "jsonMessage",
           arbitrary[Map[String,MessageAttributeValue]] → "attributes",
           SnsGen.messageId → "messageId"
-        ) { (endpoint, jsonMessage, attributes, messageId) ⇒
-          val message = jsonMessage.toString
+        ) { (endpoint, message, attributes, messageId) ⇒
           implicit val sns = mock[StreamingSNSClient]("sns")
 
           (sns.publisher _)
