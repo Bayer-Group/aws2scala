@@ -245,7 +245,7 @@ object CoreScalaCheckImplicits {
       for {
         key ← Gen.identifier
         comparisonType ← arbitrary[Condition.StringComparisonType]
-        values ← UtilGen.nonEmptyListOfSqrtN(arbitrary[String])
+        values ← UtilGen.nonEmptyListOfSqrtN(arbitrary[String].suchThat(_.forall(_ != '\uffff')))
         ifExists ← arbitrary[Boolean]
       } yield Condition.StringCondition(key, comparisonType, values.distinct, ifExists)
     }
