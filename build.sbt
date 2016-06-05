@@ -2,12 +2,12 @@ import java.util.Date
 import UnidocKeys._
 
 // dependency versions
-val akka = "2.4.4"
+val akka = "2.4.7"
 val aws = "1.11.6"
 val scalaCheck = "org.scalacheck"     %% "scalacheck"                          % "1.12.5"
 val scalaTest  = "org.scalatest"      %% "scalatest"                           % "2.2.6"
 val sprayJson  = "io.spray"           %% "spray-json"                          % "1.3.2"
-val cftg       = "com.monsanto.arch"  %% "cloud-formation-template-generator"  % "3.3.3"
+val cftg       = "com.monsanto.arch"  %% "cloud-formation-template-generator"  % "3.3.4"
 
 val compileOnlyOptions = Seq(
   "-deprecation",
