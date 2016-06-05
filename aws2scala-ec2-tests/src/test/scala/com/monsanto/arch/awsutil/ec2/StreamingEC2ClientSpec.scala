@@ -46,10 +46,11 @@ class StreamingEC2ClientSpec extends FreeSpec with Materialised {
       forAll(Ec2Gen.keyName → "keyName") { name ⇒
         val ec2 = new FakeAmazonEC2Async {
           override def deleteKeyPairAsync(deleteKeyPairRequest: aws.DeleteKeyPairRequest,
-                                          asyncHandler: AsyncHandler[aws.DeleteKeyPairRequest, Void]) = {
+                                          asyncHandler: AsyncHandler[aws.DeleteKeyPairRequest, aws.DeleteKeyPairResult]) = {
+            val result = new aws.DeleteKeyPairResult()
             deleteKeyPairRequest should have ('keyName (name))
-            asyncHandler.onSuccess(deleteKeyPairRequest, null.asInstanceOf[Void])
-            null.asInstanceOf[JFuture[Void]]
+            asyncHandler.onSuccess(deleteKeyPairRequest, result)
+            null.asInstanceOf[JFuture[aws.DeleteKeyPairResult]]
           }
         }
         val streaming = new DefaultStreamingEC2Client(ec2)

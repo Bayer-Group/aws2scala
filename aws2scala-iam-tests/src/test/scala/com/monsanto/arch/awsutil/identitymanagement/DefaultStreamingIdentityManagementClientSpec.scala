@@ -85,7 +85,7 @@ class DefaultStreamingIdentityManagementClientSpec extends FreeSpec with MockFac
         val iam = mock[AmazonIdentityManagementAsync]("iam")
         val streaming = new DefaultStreamingIdentityManagementClient(iam)
 
-        (iam.deleteRoleAsync(_: aws.DeleteRoleRequest, _: AsyncHandler[aws.DeleteRoleRequest, Void]))
+        (iam.deleteRoleAsync(_: aws.DeleteRoleRequest, _: AsyncHandler[aws.DeleteRoleRequest, aws.DeleteRoleResult]))
           .expects(whereRequest { r ⇒
             r should have ('roleName (roleName))
             true
@@ -106,7 +106,7 @@ class DefaultStreamingIdentityManagementClientSpec extends FreeSpec with MockFac
         val streaming = new DefaultStreamingIdentityManagementClient(iam)
         val request = AttachRolePolicyRequest(roleName, policyArn)
 
-        (iam.attachRolePolicyAsync(_: aws.AttachRolePolicyRequest, _: AsyncHandler[aws.AttachRolePolicyRequest, Void]))
+        (iam.attachRolePolicyAsync(_: aws.AttachRolePolicyRequest, _: AsyncHandler[aws.AttachRolePolicyRequest, aws.AttachRolePolicyResult]))
           .expects(whereRequest { r ⇒
             r should have (
               'roleName (roleName),
@@ -130,7 +130,7 @@ class DefaultStreamingIdentityManagementClientSpec extends FreeSpec with MockFac
         val streaming = new DefaultStreamingIdentityManagementClient(iam)
         val request = DetachRolePolicyRequest(roleName, policyArn)
 
-        (iam.detachRolePolicyAsync(_: aws.DetachRolePolicyRequest, _: AsyncHandler[aws.DetachRolePolicyRequest, Void]))
+        (iam.detachRolePolicyAsync(_: aws.DetachRolePolicyRequest, _: AsyncHandler[aws.DetachRolePolicyRequest, aws.DetachRolePolicyResult]))
           .expects(whereRequest { r ⇒
             r should have (
               'roleName (roleName),

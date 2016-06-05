@@ -64,7 +64,7 @@ class DefaultKMSClientSpec extends FreeSpec with Materialised with MockFactory w
     "enable keys" in withFixture { f ⇒
       val keyId = "someKeyId"
 
-      (f.awsClient.enableKeyAsync(_: EnableKeyRequest, _: AsyncHandler[EnableKeyRequest, Void]))
+      (f.awsClient.enableKeyAsync(_: EnableKeyRequest, _: AsyncHandler[EnableKeyRequest, EnableKeyResult]))
         .expects(whereRequest(_.getKeyId == keyId))
         .withVoidAwsSuccess()
 
@@ -75,7 +75,7 @@ class DefaultKMSClientSpec extends FreeSpec with Materialised with MockFactory w
     "disable keys" in withFixture { f ⇒
       val keyId = "someKeyId"
 
-      (f.awsClient.disableKeyAsync(_: DisableKeyRequest, _: AsyncHandler[DisableKeyRequest, Void]))
+      (f.awsClient.disableKeyAsync(_: DisableKeyRequest, _: AsyncHandler[DisableKeyRequest, DisableKeyResult]))
         .expects(whereRequest(_.getKeyId == keyId))
         .withVoidAwsSuccess()
 

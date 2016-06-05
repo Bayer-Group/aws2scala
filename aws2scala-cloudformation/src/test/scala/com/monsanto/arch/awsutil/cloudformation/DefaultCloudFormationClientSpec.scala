@@ -207,7 +207,7 @@ class DefaultCloudFormationClientSpec extends FreeSpec with MockFactory with Mat
     }
 
     "can delete the stack" in withFixture { f =>
-      (f.awsClient.deleteStackAsync(_: DeleteStackRequest, _: AsyncHandler[DeleteStackRequest,Void]))
+      (f.awsClient.deleteStackAsync(_: DeleteStackRequest, _: AsyncHandler[DeleteStackRequest,DeleteStackResult]))
         .expects(whereRequest(_.getStackName == stackName))
         .withVoidAwsSuccess()
 

@@ -159,7 +159,7 @@ class AWSFlowAdapterSpec extends FreeSpec with MockFactory {
         val voidFuture = mock[JFuture[Void]]
         (voidCall.apply _).expects(request, *).returning(voidFuture)
         val handler = mock[AsyncHandler[NextTokenRequest,NextTokenRequest]]
-        val devoid = AWSFlowAdapter.devoid(voidCall)
+        val devoid = AWSFlowAdapter.returnInput(voidCall)
         val jFuture = devoid(request, handler)
 
         (voidFuture, jFuture)
@@ -205,7 +205,7 @@ class AWSFlowAdapterSpec extends FreeSpec with MockFactory {
         }
         val handler = mock[AsyncHandler[NextTokenRequest,NextTokenRequest]]
         (handler.onSuccess _).expects(request, request)
-        val devoid = AWSFlowAdapter.devoid(voidCall)
+        val devoid = AWSFlowAdapter.returnInput(voidCall)
         devoid(request, handler)
       }
 
@@ -218,7 +218,7 @@ class AWSFlowAdapterSpec extends FreeSpec with MockFactory {
         }
         val handler = mock[AsyncHandler[NextTokenRequest,NextTokenRequest]]
         (handler.onError _).expects(dynamite)
-        val devoid = AWSFlowAdapter.devoid(voidCall)
+        val devoid = AWSFlowAdapter.returnInput(voidCall)
         devoid(request, handler)
       }
     }

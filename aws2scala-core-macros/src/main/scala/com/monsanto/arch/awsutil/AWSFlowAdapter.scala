@@ -46,34 +46,33 @@ object AWSFlowAdapter {
         (asyncCall: AWSAsyncCall[Request,Result]): AWSFlowAdapter[Request,Result] =
     macro Macros.markerFlowAdapter[Request, Result]
 
-  /** A utility for wrapping an asynchronous AWS call that returns void.  This utility will make the result of the call
-    * be the request that was passed in.  This is necessary because Akka streams do not allow null values to passed
-    * through.
+  /** A utility for wrapping an asynchronous AWS call that returns a useless POJO.  This utility will make the result
+    * of the call be the request that was passed in.
     */
-  def devoid[T <: AmazonWebServiceRequest](voidCall: AWSAsyncCall[T,Void]): AWSAsyncCall[T,T] = { (request: T, handler: AsyncHandler[T,T]) =>
-    val voidHandler = new AsyncHandler[T, Void] {
-      override def onSuccess(request: T, result: Void): Unit = handler.onSuccess(request, request)
+  def returnInput[T <: AmazonWebServiceRequest, U](asyncCall: AWSAsyncCall[T,U]): AWSAsyncCall[T,T] = { (request: T, handler: AsyncHandler[T,T]) ⇒
+    val ignoreResultHandler = new AsyncHandler[T, U] {
+      override def onSuccess(request: T, result: U): Unit = handler.onSuccess(request, request)
       override def onError(exception: Exception): Unit = handler.onError(exception)
     }
 
-    val voidFuture = voidCall(request, voidHandler)
+    val javaFuture = asyncCall(request, ignoreResultHandler)
 
     new JFuture[T] {
       override def get(): T = {
-        voidFuture.get()
+        javaFuture.get()
         request
       }
 
       override def get(timeout: Long, unit: TimeUnit): T = {
-        voidFuture.get(timeout, unit)
+        javaFuture.get(timeout, unit)
         request
       }
 
-      override def cancel(mayInterruptIfRunning: Boolean): Boolean = voidFuture.cancel(mayInterruptIfRunning)
+      override def cancel(mayInterruptIfRunning: Boolean): Boolean = javaFuture.cancel(mayInterruptIfRunning)
 
-      override def isCancelled: Boolean = voidFuture.isCancelled
+      override def isCancelled: Boolean = javaFuture.isCancelled
 
-      override def isDone: Boolean = voidFuture.isDone
+      override def isDone: Boolean = javaFuture.isDone
     }
   }
 }

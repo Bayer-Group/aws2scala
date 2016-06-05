@@ -41,7 +41,7 @@ private[awsutil] class DefaultStreamingKMSClient(kms: AWSKMSAsync) extends Strea
   override val keyEnabler =
     Flow[String]
       .map(id ⇒ new aws.EnableKeyRequest().withKeyId(id))
-      .via(AWSFlow.simple(AWSFlowAdapter.devoid(kms.enableKeyAsync)))
+      .via(AWSFlow.simple(AWSFlowAdapter.returnInput(kms.enableKeyAsync)))
       .map(_.getKeyId)
       .named("KMS.keyEnabler")
 
@@ -49,7 +49,7 @@ private[awsutil] class DefaultStreamingKMSClient(kms: AWSKMSAsync) extends Strea
   override val keyDisabler =
     Flow[String]
       .map(id ⇒ new aws.DisableKeyRequest().withKeyId(id))
-      .via(AWSFlow.simple(AWSFlowAdapter.devoid(kms.disableKeyAsync)))
+      .via(AWSFlow.simple(AWSFlowAdapter.returnInput(kms.disableKeyAsync)))
       .map(_.getKeyId)
       .named("KMS.keyDisabler")
 
@@ -75,7 +75,7 @@ private[awsutil] class DefaultStreamingKMSClient(kms: AWSKMSAsync) extends Strea
           .withTargetKeyId(keyId)
           .withAliasName(withAliasPrefix(alias))
       }
-      .via(AWSFlow.simple(AWSFlowAdapter.devoid(kms.createAliasAsync)))
+      .via(AWSFlow.simple(AWSFlowAdapter.returnInput(kms.createAliasAsync)))
       .map(_.getAliasName.substring(6))
       .named("KMS.aliasCreator")
 

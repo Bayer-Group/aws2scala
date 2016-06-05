@@ -19,7 +19,7 @@ private[awsutil] class DefaultStreamingEC2Client(client: AmazonEC2Async) extends
   override val keyPairDeleter =
     Flow[String]
       .map(name ⇒ new aws.DeleteKeyPairRequest(name))
-      .via(AWSFlow.simple(AWSFlowAdapter.devoid(client.deleteKeyPairAsync)))
+      .via(AWSFlow.simple(AWSFlowAdapter.returnInput(client.deleteKeyPairAsync)))
       .map(_.getKeyName)
       .named("EC2.keyPairDeleter")
 

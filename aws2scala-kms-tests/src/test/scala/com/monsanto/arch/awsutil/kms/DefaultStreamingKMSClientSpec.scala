@@ -27,7 +27,7 @@ class DefaultStreamingKMSClientSpec extends FreeSpec with MockFactory with Mater
           })
           .withAwsSuccess(new aws.CreateKeyResult().withKeyMetadata(metadata.asAws))
 
-        (kms.createAliasAsync(_: aws.CreateAliasRequest, _: AsyncHandler[aws.CreateAliasRequest, Void]))
+        (kms.createAliasAsync(_: aws.CreateAliasRequest, _: AsyncHandler[aws.CreateAliasRequest, aws.CreateAliasResult]))
           .expects(whereRequest { r ⇒
             r should have (
               'AliasName (

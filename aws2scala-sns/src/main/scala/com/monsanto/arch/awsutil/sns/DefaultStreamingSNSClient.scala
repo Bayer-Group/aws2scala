@@ -20,7 +20,7 @@ private[awsutil] final class DefaultStreamingSNSClient(sns: AmazonSNSAsync) exte
   override val topicDeleter =
     Flow[String]
       .map(arn ⇒ new aws.DeleteTopicRequest(arn))
-      .via(AWSFlow.simple(AWSFlowAdapter.devoid[aws.DeleteTopicRequest](sns.deleteTopicAsync)))
+      .via(AWSFlow.simple(AWSFlowAdapter.returnInput[aws.DeleteTopicRequest, aws.DeleteTopicResult](sns.deleteTopicAsync)))
       .map(_.getTopicArn)
       .named("SNS.topicDeleter")
 
@@ -49,21 +49,21 @@ private[awsutil] final class DefaultStreamingSNSClient(sns: AmazonSNSAsync) exte
   override val topicAttributeSetter =
     Flow[SetTopicAttributesRequest]
       .map(_.toAws)
-      .via(AWSFlow.simple(AWSFlowAdapter.devoid[aws.SetTopicAttributesRequest](sns.setTopicAttributesAsync)))
+      .via(AWSFlow.simple(AWSFlowAdapter.returnInput[aws.SetTopicAttributesRequest,aws.SetTopicAttributesResult](sns.setTopicAttributesAsync)))
       .map(_.getTopicArn)
       .named("SNS.topicAttributeSetter")
 
   override val permissionAdder =
     Flow[AddPermissionRequest]
       .map(_.asAws)
-      .via(AWSFlow.simple(AWSFlowAdapter.devoid[aws.AddPermissionRequest](sns.addPermissionAsync)))
+      .via(AWSFlow.simple(AWSFlowAdapter.returnInput[aws.AddPermissionRequest,aws.AddPermissionResult](sns.addPermissionAsync)))
       .map(_.getTopicArn)
       .named("SNS.permissionAdder")
 
   override val permissionRemover =
     Flow[RemovePermissionRequest]
       .map(_.asAws)
-      .via(AWSFlow.simple(AWSFlowAdapter.devoid[aws.RemovePermissionRequest](sns.removePermissionAsync)))
+      .via(AWSFlow.simple(AWSFlowAdapter.returnInput[aws.RemovePermissionRequest,aws.RemovePermissionResult](sns.removePermissionAsync)))
       .map(_.getTopicArn)
       .named("SNS.permissionRemover")
 
@@ -111,14 +111,14 @@ private[awsutil] final class DefaultStreamingSNSClient(sns: AmazonSNSAsync) exte
   override val subscriptionAttributeSetter =
     Flow[SetSubscriptionAttributesRequest]
       .map(_.toAws)
-      .via(AWSFlow.simple(AWSFlowAdapter.devoid[aws.SetSubscriptionAttributesRequest](sns.setSubscriptionAttributesAsync)))
+      .via(AWSFlow.simple(AWSFlowAdapter.returnInput[aws.SetSubscriptionAttributesRequest,aws.SetSubscriptionAttributesResult](sns.setSubscriptionAttributesAsync)))
       .map(_.getSubscriptionArn)
       .named("SNS.subscriptionAttributesSetter")
 
   override val unsubscriber =
     Flow[String]
       .map(arn ⇒ new aws.UnsubscribeRequest(arn))
-      .via(AWSFlow.simple(AWSFlowAdapter.devoid[aws.UnsubscribeRequest](sns.unsubscribeAsync)))
+      .via(AWSFlow.simple(AWSFlowAdapter.returnInput[aws.UnsubscribeRequest,aws.UnsubscribeResult](sns.unsubscribeAsync)))
       .map(_.getSubscriptionArn)
       .named("SNS.unsubscriber")
 
@@ -139,14 +139,14 @@ private[awsutil] final class DefaultStreamingSNSClient(sns: AmazonSNSAsync) exte
   override val platformApplicationAttributesSetter =
     Flow[SetPlatformApplicationAttributesRequest]
       .map(_.toAws)
-      .via(AWSFlow.simple(AWSFlowAdapter.devoid[aws.SetPlatformApplicationAttributesRequest](sns.setPlatformApplicationAttributesAsync)))
+      .via(AWSFlow.simple(AWSFlowAdapter.returnInput[aws.SetPlatformApplicationAttributesRequest,aws.SetPlatformApplicationAttributesResult](sns.setPlatformApplicationAttributesAsync)))
       .map(_.getPlatformApplicationArn)
       .named("SNS.platformApplicationAttributesSetter")
 
   override val platformApplicationDeleter =
     Flow[String]
       .map(arn ⇒ new aws.DeletePlatformApplicationRequest().withPlatformApplicationArn(arn))
-      .via(AWSFlow.simple(AWSFlowAdapter.devoid(sns.deletePlatformApplicationAsync)))
+      .via(AWSFlow.simple(AWSFlowAdapter.returnInput[aws.DeletePlatformApplicationRequest,aws.DeletePlatformApplicationResult](sns.deletePlatformApplicationAsync)))
       .map(_.getPlatformApplicationArn)
       .named("SNS.platformApplicationDeleter")
 
@@ -184,14 +184,14 @@ private[awsutil] final class DefaultStreamingSNSClient(sns: AmazonSNSAsync) exte
   override val platformEndpointAttributesSetter =
     Flow[SetPlatformEndpointAttributesRequest]
       .map(r ⇒ new aws.SetEndpointAttributesRequest().withEndpointArn(r.platformEndpointArn).withAttributes(r.attributes.asJava))
-      .via(AWSFlow.simple(AWSFlowAdapter.devoid(sns.setEndpointAttributesAsync)))
+      .via(AWSFlow.simple(AWSFlowAdapter.returnInput[aws.SetEndpointAttributesRequest,aws.SetEndpointAttributesResult](sns.setEndpointAttributesAsync)))
       .map(_.getEndpointArn)
       .named("SNS.platformEndpointAttributesSetter")
 
   override val platformEndpointDeleter =
     Flow[String]
       .map(arn ⇒ new aws.DeleteEndpointRequest().withEndpointArn(arn))
-      .via(AWSFlow.simple(AWSFlowAdapter.devoid(sns.deleteEndpointAsync)))
+      .via(AWSFlow.simple(AWSFlowAdapter.returnInput[aws.DeleteEndpointRequest,aws.DeleteEndpointResult](sns.deleteEndpointAsync)))
       .map(_.getEndpointArn)
       .named("SNS.platformEndpointDeleter")
 
