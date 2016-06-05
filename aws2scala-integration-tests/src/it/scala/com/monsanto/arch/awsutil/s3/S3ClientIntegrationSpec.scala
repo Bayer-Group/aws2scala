@@ -1,6 +1,6 @@
 package com.monsanto.arch.awsutil.s3
 
-import java.io.File
+import java.io.{File, PrintWriter}
 import java.net.URL
 import java.util.UUID
 
@@ -10,7 +10,6 @@ import com.monsanto.arch.awsutil.s3.model.Bucket
 import com.monsanto.arch.awsutil.test_support.AwsScalaFutures._
 import com.monsanto.arch.awsutil.test_support.{AwsIntegrationSpec, IntegrationCleanup, IntegrationTest, TestDefaults}
 import com.typesafe.scalalogging.StrictLogging
-import org.apache.commons.io.FileUtils
 import org.scalactic.Equality
 import org.scalatest.FreeSpec
 import org.scalatest.Matchers._
@@ -111,7 +110,10 @@ class S3ClientIntegrationSpec extends FreeSpec with AwsIntegrationSpec with Stri
         val sourceFile = File.createTempFile("file", ".uuids")
         sourceFile.deleteOnExit()
         try {
-          FileUtils.write(sourceFile, fileContent)
+          val out = new PrintWriter(sourceFile, "UTF-8")
+          try {
+            out.print(fileContent)
+          } finally out.close()
           val result = asyncClient.upload(bucketName, fileKey, sourceFile).futureValue
           result.getBucketName shouldBe bucketName
           result.getKey shouldBe fileKey
@@ -159,7 +161,7 @@ class S3ClientIntegrationSpec extends FreeSpec with AwsIntegrationSpec with Stri
         try {
           val result = asyncClient.downloadTo(bucketName, fileKey, dest).futureValue
           result shouldBe dest
-          FileUtils.readFileToString(dest) shouldBe fileContent
+          io.Source.fromFile(dest).mkString shouldBe fileContent
         } finally dest.delete()
       }
     }

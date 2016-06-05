@@ -416,10 +416,7 @@ lazy val integrationTests = Project("aws2scala-integration-tests", file("aws2sca
     noPublishingSettings,
     Defaults.itSettings,
     description := "Integration test suite for aws2scala",
-    libraryDependencies ++= Seq(
-      cftg                                   % "it",
-      "commons-io"  % "commons-io"  % "2.4"  % "it"
-    )
+    libraryDependencies += cftg % "it"
   )
 
 lazy val aws2scala = (project in file("."))
