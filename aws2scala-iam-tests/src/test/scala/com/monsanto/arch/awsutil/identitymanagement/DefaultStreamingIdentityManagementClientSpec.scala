@@ -238,4 +238,23 @@ class DefaultStreamingIdentityManagementClientSpec extends FreeSpec with MockFac
       result shouldBe policyArn
     }
   }
+
+  "a policy getter" in {
+    forAll { (policyArn: PolicyArn, policy: ManagedPolicy) ⇒
+      val iam = mock[AmazonIdentityManagementAsync]("iam")
+      val streaming = new DefaultStreamingIdentityManagementClient(iam)
+
+      (iam.getPolicyAsync(_: aws.GetPolicyRequest, _: AsyncHandler[aws.GetPolicyRequest, aws.GetPolicyResult]))
+        .expects(whereRequest { r ⇒
+          r should have (
+            'PolicyArn (policyArn.arnString)
+          )
+          true
+        })
+        .withAwsSuccess(new aws.GetPolicyResult().withPolicy(policy.asAws))
+
+      val result = Source.single(policyArn).via(streaming.policyGetter).runWith(Sink.head).futureValue
+      result shouldBe policy
+    }
+  }
 }

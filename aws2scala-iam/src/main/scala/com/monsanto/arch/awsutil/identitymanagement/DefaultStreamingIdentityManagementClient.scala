@@ -76,4 +76,11 @@ private[awsutil] class DefaultStreamingIdentityManagementClient(iam: AmazonIdent
           .map(_ ⇒ arn)
       }
       .named("IAM.policyDeleter")
+
+  override val policyGetter =
+    Flow[PolicyArn]
+      .map(arn ⇒ new aws.GetPolicyRequest().withPolicyArn(arn.arnString))
+      .via[aws.GetPolicyResult, NotUsed](AWSFlow.simple(iam.getPolicyAsync))
+      .map(_.getPolicy.asScala)
+      .named("IAM.policyGetter")
 }
