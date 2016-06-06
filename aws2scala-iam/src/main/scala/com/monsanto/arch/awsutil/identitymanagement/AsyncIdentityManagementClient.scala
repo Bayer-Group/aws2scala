@@ -80,4 +80,10 @@ trait AsyncIdentityManagementClient extends AsyncAwsClient {
     */
   def createPolicy(name: String, document: Policy, description: String, path: Path)
                   (implicit m: Materializer): Future[ManagedPolicy]
+
+  /** Deletes the managed policy.
+    *
+    * @param policyArn the ARN of the policy to delete
+    */
+  def deletePolicy(policyArn: PolicyArn)(implicit m: Materializer): Future[Done]
 }

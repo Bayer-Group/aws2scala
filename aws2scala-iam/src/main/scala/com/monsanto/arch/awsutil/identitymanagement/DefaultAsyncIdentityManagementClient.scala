@@ -76,4 +76,9 @@ private[awsutil] class DefaultAsyncIdentityManagementClient(streaming: Streaming
     Source.single(CreatePolicyRequest(name, document, Some(description), path))
       .via(streaming.policyCreator)
       .runWith(Sink.head)
+
+  override def deletePolicy(policyArn: PolicyArn)(implicit m: Materializer) =
+    Source.single(policyArn)
+      .via(streaming.policyDeleter)
+      .runWith(Sink.ignore)
 }

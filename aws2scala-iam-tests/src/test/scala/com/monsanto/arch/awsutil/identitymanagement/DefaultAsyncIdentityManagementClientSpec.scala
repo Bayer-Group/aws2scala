@@ -262,5 +262,19 @@ class DefaultAsyncIdentityManagementClientSpec extends FreeSpec with MockFactory
         }
       }
     }
+
+    "delete managed policies" in {
+      forAll { policyArn: PolicyArn ⇒
+        val streaming = mock[StreamingIdentityManagementClient]("streaming")
+        val async = new DefaultAsyncIdentityManagementClient(streaming)
+
+        (streaming.policyDeleter _)
+          .expects()
+          .returningFlow(policyArn, policyArn)
+
+        val result = async.deletePolicy(policyArn).futureValue
+        result shouldBe Done
+      }
+    }
   }
 }
