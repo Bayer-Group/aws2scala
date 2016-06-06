@@ -276,5 +276,19 @@ class DefaultAsyncIdentityManagementClientSpec extends FreeSpec with MockFactory
         result shouldBe Done
       }
     }
+
+    "get managed policies" in {
+      forAll { (policyArn: PolicyArn, policy: ManagedPolicy) ⇒
+        val streaming = mock[StreamingIdentityManagementClient]("streaming")
+        val async = new DefaultAsyncIdentityManagementClient(streaming)
+
+        (streaming.policyGetter _)
+          .expects()
+          .returningFlow(policyArn, policy)
+
+        val result = async.getPolicy(policyArn).futureValue
+        result shouldBe policy
+      }
+    }
   }
 }

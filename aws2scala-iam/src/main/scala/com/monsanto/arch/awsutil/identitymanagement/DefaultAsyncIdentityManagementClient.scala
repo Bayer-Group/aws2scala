@@ -81,4 +81,9 @@ private[awsutil] class DefaultAsyncIdentityManagementClient(streaming: Streaming
     Source.single(policyArn)
       .via(streaming.policyDeleter)
       .runWith(Sink.ignore)
+
+  override def getPolicy(policyArn: PolicyArn)(implicit m: Materializer) =
+    Source.single(policyArn)
+      .via(streaming.policyGetter)
+      .runWith(Sink.head)
 }

@@ -86,4 +86,10 @@ trait AsyncIdentityManagementClient extends AsyncAwsClient {
     * @param policyArn the ARN of the policy to delete
     */
   def deletePolicy(policyArn: PolicyArn)(implicit m: Materializer): Future[Done]
+
+  /** Retrieves information about the managed policy identified by the given ARN.
+    *
+    * @param policyArn the ARN of the managed policy to retrieve
+    */
+  def getPolicy(policyArn: PolicyArn)(implicit m: Materializer): Future[ManagedPolicy]
 }
