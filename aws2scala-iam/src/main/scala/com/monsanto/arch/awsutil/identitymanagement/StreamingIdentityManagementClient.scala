@@ -31,4 +31,7 @@ trait StreamingIdentityManagementClient extends StreamingAwsClient {
 
   /** Returns a flow that will process a request to create a policy and emit the resulting policy. */
   def policyCreator: Flow[CreatePolicyRequest, ManagedPolicy, NotUsed]
+
+  /** Returns a flow that given a managed policy ARN will delete it and emit the ARN of the deleted policy. */
+  def policyDeleter: Flow[PolicyArn, PolicyArn, NotUsed]
 }

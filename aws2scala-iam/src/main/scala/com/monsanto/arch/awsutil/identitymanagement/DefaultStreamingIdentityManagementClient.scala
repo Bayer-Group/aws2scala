@@ -1,7 +1,7 @@
 package com.monsanto.arch.awsutil.identitymanagement
 
 import akka.NotUsed
-import akka.stream.scaladsl.Flow
+import akka.stream.scaladsl.{Flow, Source}
 import com.amazonaws.services.identitymanagement.{AmazonIdentityManagementAsync, model ⇒ aws}
 import com.monsanto.arch.awsutil.converters.IamConverters._
 import com.monsanto.arch.awsutil.identitymanagement.model._
@@ -66,4 +66,14 @@ private[awsutil] class DefaultStreamingIdentityManagementClient(iam: AmazonIdent
       .via[aws.CreatePolicyResult,NotUsed](AWSFlow.simple(iam.createPolicyAsync))
       .map(_.getPolicy.asScala)
       .named("IAM.policyCreator")
+
+  override val policyDeleter =
+    Flow[PolicyArn]
+      .flatMapConcat { arn ⇒
+        val request = new aws.DeletePolicyRequest().withPolicyArn(arn.arnString)
+        Source.single(request)
+          .via[aws.DeletePolicyResult, NotUsed](AWSFlow.simple(iam.deletePolicyAsync))
+          .map(_ ⇒ arn)
+      }
+      .named("IAM.policyDeleter")
 }
