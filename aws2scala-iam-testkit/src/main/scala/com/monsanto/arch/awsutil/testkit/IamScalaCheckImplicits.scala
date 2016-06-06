@@ -230,4 +230,15 @@ object IamScalaCheckImplicits {
         Shrink.shrink(policy.attachmentCount).filter(_ >= 0).map(x ⇒ policy.copy(attachmentCount = x)) append
         Shrink.shrink(policy.description).map(x ⇒ policy.copy(description = x))
     }
+
+  implicit lazy val arbListPoliciesRequest: Arbitrary[ListPoliciesRequest] =
+    Arbitrary(Gen.resultOf(ListPoliciesRequest(_: Boolean, _: Path, _: ListPoliciesRequest.Scope)))
+
+  implicit lazy val shrinkListPoliciesRequest: Shrink[ListPoliciesRequest] =
+    Shrink { request ⇒
+      Shrink.shrink(request.prefix).map(p ⇒ request.copy(prefix = p))
+    }
+
+  implicit lazy val arbListPoliciesRequestScope: Arbitrary[ListPoliciesRequest.Scope] =
+    Arbitrary(Gen.oneOf(ListPoliciesRequest.Scope.values))
 }

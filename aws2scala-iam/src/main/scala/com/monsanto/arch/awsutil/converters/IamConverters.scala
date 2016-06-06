@@ -96,6 +96,14 @@ object IamConverters {
     }
   }
 
+  implicit class ScalaListPoliciesRequest(val request: ListPoliciesRequest) extends AnyVal {
+    def asAws: aws.ListPoliciesRequest =
+      new aws.ListPoliciesRequest()
+        .withOnlyAttached(java.lang.Boolean.valueOf(request.onlyAttached))
+        .withPathPrefix(request.prefix.pathString)
+        .withScope(request.scope.name)
+  }
+
   implicit class ScalaListRolesRequest(val request: ListRolesRequest) extends AnyVal {
     def asAws: aws.ListRolesRequest = {
       val awsRequest = new aws.ListRolesRequest
@@ -132,6 +140,24 @@ object IamConverters {
         .withDescription(policy.description.orNull)
         .withCreateDate(policy.created)
         .withUpdateDate(policy.updated)
+  }
+
+  implicit class AwsPolicyScopeType(val scopeType: aws.PolicyScopeType) extends AnyVal {
+    def asScala: ListPoliciesRequest.Scope =
+      scopeType match {
+        case aws.PolicyScopeType.All   ⇒ ListPoliciesRequest.Scope.All
+        case aws.PolicyScopeType.AWS   ⇒ ListPoliciesRequest.Scope.AWS
+        case aws.PolicyScopeType.Local ⇒ ListPoliciesRequest.Scope.Local
+      }
+  }
+
+  implicit class ScalaPolicyScopeType(val scopeType: ListPoliciesRequest.Scope) extends AnyVal {
+    def asAws: aws.PolicyScopeType =
+      scopeType match {
+        case ListPoliciesRequest.Scope.All   ⇒ aws.PolicyScopeType.All
+        case ListPoliciesRequest.Scope.AWS   ⇒ aws.PolicyScopeType.AWS
+        case ListPoliciesRequest.Scope.Local ⇒ aws.PolicyScopeType.Local
+      }
   }
 
   implicit class AwsRole(val role: aws.Role) extends AnyVal {
