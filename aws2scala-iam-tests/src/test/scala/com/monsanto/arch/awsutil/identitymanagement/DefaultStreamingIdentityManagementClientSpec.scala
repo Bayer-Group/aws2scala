@@ -18,7 +18,7 @@ import org.scalatest.FreeSpec
 import org.scalatest.Matchers._
 import org.scalatest.prop.GeneratorDrivenPropertyChecks._
 
-class DefaultStreamingIdentityManagementClientSpec extends FreeSpec with MockFactory with Materialised with AwsMockUtils {
+class DefaultStreamingIdentityManagementClientSpec extends FreeSpec with MockFactory with Materialised with AwsMockUtils with AwsMatcherSupport {
   "the default StreamingIdentityManagementClient provides" - {
     "a role lister" in {
       forAll(maxSize(30)) { (maybePrefix: Option[Path], scalaRoles: List[Role]) ⇒
@@ -201,60 +201,98 @@ class DefaultStreamingIdentityManagementClientSpec extends FreeSpec with MockFac
         result shouldBe users
       }
     }
-  }
 
-  "a policy creator" in {
-    forAll { (request: CreatePolicyRequest, policy: ManagedPolicy) ⇒
-      val iam = mock[AmazonIdentityManagementAsync]("iam")
-      val streaming = new DefaultStreamingIdentityManagementClient(iam)
+    "a policy creator" in {
+      forAll { (request: CreatePolicyRequest, policy: ManagedPolicy) ⇒
+        val iam = mock[AmazonIdentityManagementAsync]("iam")
+        val streaming = new DefaultStreamingIdentityManagementClient(iam)
 
-      (iam.createPolicyAsync(_: aws.CreatePolicyRequest, _: AsyncHandler[aws.CreatePolicyRequest, aws.CreatePolicyResult]))
-        .expects(whereRequest { r ⇒
-          r.asScala shouldBe request
-          true
-        })
-        .withAwsSuccess(new aws.CreatePolicyResult().withPolicy(policy.asAws))
+        (iam.createPolicyAsync(_: aws.CreatePolicyRequest, _: AsyncHandler[aws.CreatePolicyRequest, aws.CreatePolicyResult]))
+          .expects(whereRequest { r ⇒
+            r.asScala shouldBe request
+            true
+          })
+          .withAwsSuccess(new aws.CreatePolicyResult().withPolicy(policy.asAws))
 
-      val result = Source.single(request).via(streaming.policyCreator).runWith(Sink.head).futureValue
-      result shouldBe policy
+        val result = Source.single(request).via(streaming.policyCreator).runWith(Sink.head).futureValue
+        result shouldBe policy
+      }
     }
-  }
 
-  "a policy deleter" in {
-    forAll { policyArn: PolicyArn ⇒
-      val iam = mock[AmazonIdentityManagementAsync]("iam")
-      val streaming = new DefaultStreamingIdentityManagementClient(iam)
+    "a policy deleter" in {
+      forAll { policyArn: PolicyArn ⇒
+        val iam = mock[AmazonIdentityManagementAsync]("iam")
+        val streaming = new DefaultStreamingIdentityManagementClient(iam)
 
-      (iam.deletePolicyAsync(_: aws.DeletePolicyRequest, _: AsyncHandler[aws.DeletePolicyRequest, aws.DeletePolicyResult]))
-        .expects(whereRequest { r ⇒
-          r should have (
-            'PolicyArn (policyArn.arnString)
-          )
-          true
-        })
-        .withAwsSuccess(new aws.DeletePolicyResult)
+        (iam.deletePolicyAsync(_: aws.DeletePolicyRequest, _: AsyncHandler[aws.DeletePolicyRequest, aws.DeletePolicyResult]))
+          .expects(whereRequest { r ⇒
+            r should have (
+              'PolicyArn (policyArn.arnString)
+            )
+            true
+          })
+          .withAwsSuccess(new aws.DeletePolicyResult)
 
-      val result = Source.single(policyArn).via(streaming.policyDeleter).runWith(Sink.head).futureValue
-      result shouldBe policyArn
+        val result = Source.single(policyArn).via(streaming.policyDeleter).runWith(Sink.head).futureValue
+        result shouldBe policyArn
+      }
     }
-  }
 
-  "a policy getter" in {
-    forAll { (policyArn: PolicyArn, policy: ManagedPolicy) ⇒
-      val iam = mock[AmazonIdentityManagementAsync]("iam")
-      val streaming = new DefaultStreamingIdentityManagementClient(iam)
+    "a policy getter" in {
+      forAll { (policyArn: PolicyArn, policy: ManagedPolicy) ⇒
+        val iam = mock[AmazonIdentityManagementAsync]("iam")
+        val streaming = new DefaultStreamingIdentityManagementClient(iam)
 
-      (iam.getPolicyAsync(_: aws.GetPolicyRequest, _: AsyncHandler[aws.GetPolicyRequest, aws.GetPolicyResult]))
-        .expects(whereRequest { r ⇒
-          r should have (
-            'PolicyArn (policyArn.arnString)
-          )
-          true
-        })
-        .withAwsSuccess(new aws.GetPolicyResult().withPolicy(policy.asAws))
+        (iam.getPolicyAsync(_: aws.GetPolicyRequest, _: AsyncHandler[aws.GetPolicyRequest, aws.GetPolicyResult]))
+          .expects(whereRequest { r ⇒
+            r should have (
+              'PolicyArn (policyArn.arnString)
+            )
+            true
+          })
+          .withAwsSuccess(new aws.GetPolicyResult().withPolicy(policy.asAws))
 
-      val result = Source.single(policyArn).via(streaming.policyGetter).runWith(Sink.head).futureValue
-      result shouldBe policy
+        val result = Source.single(policyArn).via(streaming.policyGetter).runWith(Sink.head).futureValue
+        result shouldBe policy
+      }
+    }
+
+    "a managed policy lister" in {
+      forAll { request: ListPoliciesRequest ⇒
+        val iam = mock[AmazonIdentityManagementAsync]("iam")
+        val streaming = new DefaultStreamingIdentityManagementClient(iam)
+
+        val policies = Gen.resize(20, Gen.listOf(arbitrary[ManagedPolicy])).reallySample
+        val pages = if (policies.isEmpty) List(policies) else policies.grouped(5).toList
+
+        pages.zipWithIndex.foreach { case (page, i) ⇒
+          (iam.listPoliciesAsync(_: aws.ListPoliciesRequest, _: AsyncHandler[aws.ListPoliciesRequest, aws.ListPoliciesResult]))
+            .expects(whereRequest { r ⇒
+              val marker = if (i == 0) null else i.toString
+
+              r should have(
+                'Marker (marker),
+                onlyAttached (request.onlyAttached),
+                'PathPrefix (request.prefix.pathString),
+                'Scope (request.scope.name)
+              )
+              true
+            })
+            .withAwsSuccess {
+              val policies = page.map(_.asAws)
+              val result = new aws.ListPoliciesResult().withPolicies(policies: _*)
+              val next = i + 1
+              if (next != pages.size) {
+                result.setIsTruncated(true)
+                result.setMarker(next.toString)
+              }
+              result
+            }
+        }
+
+        val result = Source.single(request).via(streaming.policyLister).runWith(Sink.seq).futureValue
+        result shouldBe policies
+      }
     }
   }
 }

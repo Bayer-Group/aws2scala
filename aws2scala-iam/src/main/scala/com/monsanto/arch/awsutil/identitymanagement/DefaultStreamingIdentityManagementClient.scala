@@ -83,4 +83,11 @@ private[awsutil] class DefaultStreamingIdentityManagementClient(iam: AmazonIdent
       .via[aws.GetPolicyResult, NotUsed](AWSFlow.simple(iam.getPolicyAsync))
       .map(_.getPolicy.asScala)
       .named("IAM.policyGetter")
+
+  override val policyLister =
+    Flow[ListPoliciesRequest]
+      .map(_.asAws)
+      .via[aws.ListPoliciesResult, NotUsed](AWSFlow.pagedByMarker(iam.listPoliciesAsync))
+      .mapConcat(_.getPolicies.asScala.toList.map(_.asScala))
+      .named("IAM.policyLister")
 }

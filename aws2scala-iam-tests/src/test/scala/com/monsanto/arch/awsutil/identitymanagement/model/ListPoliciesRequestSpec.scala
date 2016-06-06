@@ -2,6 +2,7 @@ package com.monsanto.arch.awsutil.identitymanagement.model
 
 import com.amazonaws.services.identitymanagement.{model ⇒ aws}
 import com.monsanto.arch.awsutil.converters.IamConverters._
+import com.monsanto.arch.awsutil.identitymanagement.AwsMatcherSupport
 import com.monsanto.arch.awsutil.test_support.AwsEnumerationBehaviours
 import com.monsanto.arch.awsutil.testkit.CoreScalaCheckImplicits._
 import com.monsanto.arch.awsutil.testkit.IamScalaCheckImplicits._
@@ -11,7 +12,7 @@ import org.scalatest.prop.GeneratorDrivenPropertyChecks._
 import org.scalatest.prop.TableDrivenPropertyChecks.{Table, forAll ⇒ forAllIn}
 
 //noinspection NameBooleanParameters
-class ListPoliciesRequestSpec extends FreeSpec with AwsEnumerationBehaviours {
+class ListPoliciesRequestSpec extends FreeSpec with AwsEnumerationBehaviours with AwsMatcherSupport {
   "ListPoliciesRequest should" - {
     "have an allPolicies constant" in {
       ListPoliciesRequest.allPolicies shouldBe ListPoliciesRequest(false, Path.empty, ListPoliciesRequest.Scope.All)
@@ -30,8 +31,8 @@ class ListPoliciesRequestSpec extends FreeSpec with AwsEnumerationBehaviours {
     "convert to the correct AWS object" in {
       forAll { request: ListPoliciesRequest ⇒
         val awsRequest = request.asAws
-        awsRequest.getOnlyAttached shouldBe request.onlyAttached
         awsRequest should have (
+          onlyAttached (request.onlyAttached),
           'PathPrefix (request.prefix.pathString),
           'Scope (request.scope.name)
         )
