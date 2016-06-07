@@ -92,4 +92,16 @@ trait AsyncIdentityManagementClient extends AsyncAwsClient {
     * @param policyArn the ARN of the managed policy to retrieve
     */
   def getPolicy(policyArn: PolicyArn)(implicit m: Materializer): Future[ManagedPolicy]
+
+  /** Returns information about all managed policies. */
+  def listPolicies()(implicit m: Materializer): Future[Seq[ManagedPolicy]]
+
+  /** Returns information about all managed policies that match the given prefix. */
+  def listPolicies(prefix: Path)(implicit m: Materializer): Future[Seq[ManagedPolicy]]
+
+  /** Returns a list of policies matching the given request. */
+  def listPolicies(request: ListPoliciesRequest)(implicit m: Materializer): Future[Seq[ManagedPolicy]]
+
+  /** Returns information about all customer-managed policies. */
+  def listLocalPolicies()(implicit m: Materializer): Future[Seq[ManagedPolicy]]
 }

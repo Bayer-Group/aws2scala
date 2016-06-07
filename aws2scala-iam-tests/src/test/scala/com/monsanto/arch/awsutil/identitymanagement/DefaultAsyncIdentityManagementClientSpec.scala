@@ -291,4 +291,62 @@ class DefaultAsyncIdentityManagementClientSpec extends FreeSpec with MockFactory
       }
     }
   }
+
+  "list policies" - {
+    "all of them" in {
+      val streaming = mock[StreamingIdentityManagementClient]("streaming")
+      val async = new DefaultAsyncIdentityManagementClient(streaming)
+      val policies = List.empty[ManagedPolicy]
+
+      (streaming.policyLister _)
+        .expects()
+        .returningConcatFlow(ListPoliciesRequest.allPolicies, policies)
+
+      val result = async.listPolicies().futureValue
+      result shouldBe policies
+    }
+
+    "with a prefix" in {
+      forAll { prefix: Path ⇒
+        val streaming = mock[StreamingIdentityManagementClient]("streaming")
+        val async = new DefaultAsyncIdentityManagementClient(streaming)
+        val policies = List.empty[ManagedPolicy]
+
+        (streaming.policyLister _)
+          .expects()
+          .returningConcatFlow(ListPoliciesRequest.withPrefix(prefix), policies)
+
+        val result = async.listPolicies(prefix).futureValue
+        result shouldBe policies
+      }
+    }
+
+    "with an arbitrary filter" in {
+      forAll { request: ListPoliciesRequest ⇒
+        val streaming = mock[StreamingIdentityManagementClient]("streaming")
+        val async = new DefaultAsyncIdentityManagementClient(streaming)
+        val policies = List.empty[ManagedPolicy]
+
+        (streaming.policyLister _)
+          .expects()
+          .returningConcatFlow(request, policies)
+
+        val result = async.listPolicies(request).futureValue
+        result shouldBe policies
+      }
+    }
+
+    "only local policies" in {
+      val streaming = mock[StreamingIdentityManagementClient]("streaming")
+      val async = new DefaultAsyncIdentityManagementClient(streaming)
+      val policies = List.empty[ManagedPolicy]
+
+      (streaming.policyLister _)
+        .expects()
+        .returningConcatFlow(ListPoliciesRequest.localPolicies, policies)
+
+      val result = async.listLocalPolicies().futureValue
+      result shouldBe policies
+    }
+  }
 }
