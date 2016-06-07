@@ -256,4 +256,19 @@ object IamScalaCheckImplicits {
     Shrink { policyVersion ⇒
       Shrink.shrink(policyVersion.document).map(x ⇒ policyVersion.copy(document = x))
     }
+
+  implicit lazy val arbCreatePolicyVersionRequest: Arbitrary[CreatePolicyVersionRequest] =
+    Arbitrary {
+      for {
+        arn ← arbitrary[PolicyArn]
+        document ← arbitrary[Policy]
+        setDefaultVersion ← arbitrary[Boolean]
+      } yield CreatePolicyVersionRequest(arn, document, setDefaultVersion)
+    }
+
+  implicit lazy val shrinkCreatePolicyVersionRequest: Shrink[CreatePolicyVersionRequest] =
+    Shrink { request ⇒
+      Shrink.shrink(request.arn).map(x ⇒ request.copy(arn = x)) append
+        Shrink.shrink(request.document).map(x ⇒ request.copy(document = x))
+    }
 }
