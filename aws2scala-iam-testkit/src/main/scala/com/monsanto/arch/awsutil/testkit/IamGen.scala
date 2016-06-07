@@ -12,6 +12,8 @@ import com.monsanto.arch.awsutil.testkit.CoreScalaCheckImplicits._
 import org.scalacheck.Arbitrary.arbitrary
 import org.scalacheck.Gen
 
+import scala.util.Try
+
 /** Handy generators for ''aws2scala-iam'' objects. */
 object IamGen {
   SecurityTokenService.init()
@@ -57,6 +59,11 @@ object IamGen {
 
   /** Generates a unique identifier for a managed policy. */
   val policyId: Gen[String] = id("ANP")
+
+  /** Generates a managed policy version ID. */
+  val policyVersionId: Gen[String] = Gen.posNum[Int].map(n ⇒ s"v$n").suchThat { v ⇒
+    v.length >= 2 && v.charAt(0) == 'v' && Try(v.substring(1).toInt >= 1).isSuccess
+  }
 
   /** Used to generate IAM unique identifiers. */
   private def id(prefix: String): Gen[String] =

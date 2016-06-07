@@ -214,7 +214,7 @@ object IamScalaCheckImplicits {
       for {
         arn ← arbitrary[PolicyArn]
         id ← IamGen.policyId
-        defaultVersionId ← Gen.posNum[Int].map(n ⇒ s"v$n")
+        defaultVersionId ← IamGen.policyVersionId
         attachmentCount ← Gen.choose(0, 1024)
         attachable ← arbitrary[Boolean]
         description ← arbitrary[Option[String]]
@@ -227,6 +227,7 @@ object IamScalaCheckImplicits {
   implicit lazy val shrinkManagedPolicy: Shrink[ManagedPolicy] =
     Shrink { policy ⇒
       Shrink.shrink(policy.arn).map(a ⇒ policy.copy(name = a.name, arn = a, path = a.path)) append
+        shrinkPolicyVersionId(policy.defaultVersionId).map(x ⇒ policy.copy(defaultVersionId = x)) append
         Shrink.shrink(policy.attachmentCount).filter(_ >= 0).map(x ⇒ policy.copy(attachmentCount = x)) append
         Shrink.shrink(policy.description).map(x ⇒ policy.copy(description = x))
     }
@@ -246,7 +247,7 @@ object IamScalaCheckImplicits {
     Arbitrary {
       for {
         document ← arbitrary[Policy]
-        versionId ← Gen.posNum[Int].map(n ⇒ s"v$n")
+        versionId ← IamGen.policyVersionId
         isDefaultVersion ← arbitrary[Boolean]
         created ← arbitrary[Date]
       } yield ManagedPolicyVersion(document, versionId, isDefaultVersion, created)
@@ -254,7 +255,8 @@ object IamScalaCheckImplicits {
 
   implicit lazy val shrinkManagedPolicyVersion: Shrink[ManagedPolicyVersion] =
     Shrink { policyVersion ⇒
-      Shrink.shrink(policyVersion.document).map(x ⇒ policyVersion.copy(document = x))
+      Shrink.shrink(policyVersion.document).map(x ⇒ policyVersion.copy(document = x)) append
+        shrinkPolicyVersionId(policyVersion.versionId).map(x ⇒ policyVersion.copy(versionId = x))
     }
 
   implicit lazy val arbCreatePolicyVersionRequest: Arbitrary[CreatePolicyVersionRequest] =
@@ -271,4 +273,7 @@ object IamScalaCheckImplicits {
       Shrink.shrink(request.arn).map(x ⇒ request.copy(arn = x)) append
         Shrink.shrink(request.document).map(x ⇒ request.copy(document = x))
     }
+
+  private def shrinkPolicyVersionId(versionId: String): Stream[String] =
+    Shrink.shrink(versionId.substring(1).toInt).filter(_ >= 1).map(n ⇒ s"v$n")
 }
