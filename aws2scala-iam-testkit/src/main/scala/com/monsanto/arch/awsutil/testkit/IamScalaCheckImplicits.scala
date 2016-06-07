@@ -241,4 +241,19 @@ object IamScalaCheckImplicits {
 
   implicit lazy val arbListPoliciesRequestScope: Arbitrary[ListPoliciesRequest.Scope] =
     Arbitrary(Gen.oneOf(ListPoliciesRequest.Scope.values))
+
+  implicit lazy val arbManagedPolicyVersion: Arbitrary[ManagedPolicyVersion] =
+    Arbitrary {
+      for {
+        document ← arbitrary[Policy]
+        versionId ← Gen.posNum[Int].map(n ⇒ s"v$n")
+        isDefaultVersion ← arbitrary[Boolean]
+        created ← arbitrary[Date]
+      } yield ManagedPolicyVersion(document, versionId, isDefaultVersion, created)
+    }
+
+  implicit lazy val shrinkManagedPolicyVersion: Shrink[ManagedPolicyVersion] =
+    Shrink { policyVersion ⇒
+      Shrink.shrink(policyVersion.document).map(x ⇒ policyVersion.copy(document = x))
+    }
 }

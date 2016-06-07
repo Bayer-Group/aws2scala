@@ -160,6 +160,24 @@ object IamConverters {
       }
   }
 
+  implicit class AwsPolicyVersion(val policyVersion: aws.PolicyVersion) extends AnyVal {
+    def asScala: ManagedPolicyVersion =
+      ManagedPolicyVersion(
+        Policy.fromJson(policyVersion.getDocument),
+        policyVersion.getVersionId,
+        policyVersion.getIsDefaultVersion.booleanValue(),
+        policyVersion.getCreateDate)
+  }
+
+  implicit class ScalaPolicyVersion(val policyVersion: ManagedPolicyVersion) extends AnyVal {
+    def asAws: aws.PolicyVersion =
+      new aws.PolicyVersion()
+        .withDocument(policyVersion.document.toJson)
+        .withVersionId(policyVersion.versionId)
+        .withIsDefaultVersion(java.lang.Boolean.valueOf(policyVersion.isDefaultVersion))
+        .withCreateDate(policyVersion.created)
+  }
+
   implicit class AwsRole(val role: aws.Role) extends AnyVal {
     def asScala: Role =
       Role(
