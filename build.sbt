@@ -425,7 +425,7 @@ lazy val aws2scala = (project in file("."))
     coreMacros, core, coreTestSupport, coreTests, coreTestkit,
     cloudFormation,
     ec2, ec2Testkit, ec2Tests,
-    kms,
+    kms, kmsTestkit, kmsTests,
     iam, iamTestkit, iamTests,
     rds,
     s3, s3Testkit, s3Tests,
