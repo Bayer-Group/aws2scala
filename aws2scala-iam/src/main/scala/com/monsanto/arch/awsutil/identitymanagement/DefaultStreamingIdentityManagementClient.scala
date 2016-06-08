@@ -106,4 +106,11 @@ private[awsutil] class DefaultStreamingIdentityManagementClient(iam: AmazonIdent
           .map(_ ⇒ request.arn)
       }
       .named("IAM.policyVersionDeleter")
+
+  override val policyVersionGetter =
+    Flow[GetPolicyVersionRequest]
+      .map(_.asAws)
+      .via[aws.GetPolicyVersionResult,NotUsed](AWSFlow.simple(iam.getPolicyVersionAsync))
+      .map(_.getPolicyVersion.asScala)
+      .named("IAM.policyVersionGetter")
 }

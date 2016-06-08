@@ -51,4 +51,9 @@ trait StreamingIdentityManagementClient extends StreamingAwsClient {
     * deleted.
     */
   def policyVersionDeleter: Flow[DeletePolicyVersionRequest, PolicyArn, NotUsed]
+
+  /** Returns a flow that given a request to retrieve a managed policy version
+    * will emit the corresponding object.
+    */
+  def policyVersionGetter: Flow[GetPolicyVersionRequest, ManagedPolicyVersion, NotUsed]
 }
