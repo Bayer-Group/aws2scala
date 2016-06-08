@@ -30,5 +30,23 @@ class PathSpec extends FreeSpec {
         }
       }
     }
+
+    "should not append a path element with a slash" in {
+      val badElement =
+        (
+          for {
+            element ← Gen.identifier.suchThat(_.length > 1)
+            n ← Gen.choose(1, element.length - 1)
+          } yield {
+            val (prefix, suffix) = element.splitAt(n)
+            s"$prefix/$suffix"
+          }
+        ).suchThat(_.contains("/"))
+      forAll(arbitrary[Path] → "path", badElement → "element") { (path, element) ⇒
+        an [IllegalArgumentException] shouldBe thrownBy {
+          path / element
+        }
+      }
+    }
   }
 }
