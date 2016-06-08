@@ -250,6 +250,9 @@ object CoreScalaCheckImplicits {
       } yield Condition.StringCondition(key, comparisonType, values.distinct, ifExists)
     }
 
+  implicit lazy val arbSetOperation: Arbitrary[Condition.SetOperation] =
+    Arbitrary(Gen.oneOf(Condition.SetOperation.values))
+
   implicit lazy val arbMultipleKeyValueCondition: Arbitrary[Condition.MultipleKeyValueCondition] =
     Arbitrary {
       val innerConditionGen =
@@ -265,7 +268,7 @@ object CoreScalaCheckImplicits {
         )
       for {
         innerCondition ← innerConditionGen
-        setOperation ← Gen.oneOf(Condition.SetOperation.ForAnyValue, Condition.SetOperation.ForAllValues)
+        setOperation ← arbitrary[Condition.SetOperation]
       } yield Condition.MultipleKeyValueCondition(setOperation, innerCondition)
     }
 
