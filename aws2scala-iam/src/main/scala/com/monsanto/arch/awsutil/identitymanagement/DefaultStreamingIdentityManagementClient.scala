@@ -113,4 +113,11 @@ private[awsutil] class DefaultStreamingIdentityManagementClient(iam: AmazonIdent
       .via[aws.GetPolicyVersionResult,NotUsed](AWSFlow.simple(iam.getPolicyVersionAsync))
       .map(_.getPolicyVersion.asScala)
       .named("IAM.policyVersionGetter")
+
+  override val policyVersionLister =
+    Flow[PolicyArn]
+      .map(arn ⇒ new aws.ListPolicyVersionsRequest().withPolicyArn(arn.arnString))
+      .via[aws.ListPolicyVersionsResult,NotUsed](AWSFlow.pagedByMarker(iam.listPolicyVersionsAsync))
+      .mapConcat(_.getVersions.asScala.toList.map(_.asScala))
+      .named("IAM.policyVersionLister")
 }
