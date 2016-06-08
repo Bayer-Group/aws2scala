@@ -311,5 +311,22 @@ class DefaultStreamingIdentityManagementClientSpec extends FreeSpec with MockFac
         result shouldBe policyVersion
       }
     }
+
+    "a policy version deleter" in {
+      forAll { request: DeletePolicyVersionRequest ⇒
+        val iam = mock[AmazonIdentityManagementAsync]("iam")
+        val streaming = new DefaultStreamingIdentityManagementClient(iam)
+
+        (iam.deletePolicyVersionAsync(_: aws.DeletePolicyVersionRequest, _: AsyncHandler[aws.DeletePolicyVersionRequest, aws.DeletePolicyVersionResult]))
+          .expects(whereRequest { r ⇒
+            r shouldBe request.asAws
+            true
+          })
+          .withAwsSuccess(new aws.DeletePolicyVersionResult())
+
+        val result = Source.single(request).via(streaming.policyVersionDeleter).runWith(Sink.head).futureValue
+        result shouldBe request.arn
+      }
+    }
   }
 }
