@@ -115,4 +115,11 @@ trait AsyncIdentityManagementClient extends AsyncAwsClient {
                           document: Policy,
                           setAsDefault: Boolean)
                          (implicit m: Materializer): Future[ManagedPolicyVersion]
+
+  /** Deletes the specified version of a managed policy.
+    *
+    * @param arn       the ARN of the policy from which to delete a version
+    * @param versionId the policy version to delete
+    */
+  def deletePolicyVersion(arn: PolicyArn, versionId: String)(implicit m: Materializer): Future[Done]
 }
