@@ -104,4 +104,15 @@ trait AsyncIdentityManagementClient extends AsyncAwsClient {
 
   /** Returns information about all customer-managed policies. */
   def listLocalPolicies()(implicit m: Materializer): Future[Seq[ManagedPolicy]]
+
+  /** Creates a new version of a managed policy.
+    *
+    * @param arn the ARN of the managed policy to update
+    * @param document the policy content that should be used for the new version of the managed policy
+    * @param setAsDefault specifies whether to set this version as the policy’s default version
+    */
+  def createPolicyVersion(arn: PolicyArn,
+                          document: Policy,
+                          setAsDefault: Boolean)
+                         (implicit m: Materializer): Future[ManagedPolicyVersion]
 }

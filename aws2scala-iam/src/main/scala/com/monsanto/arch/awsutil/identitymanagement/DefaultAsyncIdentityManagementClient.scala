@@ -100,4 +100,12 @@ private[awsutil] class DefaultAsyncIdentityManagementClient(streaming: Streaming
 
   override def listLocalPolicies()(implicit m: Materializer) =
     listPolicies(ListPoliciesRequest.localPolicies)
+
+  override def createPolicyVersion(arn: PolicyArn,
+                                   document: Policy,
+                                   setAsDefault: Boolean)
+                                  (implicit m: Materializer) =
+    Source.single(CreatePolicyVersionRequest(arn, document, setAsDefault))
+      .via(streaming.policyVersionCreator)
+      .runWith(Sink.head)
 }
