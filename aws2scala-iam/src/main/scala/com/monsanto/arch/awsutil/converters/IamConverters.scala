@@ -95,6 +95,13 @@ object IamConverters {
         .withPolicyArn(request.policyArn.arnString)
   }
 
+  implicit class ScalaGetPolicyVersionRequest(val request: GetPolicyVersionRequest) extends AnyVal {
+    def asAws: aws.GetPolicyVersionRequest =
+      new aws.GetPolicyVersionRequest()
+        .withPolicyArn(request.arn.arnString)
+        .withVersionId(request.versionId)
+  }
+
   implicit class ScalaGetUserRequest(val request: GetUserRequest) extends AnyVal {
     def asAws: aws.GetUserRequest = {
       val awsRequest = new aws.GetUserRequest
