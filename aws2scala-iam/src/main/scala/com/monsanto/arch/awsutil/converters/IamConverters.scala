@@ -81,6 +81,13 @@ object IamConverters {
       DetachRolePolicyRequest(request.getRoleName, PolicyArn.fromArnString(request.getPolicyArn))
   }
 
+  implicit class ScalaDeletePolicyVersionRequest(val request: DeletePolicyVersionRequest) extends AnyVal {
+    def asAws: aws.DeletePolicyVersionRequest =
+      new aws.DeletePolicyVersionRequest()
+        .withPolicyArn(request.arn.arnString)
+        .withVersionId(request.versionId)
+  }
+
   implicit class ScalaDetachRolePolicyRequest(val request: DetachRolePolicyRequest) extends AnyVal {
     def asAws: aws.DetachRolePolicyRequest =
       new aws.DetachRolePolicyRequest()
