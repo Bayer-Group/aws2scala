@@ -3,7 +3,7 @@ package com.monsanto.arch.awsutil.auth.policy
 import java.io.StringWriter
 
 import com.amazonaws.auth.{policy ⇒ aws}
-import com.fasterxml.jackson.core.{JsonFactory, JsonGenerator}
+import com.fasterxml.jackson.core.{JsonFactory, JsonGenerator, JsonParseException}
 import com.monsanto.arch.awsutil.auth.policy.PolicyJsonSupport._
 import com.monsanto.arch.awsutil.converters.CoreConverters._
 import com.monsanto.arch.awsutil.testkit.CoreScalaCheckImplicits._
@@ -423,6 +423,145 @@ class PolicyJsonSupportSpec extends FreeSpec {
           val fromJson = jsonToPolicy(json)
 
           fromJson shouldBe policy
+        }
+      }
+    }
+
+    "report somewhat helpful errors when" - {
+      "parsing a policy that" - {
+        "is not a JSON object" in {
+          val ex = the [JsonParseException] thrownBy jsonToPolicy("\"foo\"")
+          ex.getMessage should startWith ("Expected a policy object but got a string.")
+        }
+
+        "has a non-string Version" in {
+          val ex = the [JsonParseException] thrownBy jsonToPolicy("{\"Version\": 2}")
+          ex.getMessage should startWith ("Expected a string policy version but got an integer.")
+        }
+
+        "has a non-string Id" in {
+          val ex = the [JsonParseException] thrownBy jsonToPolicy("{\"Id\": 2}")
+          ex.getMessage should startWith ("Expected a string policy identifier but got an integer.")
+        }
+
+        "has a non-array Statement" in {
+          val ex = the [JsonParseException] thrownBy jsonToPolicy("{\"Statement\": 2}")
+          ex.getMessage should startWith ("Expected a statement array but got an integer.")
+        }
+
+        "has an invalid field" in {
+          val ex = the [JsonParseException] thrownBy jsonToPolicy("{\"Foo\": 2}")
+          ex.getMessage should startWith ("Expected Version, Id, or Statement but got Foo.")
+        }
+      }
+
+      "parsing a statement that" - {
+        def parseStatement(json: String) = jsonToStatement(factory.createParser(json))
+
+        "is not an object" in {
+          val ex = the [JsonParseException] thrownBy parseStatement("2")
+          ex.getMessage should startWith ("Expected a statement object but got an integer.")
+        }
+
+        "has a non-string Sid" in {
+          val ex = the [JsonParseException] thrownBy parseStatement("{\"Sid\": 2}")
+          ex.getMessage should startWith ("Expected a string statement identifier but got an integer.")
+        }
+
+        "has a non-string Effect" in {
+          val ex = the [JsonParseException] thrownBy parseStatement("{\"Effect\": 2}")
+          ex.getMessage should startWith ("Expected a string statement effect but got an integer.")
+        }
+
+        "has an invalid field" in {
+          val ex = the [JsonParseException] thrownBy parseStatement("{\"Foo\": 2}")
+          ex.getMessage should startWith ("Expected Sid, Principal, Effect, Action, Resource, or Condition but got Foo.")
+        }
+      }
+
+      "parsing principals that" - {
+        def parsePrincipals(json: String) = jsonToPrincipals(factory.createParser(json))
+
+        "is not null, a string, or an object" in {
+          val ex = the [JsonParseException] thrownBy parsePrincipals("2")
+          ex.getMessage should startWith ("Expected either null, the string ‘*’, or an object but got an integer.")
+        }
+
+        "has an invalid string value" in {
+          val ex = the [JsonParseException] thrownBy parsePrincipals("\"foo\"")
+          ex.getMessage should startWith ("Expected ‘*’ but got foo.")
+        }
+
+        "has a null principal ids" in {
+          val ex = the [JsonParseException] thrownBy parsePrincipals("{\"AWS\": null}")
+          ex.getMessage should startWith ("Expected a string or an array of strings but got the null value.")
+        }
+
+        "has a non-null, non-string, non-array of strings principal ids" in {
+          val ex = the [JsonParseException] thrownBy parsePrincipals("{\"AWS\": {}}")
+          ex.getMessage should startWith ("Expected a string or an array of strings but got an object.")
+        }
+
+        "has a non-string principal id array value" in {
+          val ex = the [JsonParseException] thrownBy parsePrincipals("{\"AWS\": [2]}")
+          ex.getMessage should startWith ("Expected a string array value but got an integer.")
+        }
+      }
+
+      "parsing actions that" - {
+        def parseActions(json: String) = jsonToActions(factory.createParser(json))
+
+        "is not null, a string, or an array of strings" in {
+          val ex = the [JsonParseException] thrownBy parseActions("2")
+          ex.getMessage should startWith ("Expected null, a string, or an array of strings but got an integer.")
+        }
+
+        "has a non-string array value" in {
+          val ex = the [JsonParseException] thrownBy parseActions("[null]")
+          ex.getMessage should startWith ("Expected a string array value but got the null value.")
+        }
+      }
+
+      "parsing resources that" - {
+        def parseResources(json: String) = jsonToResources(factory.createParser(json))
+
+        "is not null, a string, or an array of strings" in {
+          val ex = the [JsonParseException] thrownBy parseResources("2")
+          ex.getMessage should startWith ("Expected null, a string, or an array of strings but got an integer.")
+        }
+
+        "has a non-string array value" in {
+          val ex = the [JsonParseException] thrownBy parseResources("[null]")
+          ex.getMessage should startWith ("Expected a string array value but got the null value.")
+        }
+      }
+
+      "parsing conditions that" - {
+        def parseCondition(json: String) = jsonToConditions(factory.createParser(json))
+
+        "is not null or an object" in {
+          val ex = the [JsonParseException] thrownBy parseCondition("2")
+          ex.getMessage should startWith ("Expected either null or a condition object but got an integer.")
+        }
+
+        "does not have a valid key/values object for a comparison" in {
+          val ex = the [JsonParseException] thrownBy parseCondition("{\"foo\": 2}")
+          ex.getMessage should startWith ("Expected an object of key names with comparison values but got an integer.")
+        }
+
+        "has a null comparison values" in {
+          val ex = the [JsonParseException] thrownBy parseCondition("{\"StringLike\": {\"foo\": null}}")
+          ex.getMessage should startWith ("Expected a string or an array of strings but got the null value.")
+        }
+
+        "has a non-null, non-string, non-array of strings comparison values" in {
+          val ex = the [JsonParseException] thrownBy parseCondition("{\"StringLike\": {\"foo\": {}}}")
+          ex.getMessage should startWith ("Expected a string or an array of strings but got an object.")
+        }
+
+        "has a non-string comparison value" in {
+          val ex = the [JsonParseException] thrownBy parseCondition("{\"StringLike\": {\"foo\": [2]}")
+          ex.getMessage should startWith ("Expected a string array value but got an integer.")
         }
       }
     }

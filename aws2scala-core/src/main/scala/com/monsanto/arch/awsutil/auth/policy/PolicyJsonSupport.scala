@@ -39,7 +39,7 @@ private[awsutil] object PolicyJsonSupport {
           if (parser.nextToken() == JsonToken.VALUE_STRING) {
             builder = builder.withVersion(Policy.Version.fromId(parser.getValueAsString))
           } else {
-            throwBadToken(parser, "a string statement effect")
+            throwBadToken(parser, "a string policy version")
           }
         case "Id" ⇒
           if (parser.nextToken() == JsonToken.VALUE_STRING) {
@@ -142,7 +142,7 @@ private[awsutil] object PolicyJsonSupport {
         }
         builder.result()
       case _ ⇒
-        throwBadToken(parser, "either null, the string ’*‘, or an object")
+        throwBadToken(parser, "either null, the string ‘*’, or an object")
     }
   }
 
@@ -199,7 +199,7 @@ private[awsutil] object PolicyJsonSupport {
         while(parser.nextToken() != JsonToken.END_OBJECT) {
           val comparisonType = parser.getCurrentName
           if (parser.nextToken() != JsonToken.START_OBJECT) {
-            throwBadToken(parser, "a JSON object")
+            throwBadToken(parser, "an object of key names with comparison values")
           }
           while(parser.nextToken() != JsonToken.END_OBJECT) {
             val key = parser.getCurrentName
@@ -209,7 +209,7 @@ private[awsutil] object PolicyJsonSupport {
         }
         conditions.result()
       case _ ⇒
-        throwBadToken(parser, "a condition object")
+        throwBadToken(parser, "either null or a condition object")
     }
 
   implicit class EnhancedJsonGenerator(val generator: JsonGenerator) extends AnyVal {
@@ -253,14 +253,14 @@ private[awsutil] object PolicyJsonSupport {
             }
           }
           strings.result()
-        case JsonToken.VALUE_NULL ⇒
-          if (nullOk) {
-            Seq.empty
-          } else {
-            throwBadToken(parser, "null, a string, or an array of strings")
-          }
+        case JsonToken.VALUE_NULL if nullOk ⇒
+          Seq.empty
         case _ ⇒
-          throwBadToken(parser, "a string or an array of strings")
+          if (nullOk) {
+            throwBadToken(parser, "null, a string, or an array of strings")
+          } else {
+            throwBadToken(parser, "a string or an array of strings")
+          }
       }
     }
 
@@ -268,14 +268,29 @@ private[awsutil] object PolicyJsonSupport {
   }
 
   private def throwBadToken(jsonParser: JsonParser, expected: String): Nothing = {
+    val tokenName = jsonParser.getCurrentToken match {
+      case JsonToken.END_ARRAY             ⇒ "the end of an array"
+      case JsonToken.END_OBJECT            ⇒ "the end of an object"
+      case JsonToken.FIELD_NAME            ⇒ s"the field ‘${jsonParser.getText}’"
+      case JsonToken.NOT_AVAILABLE         ⇒ "no available input"
+      case JsonToken.START_ARRAY           ⇒ "an array"
+      case JsonToken.START_OBJECT          ⇒ "an object"
+      case JsonToken.VALUE_EMBEDDED_OBJECT ⇒ "an object"
+      case JsonToken.VALUE_FALSE           ⇒ "the boolean value ‘false’"
+      case JsonToken.VALUE_NULL            ⇒ "the null value"
+      case JsonToken.VALUE_NUMBER_FLOAT    ⇒ "a floating-point number"
+      case JsonToken.VALUE_NUMBER_INT      ⇒ "an integer"
+      case JsonToken.VALUE_STRING          ⇒ "a string"
+      case JsonToken.VALUE_TRUE            ⇒ "the boolean value ‘true’"
+    }
     throw new JsonParseException(
-      s"Expected $expected, but got ‘${jsonParser.getCurrentToken}’",
+      s"Expected $expected but got $tokenName.",
       jsonParser.getTokenLocation)
   }
 
   private def throwBadValue[T](jsonParser: JsonParser, expected: String, actual: T): Nothing = {
     throw new JsonParseException(
-      s"Expected $expected, but got $actual",
+      s"Expected $expected but got $actual.",
       jsonParser.getCurrentLocation)
   }
 }
