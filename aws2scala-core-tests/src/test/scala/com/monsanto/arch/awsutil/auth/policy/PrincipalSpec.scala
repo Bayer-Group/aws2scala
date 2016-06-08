@@ -42,6 +42,17 @@ class PrincipalSpec extends FreeSpec with AwsEnumerationBehaviours {
         Principal.service(Principal.Service.GenericService("fubar.amazonaws.com"))
     }
 
+    "will not build from bad providers/IDs" in {
+      val isValidProvider = Set("AWS", "Federated", "Service", "*")
+      forAll { (provider: String, id: String) ⇒
+        whenever(!isValidProvider(provider)) {
+          an [IllegalArgumentException] shouldBe thrownBy {
+            Principal.fromProviderAndId(provider, id)
+          }
+        }
+      }
+    }
+
     "converts" - {
       "AWS account principals that only contain an account number" in {
         forAll { account: Account ⇒

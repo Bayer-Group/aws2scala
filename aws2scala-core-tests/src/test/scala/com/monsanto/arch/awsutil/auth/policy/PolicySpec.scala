@@ -25,6 +25,10 @@ class PolicySpec extends FreeSpec with AwsEnumerationBehaviours {
         }
       }
     }
+
+    "will not match bad JSON" in {
+      "{}" should not matchPattern { case Policy.fromJson(_) ⇒ }
+    }
   }
 
   "a Policy.Version should" - {
@@ -33,6 +37,18 @@ class PolicySpec extends FreeSpec with AwsEnumerationBehaviours {
       Policy.Version.values,
       (_: Policy.Version).asAws,
       (_: String).asScalaPolicyVersion)
+
+    "not build from invalid versions" in {
+      val isValidVersion = Policy.Version.values.map(_.id).toSet
+
+      forAll { version: String ⇒
+        whenever(!isValidVersion(version)) {
+          an [IllegalArgumentException] shouldBe thrownBy {
+            Policy.Version.fromId(version)
+          }
+        }
+      }
+    }
   }
 
   /** This is used because AWS will automatically insert statement IDs if not
