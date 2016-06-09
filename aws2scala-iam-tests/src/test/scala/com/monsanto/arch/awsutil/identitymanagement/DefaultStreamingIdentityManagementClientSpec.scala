@@ -380,5 +380,22 @@ class DefaultStreamingIdentityManagementClientSpec extends FreeSpec with MockFac
         result shouldBe versions
       }
     }
+
+    "a default policy version setter" in {
+      forAll { request: SetDefaultPolicyVersionRequest ⇒
+        val iam = mock[AmazonIdentityManagementAsync]("iam")
+        val streaming = new DefaultStreamingIdentityManagementClient(iam)
+
+        (iam.setDefaultPolicyVersionAsync(_: aws.SetDefaultPolicyVersionRequest, _: AsyncHandler[aws.SetDefaultPolicyVersionRequest, aws.SetDefaultPolicyVersionResult]))
+          .expects(whereRequest { r ⇒
+            r shouldBe request.asAws
+            true
+          })
+          .withAwsSuccess(new aws.SetDefaultPolicyVersionResult())
+
+        val result = Source.single(request).via(streaming.defaultPolicyVersionSetter).runWith(Sink.head).futureValue
+        result shouldBe request.arn
+      }
+    }
   }
 }
