@@ -129,4 +129,10 @@ trait AsyncIdentityManagementClient extends AsyncAwsClient {
     * @param versionId the policy version to retrieve
     */
   def getPolicyVersion(arn: PolicyArn, versionId: String)(implicit m: Materializer): Future[ManagedPolicyVersion]
+
+  /** Lists all of the versions of the given policy.
+    *
+    * @param arn the ARN of the policy for which to list versions
+    */
+  def listPolicyVersions(arn: PolicyArn)(implicit m: Materializer): Future[Seq[ManagedPolicyVersion]]
 }

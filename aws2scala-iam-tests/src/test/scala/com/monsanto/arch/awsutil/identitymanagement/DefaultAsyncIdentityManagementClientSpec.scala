@@ -10,7 +10,7 @@ import com.monsanto.arch.awsutil.testkit.CoreScalaCheckImplicits._
 import com.monsanto.arch.awsutil.testkit.IamScalaCheckImplicits._
 import com.monsanto.arch.awsutil.testkit.{CoreGen, IamGen}
 import org.scalacheck.Arbitrary.arbitrary
-import org.scalacheck.Gen
+import org.scalacheck.{Arbitrary, Gen}
 import org.scalamock.scalatest.MockFactory
 import org.scalatest.FreeSpec
 import org.scalatest.Matchers._
@@ -388,6 +388,22 @@ class DefaultAsyncIdentityManagementClientSpec extends FreeSpec with MockFactory
 
         val result = async.getPolicyVersion(request.arn, request.versionId).futureValue
         result shouldBe policyVersion
+      }
+    }
+
+    "list policy versions" in {
+      implicit val arbPolicyVersions: Arbitrary[List[ManagedPolicyVersion]] =
+        Arbitrary(Gen.resize(10, Gen.nonEmptyListOf(arbitrary[ManagedPolicyVersion])))
+      forAll { (arn: PolicyArn, versions: List[ManagedPolicyVersion]) ⇒
+        val streaming = mock[StreamingIdentityManagementClient]("streaming")
+        val async = new DefaultAsyncIdentityManagementClient(streaming)
+
+        (streaming.policyVersionLister _)
+          .expects()
+          .returningConcatFlow(arn, versions)
+
+        val result = async.listPolicyVersions(arn).futureValue
+        result shouldBe versions
       }
     }
   }
