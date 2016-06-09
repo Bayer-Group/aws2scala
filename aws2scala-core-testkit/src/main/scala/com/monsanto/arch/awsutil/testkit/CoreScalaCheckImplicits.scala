@@ -68,6 +68,12 @@ object CoreScalaCheckImplicits {
         Shrink.shrink(statement.conditions).map(x ⇒ statement.copy(conditions = x))
     }
 
+  implicit val arbStatements: Arbitrary[Seq[Statement]] =
+    Arbitrary(UtilGen.nonEmptyListOfSqrtN(arbitrary[Statement]))
+
+  implicit val shrinkStatements: Shrink[Seq[Statement]] =
+    Shrink(statements ⇒ Shrink.shrinkContainer[Seq,Statement].shrink(statements).filter(_.nonEmpty))
+
   implicit lazy val arbStatementEffect: Arbitrary[Statement.Effect] =
     Arbitrary(Gen.oneOf(Statement.Effect.values))
 
@@ -239,10 +245,13 @@ object CoreScalaCheckImplicits {
       for {
         key ← Gen.identifier
         comparisonType ← arbitrary[Condition.StringComparisonType]
-        values ← UtilGen.nonEmptyListOfSqrtN(arbitrary[String])
+        values ← UtilGen.nonEmptyListOfSqrtN(arbitrary[String].suchThat(_.forall(_ != '\uffff')))
         ifExists ← arbitrary[Boolean]
       } yield Condition.StringCondition(key, comparisonType, values.distinct, ifExists)
     }
+
+  implicit lazy val arbSetOperation: Arbitrary[Condition.SetOperation] =
+    Arbitrary(Gen.oneOf(Condition.SetOperation.values))
 
   implicit lazy val arbMultipleKeyValueCondition: Arbitrary[Condition.MultipleKeyValueCondition] =
     Arbitrary {
@@ -259,7 +268,7 @@ object CoreScalaCheckImplicits {
         )
       for {
         innerCondition ← innerConditionGen
-        setOperation ← Gen.oneOf(Condition.SetOperation.ForAnyValue, Condition.SetOperation.ForAllValues)
+        setOperation ← arbitrary[Condition.SetOperation]
       } yield Condition.MultipleKeyValueCondition(setOperation, innerCondition)
     }
 

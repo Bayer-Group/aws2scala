@@ -13,7 +13,7 @@ trait AdaptableScalaFutures extends ScalaFutures {
       PatienceConfig(10.seconds, 50.milliseconds)
     } else {
       AdaptableScalaFutures.logger.info("Using default patience configuration")
-      PatienceConfig(250.milliseconds, 10.milliseconds)
+      PatienceConfig(500.milliseconds, 10.milliseconds)
     }
 
   override implicit def patienceConfig = lazyConfig

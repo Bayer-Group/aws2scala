@@ -1,7 +1,9 @@
 package com.monsanto.arch.awsutil.auth.policy
 
+import java.io.StringWriter
+
 import com.amazonaws.auth.{policy ⇒ aws}
-import com.amazonaws.util.json.JSONArray
+import com.fasterxml.jackson.core.{JsonFactory, JsonGenerator, JsonParseException}
 import com.monsanto.arch.awsutil.auth.policy.PolicyJsonSupport._
 import com.monsanto.arch.awsutil.converters.CoreConverters._
 import com.monsanto.arch.awsutil.testkit.CoreScalaCheckImplicits._
@@ -11,27 +13,39 @@ import org.scalacheck.Gen
 import org.scalatest.FreeSpec
 import org.scalatest.Matchers._
 import org.scalatest.prop.GeneratorDrivenPropertyChecks._
-import spray.json.{JsArray, JsNull, JsObject, JsString, JsValue, JsonParser}
+import spray.json.{JsArray, JsNull, JsObject, JsString, JsValue, pimpString}
 
 class PolicyJsonSupportSpec extends FreeSpec {
   TestAction.registerActions()
+
+  private val factory = new JsonFactory()
+
+  private def withGenerator(f: JsonGenerator ⇒ Unit): String = {
+    val out = new StringWriter()
+    val generator = factory.createGenerator(out)
+    f(generator)
+    generator.close()
+    out.toString
+  }
 
   "the PolicyJsonSupport should" - {
     "properly serialise" - {
       "a principal set that" - {
         "is empty" in {
-          principalsToJson(Set.empty) shouldBe None
+          val result = withGenerator(principalsToJson(_, Set.empty))
+          result.parseJson shouldBe JsNull
         }
 
-        "is all principals set" in {
-          principalsToJson(Statement.allPrincipals) shouldBe Some("*")
+        "is the all principals set" in {
+          val result = withGenerator(principalsToJson(_, Statement.allPrincipals))
+          result.parseJson shouldBe JsString("*")
         }
 
         "contains a single principal" in {
           forAll { principal: Principal ⇒
             val expected = JsObject(principal.provider → JsString(principal.id))
-            val result = JsonParser(principalsToJson(Set(principal)).get.toString)
-            result shouldBe expected
+            val result = withGenerator(principalsToJson(_, Set(principal)))
+            result.parseJson shouldBe expected
           }
         }
 
@@ -46,9 +60,9 @@ class PolicyJsonSupportSpec extends FreeSpec {
           forAll(sameProviderPrincipals) { principals ⇒
             val expected = JsObject(principals.head.provider → JsArray(principals.toSeq.map(p ⇒ JsString(p.id)): _*))
 
-            val result = JsonParser(principalsToJson(principals).get.toString)
+            val result = withGenerator(principalsToJson(_, principals))
 
-            result shouldBe expected
+            result.parseJson shouldBe expected
           }
         }
 
@@ -60,27 +74,28 @@ class PolicyJsonSupportSpec extends FreeSpec {
             } yield Set(principal1, principal2)
           forAll(twoPrincipals) { principals ⇒
             val expected = JsObject(principals.map(p ⇒ p.provider → JsString(p.id)).toMap)
-            val result = JsonParser(principalsToJson(principals).get.toString)
+            val result = withGenerator(principalsToJson(_, principals))
 
-            result shouldBe expected
+            result.parseJson shouldBe expected
           }
         }
       }
 
       "an action list that" - {
         "is empty" in {
-          actionsToJson(Seq.empty) shouldBe None
+          val result = withGenerator(actionsToJson(_, Seq.empty))
+          result.parseJson shouldBe JsNull
         }
 
         "is the all actions sequence" in {
-          actionsToJson(Statement.allActions) shouldBe Some("*")
+          val result = withGenerator(actionsToJson(_, Statement.allActions))
+          result.parseJson shouldBe JsString("*")
         }
 
         "contains a single action" in {
           forAll { action: Action ⇒
-            val result = actionsToJson(Seq(action))
-            val expected = Some(action.name)
-            result shouldBe expected
+            val result = withGenerator(actionsToJson(_, Seq(action)))
+            result.parseJson shouldBe JsString(action.name)
           }
         }
 
@@ -92,25 +107,28 @@ class PolicyJsonSupportSpec extends FreeSpec {
             } yield first :: rest
 
           forAll(genActions) { actions ⇒
-            val result = JsonParser(actionsToJson(actions).get.toString)
+            val result = withGenerator(actionsToJson(_, actions))
             val expected = JsArray(actions.map(a ⇒ JsString(a.name)): _*)
-            result shouldBe expected
+            result.parseJson shouldBe expected
           }
         }
       }
 
       "a resource list that" - {
         "is empty" in {
-          resourcesToJson(Seq.empty) shouldBe None
+          val result = withGenerator(resourcesToJson(_, Seq.empty))
+          result.parseJson shouldBe JsNull
         }
 
         "is the all resources list" in {
-          resourcesToJson(Statement.allResources) shouldBe Some("*")
+          val result = withGenerator(resourcesToJson(_, Statement.allResources))
+          result.parseJson shouldBe JsString("*")
         }
 
         "contains a single resource" in {
           forAll { resource: Resource ⇒
-            resourcesToJson(Seq(resource)) shouldBe Some(resource.id)
+            val result = withGenerator(resourcesToJson(_, Seq(resource)))
+            result.parseJson shouldBe JsString(resource.id)
           }
         }
 
@@ -122,19 +140,20 @@ class PolicyJsonSupportSpec extends FreeSpec {
             } yield first :: rest
 
           forAll(genResources) { resources ⇒
-            val result = JsonParser(resourcesToJson(resources).get.toString)
+            val result = withGenerator(resourcesToJson(_, resources))
             val expected = JsArray(resources.map(r ⇒ JsString(r.id)): _*)
-            result shouldBe expected
+            result.parseJson shouldBe expected
           }
         }
       }
 
       "a condition set that" - {
         "is empty" in {
-          conditionsToJson(Set.empty) shouldBe None
+          val result = withGenerator(conditionsToJson(_, Set.empty))
+          result.parseJson shouldBe JsNull
         }
 
-        "contains a single condition with a single value" - {
+        "contains a single condition with a single value" in {
           val singleValueCondition =
             for {
               condition ← arbitrary[Condition]
@@ -149,9 +168,9 @@ class PolicyJsonSupportSpec extends FreeSpec {
                 )
               )
 
-            val result = JsonParser(conditionsToJson(Set(condition)).get.toString)
+            val result = withGenerator(conditionsToJson(_, Set(condition)))
 
-            result shouldBe expected
+            result.parseJson shouldBe expected
           }
         }
 
@@ -170,9 +189,9 @@ class PolicyJsonSupportSpec extends FreeSpec {
                 )
               )
 
-            val result = JsonParser(conditionsToJson(Set(condition)).get.toString)
+            val result = withGenerator(conditionsToJson(_, Set(condition)))
 
-            result shouldBe expected
+            result.parseJson shouldBe expected
           }
         }
 
@@ -207,9 +226,9 @@ class PolicyJsonSupportSpec extends FreeSpec {
                 )
               )
 
-            val result = JsonParser(conditionsToJson(conditions).get.toString)
+            val result = withGenerator(conditionsToJson(_, conditions))
 
-            result shouldBe expected
+            result.parseJson shouldBe expected
           }
         }
 
@@ -238,9 +257,9 @@ class PolicyJsonSupportSpec extends FreeSpec {
                 )
               )
 
-            val result = JsonParser(conditionsToJson(conditions).get.toString)
+            val result = withGenerator(conditionsToJson(_, conditions))
 
-            result shouldBe expected
+            result.parseJson shouldBe expected
           }
         }
 
@@ -252,10 +271,6 @@ class PolicyJsonSupportSpec extends FreeSpec {
                 condition2 ← arbitrary[Condition.DateCondition]
               } yield Set[Condition](condition1, condition2)
               ).suchThat(s ⇒ s.size == 2)
-          //   Message: {"ArnNotEquals":{"aws:SourceArn":["arn:aws:AwsCodeDeploy:ap-southeast-1:*:*","arn:aws:AwsStorageGateway:us-west-2:158864837822:*","arn:aws:AmazonCognitoSync:ap-northeast-2:190412167942:*","arn:aws:AwsWAF:ap-southeast-2:399393080574:sgz9qc8EiofhW0eqrolgewnql572","arn:aws:AwsKMS:cn-north-1:*:*","arn:aws:AwsSTS:us-west-2:*:*","arn:aws:AwsCloudFormation:us-east-1:*:zhinussm","arn:aws:AutoScaling:cn-north-1:*:*"]},"DateLessThanEqualsIfExists":{"t3vrjs7yhn4midoyawhfjkuxwtvqalsU2zymmjhpwrty0u2MzdwpndadrCruy":["-179800329-10-02T21:39:56.923Z","-175766714-01-18T18:41:36.766Z"]}}
-          //            {"ArnNotEquals":{"aws:SourceArn":["arn:aws:AwsCodeDeploy:ap-southeast-1:*:*","arn:aws:AwsStorageGateway:us-west-2:158864837822:*","arn:aws:AmazonCognitoSync:ap-northeast-2:190412167942:*","arn:aws:AwsWAF:ap-southeast-2:399393080574:sgz9qc8EiofhW0eqrolgewnql572","arn:aws:AwsCodeDeploy:ap-southeast-1:*:*","arn:aws:AwsKMS:cn-north-1:*:*","arn:aws:AwsSTS:us-west-2:*:*","arn:aws:AwsCloudFormation:us-east-1:*:zhinussm","arn:aws:AutoScaling:cn-north-1:*:*"]},"DateLessThanEqualsIfExists":{"t3vrjs7yhn4midoyawhfjkuxwtvqalsU2zymmjhpwrty0u2MzdwpndadrCruy":["-179800329-10-02T21:39:56.923Z","-175766714-01-18T18:41:36.766Z"]}},
-          //        and {"ArnNotEquals":{"aws:SourceArn":["arn:aws:AwsCodeDeploy:ap-southeast-1:*:*","arn:aws:AwsStorageGateway:us-west-2:158864837822:*","arn:aws:AmazonCognitoSync:ap-northeast-2:190412167942:*","arn:aws:AwsWAF:ap-southeast-2:399393080574:sgz9qc8EiofhW0eqrolgewnql572","arn:aws:AwsKMS:cn-north-1:*:*","arn:aws:AwsSTS:us-west-2:*:*","arn:aws:AwsCloudFormation:us-east-1:*:zhinussm","arn:aws:AutoScaling:cn-north-1:*:*"]},"DateLessThanEqualsIfExists":{"t3vrjs7yhn4midoyawhfjkuxwtvqalsU2zymmjhpwrty0u2MzdwpndadrCruy":["-179800329-10-02T21:39:56.923Z","-175766714-01-18T18:41:36.766Z"]}}
-          //            {"ArnNotEquals":{"aws:SourceArn":["arn:aws:AwsCodeDeploy:ap-southeast-1:*:*","arn:aws:AwsStorageGateway:us-west-2:158864837822:*","arn:aws:AmazonCognitoSync:ap-northeast-2:190412167942:*","arn:aws:AwsWAF:ap-southeast-2:399393080574:sgz9qc8EiofhW0eqrolgewnql572","arn:aws:AwsCodeDeploy:ap-southeast-1:*:*","arn:aws:AwsKMS:cn-north-1:*:*","arn:aws:AwsSTS:us-west-2:*:*","arn:aws:AwsCloudFormation:us-east-1:*:zhinussm","arn:aws:AutoScaling:cn-north-1:*:*"]},"DateLessThanEqualsIfExists":{"t3vrjs7yhn4midoyawhfjkuxwtvqalsU2zymmjhpwrty0u2MzdwpndadrCruy":["-179800329-10-02T21:39:56.923Z","-175766714-01-18T18:41:36.766Z"]}}
 
           forAll(twoDifferentConditionTypes) { conditions ⇒
             val fwdConditions = conditions.toList
@@ -275,9 +290,9 @@ class PolicyJsonSupportSpec extends FreeSpec {
               )
             }
 
-            val result = JsonParser(conditionsToJson(conditions).get.toString)
+            val result = withGenerator(conditionsToJson(_, conditions))
 
-            result should (equal (toJson(fwdConditions)) or equal (toJson(revConditions)))
+            result.parseJson should (equal (toJson(fwdConditions)) or equal (toJson(revConditions)))
           }
         }
       }
@@ -287,14 +302,14 @@ class PolicyJsonSupportSpec extends FreeSpec {
           val statement = Statement(None, Set.empty, effect, Seq.empty, Seq.empty, Set.empty)
 
           val expected = JsObject("Effect" → JsString(effect.name))
-          val result = JsonParser(statementToJson(statement).toString)
+          val result = withGenerator(statementToJson(_, statement))
 
-          result shouldBe expected
+          result.parseJson shouldBe expected
         }
       }
 
       "a mostly empty Policy" in {
-        forAll { effect: Statement.Effect ⇒
+        forAll(minSuccessful(10)) { effect: Statement.Effect ⇒
           val policy = Policy(None, None, Seq(Statement(None, Set.empty, effect, Seq.empty, Seq.empty, Set.empty)))
 
           val expected =
@@ -302,25 +317,26 @@ class PolicyJsonSupportSpec extends FreeSpec {
               "Statement" → JsArray(JsObject("Effect" → JsString(effect.name)))
             )
 
-          val result = JsonParser(policyToJson(policy).toString)
+          val result = policyToJson(policy)
 
-          result shouldBe expected
+          result.parseJson shouldBe expected
         }
       }
     }
 
     "properly deserialise" - {
       "an unknown action" in {
-        jsonToActions(Some("foo")) shouldBe Seq(Action.NamedAction("foo"))
+        val parser = factory.createParser(JsString("foo").compactPrint)
+        jsonToActions(parser) shouldBe Seq(Action.NamedAction("foo"))
       }
 
       "a list containing an unknown action" in {
         forAll { actions: Seq[Action] ⇒
           whenever(actions != Statement.allActions) {
-            val json = JsArray((actions.map(a ⇒ JsString(a.name)) :+ JsString("foo")).toVector).toString
-            val jsonArray = new JSONArray(json)
+            val json = JsArray((actions.map(a ⇒ JsString(a.name)) :+ JsString("foo")).toVector).compactPrint
+            val parser = factory.createParser(json)
 
-            jsonToActions(Some(jsonArray)) shouldBe actions :+ Action.NamedAction("foo")
+            jsonToActions(parser) shouldBe actions :+ Action.NamedAction("foo")
           }
         }
       }
@@ -329,31 +345,41 @@ class PolicyJsonSupportSpec extends FreeSpec {
     "round-trip" - {
       "principal sets" in {
         forAll { principals: Set[Principal] ⇒
-          jsonToPrincipals(principalsToJson(principals)) shouldBe principals
+          val json = withGenerator(principalsToJson(_, principals))
+          val result = jsonToPrincipals(factory.createParser(json))
+          result shouldBe principals
         }
       }
 
       "action lists" in {
         forAll { actions: Seq[Action] ⇒
-          jsonToActions(actionsToJson(actions)) shouldBe actions
+          val json = withGenerator(actionsToJson(_, actions))
+          val result = jsonToActions(factory.createParser(json))
+          result shouldBe actions
         }
       }
 
       "resource lists" in {
         forAll { resources: Seq[Resource] ⇒
-          jsonToResources(resourcesToJson(resources)) shouldBe resources
+          val json = withGenerator(resourcesToJson(_, resources))
+          val result = jsonToResources(factory.createParser(json))
+          result shouldBe resources
         }
       }
 
       "condition sets" in {
         forAll { conditions: Set[Condition] ⇒
-          jsonToConditions(conditionsToJson(conditions)) shouldBe conditions
+          val json = withGenerator(conditionsToJson(_, conditions))
+          val result = jsonToConditions(factory.createParser(json))
+          result shouldBe conditions
         }
       }
 
       "arbitrary statements" in {
         forAll { statement: Statement ⇒
-          jsonToStatement(statementToJson(statement)) shouldBe statement
+          val json = withGenerator(statementToJson(_, statement))
+          val result = jsonToStatement(factory.createParser(json))
+          result shouldBe statement
         }
       }
 
@@ -368,7 +394,6 @@ class PolicyJsonSupportSpec extends FreeSpec {
       val nonBrokenPrincipal = arbitrary[Principal].retryUntil(p ⇒ !p.id.contains("-"))
       val nonBrokenPolicy =
         for {
-        // generate a policy with unique condition types
           policy ← arbitrary[Policy]
           // generate a set of principles that will round-trip
           okPrincipals ← Gen.listOfN(policy.statements.size, UtilGen.listOfSqrtN(nonBrokenPrincipal).map(_.toSet))
@@ -398,6 +423,145 @@ class PolicyJsonSupportSpec extends FreeSpec {
           val fromJson = jsonToPolicy(json)
 
           fromJson shouldBe policy
+        }
+      }
+    }
+
+    "report somewhat helpful errors when" - {
+      "parsing a policy that" - {
+        "is not a JSON object" in {
+          val ex = the [JsonParseException] thrownBy jsonToPolicy("\"foo\"")
+          ex.getMessage should startWith ("Expected a policy object but got a string.")
+        }
+
+        "has a non-string Version" in {
+          val ex = the [JsonParseException] thrownBy jsonToPolicy("{\"Version\": 2}")
+          ex.getMessage should startWith ("Expected a string policy version but got an integer.")
+        }
+
+        "has a non-string Id" in {
+          val ex = the [JsonParseException] thrownBy jsonToPolicy("{\"Id\": 2}")
+          ex.getMessage should startWith ("Expected a string policy identifier but got an integer.")
+        }
+
+        "has a non-array Statement" in {
+          val ex = the [JsonParseException] thrownBy jsonToPolicy("{\"Statement\": 2}")
+          ex.getMessage should startWith ("Expected a statement array but got an integer.")
+        }
+
+        "has an invalid field" in {
+          val ex = the [JsonParseException] thrownBy jsonToPolicy("{\"Foo\": 2}")
+          ex.getMessage should startWith ("Expected Version, Id, or Statement but got Foo.")
+        }
+      }
+
+      "parsing a statement that" - {
+        def parseStatement(json: String) = jsonToStatement(factory.createParser(json))
+
+        "is not an object" in {
+          val ex = the [JsonParseException] thrownBy parseStatement("2")
+          ex.getMessage should startWith ("Expected a statement object but got an integer.")
+        }
+
+        "has a non-string Sid" in {
+          val ex = the [JsonParseException] thrownBy parseStatement("{\"Sid\": 2}")
+          ex.getMessage should startWith ("Expected a string statement identifier but got an integer.")
+        }
+
+        "has a non-string Effect" in {
+          val ex = the [JsonParseException] thrownBy parseStatement("{\"Effect\": 2}")
+          ex.getMessage should startWith ("Expected a string statement effect but got an integer.")
+        }
+
+        "has an invalid field" in {
+          val ex = the [JsonParseException] thrownBy parseStatement("{\"Foo\": 2}")
+          ex.getMessage should startWith ("Expected Sid, Principal, Effect, Action, Resource, or Condition but got Foo.")
+        }
+      }
+
+      "parsing principals that" - {
+        def parsePrincipals(json: String) = jsonToPrincipals(factory.createParser(json))
+
+        "is not null, a string, or an object" in {
+          val ex = the [JsonParseException] thrownBy parsePrincipals("2")
+          ex.getMessage should startWith ("Expected either null, the string ‘*’, or an object but got an integer.")
+        }
+
+        "has an invalid string value" in {
+          val ex = the [JsonParseException] thrownBy parsePrincipals("\"foo\"")
+          ex.getMessage should startWith ("Expected ‘*’ but got foo.")
+        }
+
+        "has a null principal ids" in {
+          val ex = the [JsonParseException] thrownBy parsePrincipals("{\"AWS\": null}")
+          ex.getMessage should startWith ("Expected a string or an array of strings but got the null value.")
+        }
+
+        "has a non-null, non-string, non-array of strings principal ids" in {
+          val ex = the [JsonParseException] thrownBy parsePrincipals("{\"AWS\": {}}")
+          ex.getMessage should startWith ("Expected a string or an array of strings but got an object.")
+        }
+
+        "has a non-string principal id array value" in {
+          val ex = the [JsonParseException] thrownBy parsePrincipals("{\"AWS\": [2]}")
+          ex.getMessage should startWith ("Expected a string array value but got an integer.")
+        }
+      }
+
+      "parsing actions that" - {
+        def parseActions(json: String) = jsonToActions(factory.createParser(json))
+
+        "is not null, a string, or an array of strings" in {
+          val ex = the [JsonParseException] thrownBy parseActions("2")
+          ex.getMessage should startWith ("Expected null, a string, or an array of strings but got an integer.")
+        }
+
+        "has a non-string array value" in {
+          val ex = the [JsonParseException] thrownBy parseActions("[null]")
+          ex.getMessage should startWith ("Expected a string array value but got the null value.")
+        }
+      }
+
+      "parsing resources that" - {
+        def parseResources(json: String) = jsonToResources(factory.createParser(json))
+
+        "is not null, a string, or an array of strings" in {
+          val ex = the [JsonParseException] thrownBy parseResources("2")
+          ex.getMessage should startWith ("Expected null, a string, or an array of strings but got an integer.")
+        }
+
+        "has a non-string array value" in {
+          val ex = the [JsonParseException] thrownBy parseResources("[null]")
+          ex.getMessage should startWith ("Expected a string array value but got the null value.")
+        }
+      }
+
+      "parsing conditions that" - {
+        def parseCondition(json: String) = jsonToConditions(factory.createParser(json))
+
+        "is not null or an object" in {
+          val ex = the [JsonParseException] thrownBy parseCondition("2")
+          ex.getMessage should startWith ("Expected either null or a condition object but got an integer.")
+        }
+
+        "does not have a valid key/values object for a comparison" in {
+          val ex = the [JsonParseException] thrownBy parseCondition("{\"foo\": 2}")
+          ex.getMessage should startWith ("Expected an object of key names with comparison values but got an integer.")
+        }
+
+        "has a null comparison values" in {
+          val ex = the [JsonParseException] thrownBy parseCondition("{\"StringLike\": {\"foo\": null}}")
+          ex.getMessage should startWith ("Expected a string or an array of strings but got the null value.")
+        }
+
+        "has a non-null, non-string, non-array of strings comparison values" in {
+          val ex = the [JsonParseException] thrownBy parseCondition("{\"StringLike\": {\"foo\": {}}}")
+          ex.getMessage should startWith ("Expected a string or an array of strings but got an object.")
+        }
+
+        "has a non-string comparison value" in {
+          val ex = the [JsonParseException] thrownBy parseCondition("{\"StringLike\": {\"foo\": [2]}")
+          ex.getMessage should startWith ("Expected a string array value but got an integer.")
         }
       }
     }

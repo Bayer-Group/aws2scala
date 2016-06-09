@@ -68,5 +68,16 @@ class StatementSpec extends FreeSpec with AwsEnumerationBehaviours {
         Statement.Effect.fromName(effect.name) shouldBe effect
       }
     }
+
+    "not build from bad names" in {
+      val isValidName = Statement.Effect.values.map(_.name).toSet
+      forAll { name: String ⇒
+        whenever(!isValidName(name)) {
+          an [IllegalArgumentException] shouldBe thrownBy {
+            Statement.Effect.fromName(name)
+          }
+        }
+      }
+    }
   }
 }

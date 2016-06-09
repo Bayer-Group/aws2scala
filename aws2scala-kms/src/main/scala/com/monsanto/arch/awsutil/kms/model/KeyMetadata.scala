@@ -1,42 +1,27 @@
 package com.monsanto.arch.awsutil.kms.model
 
-import com.amazonaws.services.kms.model.{KeyMetadata ⇒ AWSKeyMetadata}
 import java.util.Date
 
-case class KeyMetadata(arn: String,
-                       accountId: String,
-                       creationDate: Date,
-                       deletionDate: Option[Date],
-                       description: Option[String],
-                       enabled: Boolean,
-                       id: String,
-                       state: KeyState,
-                       usage: KeyUsage) {
-  def toAws: AWSKeyMetadata = {
-    val aws = new AWSKeyMetadata
-    aws.setArn(arn)
-    aws.setAWSAccountId(accountId)
-    aws.setCreationDate(creationDate)
-    aws.setDeletionDate(deletionDate.orNull)
-    aws.setDescription(description.orNull)
-    aws.setEnabled(enabled)
-    aws.setKeyId(id)
-    aws.setKeyState(state.toAws)
-    aws.setKeyUsage(usage.toAws)
-    aws
-  }
-}
+import com.monsanto.arch.awsutil.Account
 
-object KeyMetadata {
-  def apply(aws: AWSKeyMetadata): KeyMetadata =
-    KeyMetadata(
-      aws.getArn,
-      aws.getAWSAccountId,
-      aws.getCreationDate,
-      Option(aws.getDeletionDate),
-      Option(aws.getDescription),
-      aws.isEnabled,
-      aws.getKeyId,
-      KeyState(aws.getKeyState),
-      KeyUsage(aws.getKeyUsage))
-}
+/** Contains information about a customer master key (CMK).
+  *
+  * @param account the account that owns the key
+  * @param id the globally unique identifier for the key
+  * @param arn the Amazon Resource Name (ARN) of the key
+  * @param creationDate the date and time when the key was created
+  * @param enabled specifies whether the key is enabled
+  * @param description the friendly description of the key
+  * @param usage the cryptographic operations for which the key may be used
+  * @param state the state of the key
+  * @param deletionDate the date and time after which AWS KMS deletes the key, if any
+  */
+case class KeyMetadata(account: Account,
+                       id: String,
+                       arn: KeyArn,
+                       creationDate: Date,
+                       enabled: Boolean,
+                       description: Option[String],
+                       usage: KeyUsage,
+                       state: KeyState,
+                       deletionDate: Option[Date])

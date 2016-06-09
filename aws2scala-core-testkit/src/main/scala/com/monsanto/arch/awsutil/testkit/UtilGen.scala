@@ -48,7 +48,8 @@ object UtilGen {
       } yield str
     }.suchThat(_.length >= minSize)
 
-  val nonEmptyString: Gen[String] = Gen.nonEmptyListOf(arbitrary[Char]).map(_.mkString).suchThat(_.nonEmpty)
+  val nonEmptyString: Gen[String] =
+    Gen.nonEmptyListOf(arbitrary[Char].suchThat(_ != '\uFFFF')).map(_.mkString).suchThat(_.nonEmpty)
 
   case class Sizer(minSize: Int, maxSize: Int, minScale: Double = 0.05) {
     private val k = Math.log(1.0 / minScale) / 99.0

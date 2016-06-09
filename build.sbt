@@ -2,12 +2,12 @@ import java.util.Date
 import UnidocKeys._
 
 // dependency versions
-val akka = "2.4.4"
-val aws = "1.10.75"
+val akka = "2.4.7"
+val aws = "1.11.6"
 val scalaCheck = "org.scalacheck"     %% "scalacheck"                          % "1.12.5"
 val scalaTest  = "org.scalatest"      %% "scalatest"                           % "2.2.6"
 val sprayJson  = "io.spray"           %% "spray-json"                          % "1.3.2"
-val cftg       = "com.monsanto.arch"  %% "cloud-formation-template-generator"  % "3.3.3"
+val cftg       = "com.monsanto.arch"  %% "cloud-formation-template-generator"  % "3.3.4"
 
 val compileOnlyOptions = Seq(
   "-deprecation",
@@ -46,7 +46,7 @@ lazy val commonSettings = Seq(
   ),
   apiMappingsJava ++= Map(
     ("com.typesafe", "config") → "http://typesafehub.github.io/config/latest/api"
-  ) ++ createAwsApiMappings("core", "cloudformation", "ec2", "kms", "rds", "s3", "sns", "sts"),
+  ) ++ createAwsApiMappings("core", "cloudformation", "ec2", "iam", "kms", "rds", "s3", "sns", "sts"),
 
   // coverage
   coverageExcludedPackages := "com\\.monsanto\\.arch\\.awsutil\\.test_support\\..*;com\\.monsanto\\.arch\\.awsutil\\.testkit\\..*",
@@ -244,12 +244,34 @@ lazy val iamTests = Project("aws2scala-iam-tests", file("aws2scala-iam-tests"))
   )
 
 lazy val kms = Project("aws2scala-kms", file("aws2scala-kms"))
-  .dependsOn(core, testSupport % "test->test", coreTestSupport % "test")
+  .dependsOn(core)
   .settings(
     commonSettings,
     bintrayPublishingSettings,
     description := "Client for AWS Key Management Service (KMS)",
     libraryDependencies += awsDependency("kms")
+  )
+
+lazy val kmsTestkit = Project("aws2scala-kms-testkit", file("aws2scala-kms-testkit"))
+  .dependsOn(kms, coreTestkit)
+  .settings(
+    commonSettings,
+    bintrayPublishingSettings,
+    description := "Test utility library for aws2scala-kms",
+    libraryDependencies += scalaCheck
+  )
+
+lazy val kmsTests = Project("aws2scala-kms-tests", file("aws2scala-kms-tests"))
+  .dependsOn(
+    kms             % "test",
+    kmsTestkit      % "test",
+    coreTestSupport % "test",
+    testSupport     % "test->test"
+  )
+  .settings(
+    commonSettings,
+    noPublishingSettings,
+    description := "Tests for aws2scala-kms"
   )
 
 lazy val rds = Project("aws2scala-rds", file("aws2scala-rds"))
@@ -394,10 +416,7 @@ lazy val integrationTests = Project("aws2scala-integration-tests", file("aws2sca
     noPublishingSettings,
     Defaults.itSettings,
     description := "Integration test suite for aws2scala",
-    libraryDependencies ++= Seq(
-      cftg                                   % "it",
-      "commons-io"  % "commons-io"  % "2.4"  % "it"
-    )
+    libraryDependencies += cftg % "it"
   )
 
 lazy val aws2scala = (project in file("."))
@@ -406,7 +425,7 @@ lazy val aws2scala = (project in file("."))
     coreMacros, core, coreTestSupport, coreTests, coreTestkit,
     cloudFormation,
     ec2, ec2Testkit, ec2Tests,
-    kms,
+    kms, kmsTestkit, kmsTests,
     iam, iamTestkit, iamTests,
     rds,
     s3, s3Testkit, s3Tests,

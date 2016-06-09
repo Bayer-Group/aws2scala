@@ -44,7 +44,7 @@ private[cloudformation] class DefaultStreamingCloudFormationClient(client: Amazo
   override val stackDeleter =
     Flow[DeleteStackRequest]
       .map(_.asAws)
-      .via(AWSFlow.simple(AWSFlowAdapter.devoid(client.deleteStackAsync)))
+      .via(AWSFlow.simple(AWSFlowAdapter.returnInput(client.deleteStackAsync)))
       .map(_.getStackName)
       .named("CloudFormation.stackDeleter")
 

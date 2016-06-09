@@ -1,6 +1,8 @@
 package com.monsanto.arch.awsutil.sns.model
 
-import com.amazonaws.util.json.JSONObject
+import java.io.StringWriter
+
+import com.fasterxml.jackson.core.JsonFactory
 
 /** A basic data type for generating `PublishRequest` objects. */
 case class PublishRequest(targetArn: String, message: String, subject: Option[String], messageStructure: Option[String],
@@ -64,8 +66,21 @@ object PublishRequest {
     PublishRequest(platformEndpoint.arn, toJsonMessage(Map(platformEndpoint.platform.name → jsonMessage)), None,
       Some("json"), attributes)
 
-  private def toJsonMessage(message: Map[String,String]): String =
-    message
-      .foldLeft(new JSONObject())((obj, entry) ⇒ obj.putOpt(entry._1, entry._2))
-      .toString
+  private val jsonFactory = new JsonFactory()
+
+  private def toJsonMessage(message: Map[String,String]): String = {
+    val writer = new StringWriter()
+    val generator = jsonFactory.createGenerator(writer)
+    try {
+      generator.writeStartObject()
+      message.foreach { entry ⇒
+        generator.writeStringField(entry._1, entry._2)
+      }
+      generator.writeEndObject()
+    } finally {
+      generator.close()
+      writer.close()
+    }
+    writer.toString
+  }
 }

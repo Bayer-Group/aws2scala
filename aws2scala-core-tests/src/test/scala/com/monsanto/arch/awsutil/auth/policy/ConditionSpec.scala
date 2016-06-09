@@ -36,7 +36,7 @@ class ConditionSpec extends FreeSpec with AwsEnumerationBehaviours {
       }
     }
 
-    "can extract from its parts" in {
+    "extract from its parts" in {
       forAll { condition: Condition ⇒
         inside((condition.key, condition.comparisonType, condition.comparisonValues)) {
           case Condition.fromParts(c) ⇒ c shouldBe condition
@@ -44,9 +44,20 @@ class ConditionSpec extends FreeSpec with AwsEnumerationBehaviours {
       }
     }
 
-    "can be built from its parts" in {
+    "be built from its parts" in {
       forAll { condition: Condition ⇒
         Condition.fromParts(condition.key, condition.comparisonType, condition.comparisonValues) shouldBe condition
+      }
+    }
+
+    "fail to build from invalid parts" in {
+      forAll { (key: String, rawComparisonType: String, values: Seq[String], maybeSetOp: Option[Condition.SetOperation]) ⇒
+        val comparisonType = maybeSetOp.map(op ⇒ s"${op.prefix}$rawComparisonType").getOrElse(rawComparisonType)
+        whenever(Condition.fromParts.unapply((key, comparisonType, values)).isEmpty) {
+          an [IllegalArgumentException] shouldBe thrownBy {
+            Condition.fromParts(key, comparisonType, values)
+          }
+        }
       }
     }
 
@@ -410,6 +421,17 @@ class ConditionSpec extends FreeSpec with AwsEnumerationBehaviours {
         Condition.ArnComparisonType.fromId(comparisonType.id) shouldBe theSameInstanceAs (comparisonType)
       }
     }
+
+    "should not build from invalid IDs" in {
+      val isValidId = Condition.ArnComparisonType.values.map(_.id).toSet
+      forAll { badId: String ⇒
+        whenever(!isValidId(badId)) {
+          an [IllegalArgumentException] shouldBe thrownBy {
+            Condition.ArnComparisonType.fromId(badId)
+          }
+        }
+      }
+    }
   }
 
   "Condition.BinaryCondition should" - {
@@ -454,6 +476,16 @@ class ConditionSpec extends FreeSpec with AwsEnumerationBehaviours {
         inside((condition.key, condition.comparisonType, condition.comparisonValues)) {
           case Condition.BooleanCondition.fromParts(c) ⇒ c shouldBe condition
         }
+      }
+    }
+
+    "not support values that are not a single boolean" in {
+      forAll(
+        arbitrary[Condition.BooleanCondition] → "baseCondition",
+        nonSingularBooleanValues → "badValues"
+      ) { (baseCondition, badValues) ⇒
+        val parts: (String, String, Seq[String]) = (baseCondition.key, baseCondition.comparisonType, badValues)
+        Condition.BooleanCondition.fromParts.unapply(parts) shouldBe None
       }
     }
 
@@ -503,6 +535,17 @@ class ConditionSpec extends FreeSpec with AwsEnumerationBehaviours {
         Condition.DateComparisonType.fromId(comparisonType.id) shouldBe theSameInstanceAs (comparisonType)
       }
     }
+
+    "should not build from invalid IDs" in {
+      val isValidId = Condition.DateComparisonType.values.map(_.id).toSet
+      forAll { badId: String ⇒
+        whenever(!isValidId(badId)) {
+          an [IllegalArgumentException] shouldBe thrownBy {
+            Condition.DateComparisonType.fromId(badId)
+          }
+        }
+      }
+    }
   }
 
   "Condition.IpAddressCondition should" - {
@@ -546,6 +589,17 @@ class ConditionSpec extends FreeSpec with AwsEnumerationBehaviours {
     "should be recoverable from an ID" in {
       forAllIn(comparisonTypes) { comparisonType ⇒
         Condition.IpAddressComparisonType.fromId(comparisonType.id) shouldBe theSameInstanceAs (comparisonType)
+      }
+    }
+
+    "should not build from invalid IDs" in {
+      val isValidId = Condition.IpAddressComparisonType.values.map(_.id).toSet
+      forAll { badId: String ⇒
+        whenever(!isValidId(badId)) {
+          an [IllegalArgumentException] shouldBe thrownBy {
+            Condition.IpAddressComparisonType.fromId(badId)
+          }
+        }
       }
     }
   }
@@ -593,6 +647,17 @@ class ConditionSpec extends FreeSpec with AwsEnumerationBehaviours {
         Condition.NumericComparisonType.fromId(comparisonType.id) shouldBe theSameInstanceAs (comparisonType)
       }
     }
+
+    "should not build from invalid IDs" in {
+      val isValidId = Condition.NumericComparisonType.values.map(_.id).toSet
+      forAll { badId: String ⇒
+        whenever(!isValidId(badId)) {
+          an [IllegalArgumentException] shouldBe thrownBy {
+            Condition.NumericComparisonType.fromId(badId)
+          }
+        }
+      }
+    }
   }
 
   "Condition.StringCondition should" - {
@@ -629,6 +694,17 @@ class ConditionSpec extends FreeSpec with AwsEnumerationBehaviours {
       }
     }
 
+    "should not build from invalid IDs" in {
+      val isValidId = Condition.StringComparisonType.values.map(_.id).toSet
+      forAll { badId: String ⇒
+        whenever(!isValidId(badId)) {
+          an [IllegalArgumentException] shouldBe thrownBy {
+            Condition.StringComparisonType.fromId(badId)
+          }
+        }
+      }
+    }
+
     behave like anAwsEnumeration(
       StringCondition.StringComparisonType.values, Condition.StringComparisonType.values,
       (_: Condition.StringComparisonType).asAws, (_: StringCondition.StringComparisonType).asScala)
@@ -652,6 +728,16 @@ class ConditionSpec extends FreeSpec with AwsEnumerationBehaviours {
         inside((condition.key, condition.comparisonType, condition.comparisonValues)) {
           case Condition.NullCondition.fromParts(c) ⇒ c shouldBe condition
         }
+      }
+    }
+
+    "not support values that are not a single boolean" in {
+      forAll(
+        arbitrary[Condition.NullCondition] → "baseCondition",
+        nonSingularBooleanValues → "badValues"
+      ) { (baseCondition, badValues) ⇒
+        val parts: (String, String, Seq[String]) = (baseCondition.key, baseCondition.comparisonType, badValues)
+        Condition.NullCondition.fromParts.unapply(parts) shouldBe None
       }
     }
 
@@ -709,5 +795,12 @@ class ConditionSpec extends FreeSpec with AwsEnumerationBehaviours {
             condition)
       }
     }
+  }
+
+  private val nonSingularBooleanValues: Gen[Seq[String]] = {
+    val isBooleanString = Set("true", "false")
+    arbitrary[Seq[Boolean]]
+      .map(_.map(_.toString))
+      .suchThat(vals ⇒ vals.size != 1 && vals.forall(isBooleanString))
   }
 }

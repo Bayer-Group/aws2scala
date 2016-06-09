@@ -8,10 +8,13 @@ import akka.stream.scaladsl.{Sink, Source}
 import com.amazonaws.AmazonServiceException
 import com.amazonaws.handlers.AsyncHandler
 import com.amazonaws.services.kms.AWSKMSAsync
-import com.amazonaws.services.kms.model.{CreateKeyRequest ⇒ AWSCreateKeyRequest, DataKeySpec ⇒ AWSDataKeySpec, DecryptRequest ⇒ AWSDecryptRequest, EncryptRequest ⇒ AWSEncryptRequest, GenerateDataKeyRequest ⇒ AWSGenerateDataKeyRequest, KeyMetadata ⇒ _, KeyState ⇒ _, _}
+import com.amazonaws.services.kms.model.{DataKeySpec ⇒ AWSDataKeySpec, DecryptRequest ⇒ AWSDecryptRequest, EncryptRequest ⇒ AWSEncryptRequest, GenerateDataKeyRequest ⇒ AWSGenerateDataKeyRequest, KeyMetadata ⇒ _, KeyState ⇒ _, _}
+import com.monsanto.arch.awsutil.converters.KmsConverters._
 import com.monsanto.arch.awsutil.kms.model._
 import com.monsanto.arch.awsutil.test_support.AdaptableScalaFutures._
+import com.monsanto.arch.awsutil.test_support.Samplers.arbitrarySample
 import com.monsanto.arch.awsutil.test_support.{AwsMockUtils, Materialised}
+import com.monsanto.arch.awsutil.testkit.KmsScalaCheckImplicits._
 import org.scalamock.scalatest.MockFactory
 import org.scalatest.FreeSpec
 import org.scalatest.Matchers._
@@ -33,59 +36,6 @@ class DefaultKMSClientSpec extends FreeSpec with Materialised with MockFactory w
   }
 
   "the default KMS client can" - {
-    "create keys" - {
-      val keyMetadata = KeyMetadata("arn:key", "42", new Date, None, None, enabled = true, keyIdentifier, KeyState.Enabled,
-        KeyUsage.EncryptDecrypt)
-      def withCreateKeyFixture(description: String, policy: String)(test: Fixture ⇒ Any): Unit = {
-        withFixture { f ⇒
-          (f.awsClient.createKeyAsync(_: AWSCreateKeyRequest, _: AsyncHandler[AWSCreateKeyRequest, CreateKeyResult]))
-            .expects(whereRequest(request ⇒
-              request.getPolicy == policy &&
-                request.getDescription == description &&
-                request.getKeyUsage == KeyUsageType.ENCRYPT_DECRYPT.toString
-            ))
-            .withAwsSuccess(new CreateKeyResult().withKeyMetadata(keyMetadata.toAws))
-          (f.awsClient.createAliasAsync(_: CreateAliasRequest, _: AsyncHandler[CreateAliasRequest,Void]))
-            .expects(whereRequest(request ⇒
-              request.getAliasName == s"alias/$alias" &&
-                request.getTargetKeyId == keyIdentifier
-            ))
-            .withVoidAwsSuccess()
-
-          test(f)
-        }
-      }
-
-      val description = "a description"
-      val policy = "a policy"
-
-      "with no optional arguments" in withCreateKeyFixture(null, null) { f ⇒
-        val result = f.asyncClient.createKey(alias).futureValue
-        result shouldBe keyMetadata
-      }
-
-      "using a alias that already includes the `alias/` prefix" in withCreateKeyFixture(null, null) { f ⇒
-        val result = f.asyncClient.createKey(s"alias/$alias").futureValue
-        result shouldBe keyMetadata
-      }
-
-      "with a description" in withCreateKeyFixture(description, null) { f ⇒
-        val result = f.asyncClient.createKey(alias, description).futureValue
-        result shouldBe keyMetadata
-      }
-
-      "with a policy" in withCreateKeyFixture(null, policy) { f ⇒
-        val result = f.asyncClient.createKey(CreateKeyRequest(alias, policy = Some(policy))).futureValue
-        result shouldBe keyMetadata
-      }
-
-      "with a description and a policy" in withCreateKeyFixture(description, policy) { f ⇒
-        val request = CreateKeyRequest(alias, description = Some(description), policy = Some(policy))
-        val result = f.asyncClient.createKey(request).futureValue
-        result shouldBe keyMetadata
-      }
-    }
-
     "schedule deletion of a key" in withFixture { f ⇒
       val keyId = "someKeyId"
       val days = 15
@@ -114,7 +64,7 @@ class DefaultKMSClientSpec extends FreeSpec with Materialised with MockFactory w
     "enable keys" in withFixture { f ⇒
       val keyId = "someKeyId"
 
-      (f.awsClient.enableKeyAsync(_: EnableKeyRequest, _: AsyncHandler[EnableKeyRequest, Void]))
+      (f.awsClient.enableKeyAsync(_: EnableKeyRequest, _: AsyncHandler[EnableKeyRequest, EnableKeyResult]))
         .expects(whereRequest(_.getKeyId == keyId))
         .withVoidAwsSuccess()
 
@@ -125,7 +75,7 @@ class DefaultKMSClientSpec extends FreeSpec with Materialised with MockFactory w
     "disable keys" in withFixture { f ⇒
       val keyId = "someKeyId"
 
-      (f.awsClient.disableKeyAsync(_: DisableKeyRequest, _: AsyncHandler[DisableKeyRequest, Void]))
+      (f.awsClient.disableKeyAsync(_: DisableKeyRequest, _: AsyncHandler[DisableKeyRequest, DisableKeyResult]))
         .expects(whereRequest(_.getKeyId == keyId))
         .withVoidAwsSuccess()
 
@@ -170,12 +120,12 @@ class DefaultKMSClientSpec extends FreeSpec with Materialised with MockFactory w
     }
 
     "describe a key" - {
-      val metadata = KeyMetadata("arn:key", "42", new Date, None, None, enabled = true, keyIdentifier, KeyState.Enabled,
-        KeyUsage.EncryptDecrypt)
+      val metadata = arbitrarySample[KeyMetadata]
+
       def expectDescribeKeyAsync(client: AWSKMSAsync, keyId: String): Unit = {
         (client.describeKeyAsync(_: DescribeKeyRequest, _: AsyncHandler[DescribeKeyRequest, DescribeKeyResult]))
           .expects(whereRequest(_.getKeyId == keyId))
-          .withAwsSuccess(new DescribeKeyResult().withKeyMetadata(metadata.toAws))
+          .withAwsSuccess(new DescribeKeyResult().withKeyMetadata(metadata.asAws))
       }
 
       "given a UUID" in withFixture { f ⇒

@@ -1,6 +1,7 @@
 package com.monsanto.arch.awsutil.identitymanagement.model
 
 import com.amazonaws.services.identitymanagement.{model ⇒ aws}
+import com.monsanto.arch.awsutil.converters.IamConverters._
 import com.monsanto.arch.awsutil.testkit.CoreGen
 import com.monsanto.arch.awsutil.testkit.CoreScalaCheckImplicits._
 import org.scalacheck.Arbitrary.arbitrary
@@ -15,7 +16,7 @@ class ListAttachedRolePoliciesRequestSpec extends FreeSpec {
         val request = ListAttachedRolePoliciesRequest(roleName)
         val awsRequest = new aws.ListAttachedRolePoliciesRequest().withRoleName(roleName)
 
-        request.toAws shouldBe awsRequest
+        request.asAws shouldBe awsRequest
       }
     }
 
@@ -23,7 +24,7 @@ class ListAttachedRolePoliciesRequestSpec extends FreeSpec {
       forAll(CoreGen.iamName) { roleName ⇒
         val request = ListAttachedRolePoliciesRequest(roleName)
 
-        request.toAws should not be theSameInstanceAs (request.toAws)
+        request.asAws should not be theSameInstanceAs (request.asAws)
       }
     }
   }
@@ -31,18 +32,18 @@ class ListAttachedRolePoliciesRequestSpec extends FreeSpec {
   "a list roles with prefix" - {
     "creates the correct AWS request" in {
       forAll(CoreGen.iamName, arbitrary[Path]) { (roleName, path) ⇒
-        val request = ListAttachedRolePoliciesRequest(roleName, path.pathString)
+        val request = ListAttachedRolePoliciesRequest(roleName, path)
         val awsRequest = new aws.ListAttachedRolePoliciesRequest()
           .withRoleName(roleName)
-          .withPathPrefix(request.pathPrefix.get)
-        request.toAws shouldBe awsRequest
+          .withPathPrefix(request.prefix.get.pathString)
+        request.asAws shouldBe awsRequest
       }
     }
 
     "creates new requests" in {
       forAll(CoreGen.iamName, arbitrary[Path]) { (roleName, path) ⇒
-        val request = ListAttachedRolePoliciesRequest(roleName, path.pathString)
-        request.toAws should not be theSameInstanceAs (request.toAws)
+        val request = ListAttachedRolePoliciesRequest(roleName, path)
+        request.asAws should not be theSameInstanceAs (request.asAws)
       }
     }
   }

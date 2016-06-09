@@ -2,7 +2,7 @@ package com.monsanto.arch.awsutil.kms
 
 import java.util.{Date, UUID}
 
-import com.monsanto.arch.awsutil.kms.model.GenerateDataKeyRequest
+import com.monsanto.arch.awsutil.kms.model.{GenerateDataKeyRequest, KeyArn}
 import com.monsanto.arch.awsutil.test_support.AwsScalaFutures._
 import com.monsanto.arch.awsutil.test_support.{AwsIntegrationSpec, IntegrationTest}
 import com.typesafe.scalalogging.StrictLogging
@@ -20,7 +20,7 @@ class KMSClientIntegrationSpec extends FreeSpec with AwsIntegrationSpec with Str
   val testPrefix = "aws2scala-it-kms"
   val alias = s"$testPrefix-$testId"
   var keyId: String = _
-  var keyArn: String = _
+  var keyArn: KeyArn = _
   var aliasArn: String = _
 
   "the default KMS client should" - {
@@ -38,7 +38,7 @@ class KMSClientIntegrationSpec extends FreeSpec with AwsIntegrationSpec with Str
       val listing = asyncClient.listKeys().futureValue
       listing.map(_.keyId) should contain(keyId)
       val entry = listing.find(_.keyId == keyId).get
-      entry.keyArn shouldBe keyArn
+      entry.keyArn shouldBe keyArn.arnString
       entry.aliasName should contain (alias)
       aliasArn = entry.aliasArn.get
       logger.info(s"Key has alias ARN $aliasArn")
@@ -52,7 +52,7 @@ class KMSClientIntegrationSpec extends FreeSpec with AwsIntegrationSpec with Str
       }
 
       "the key ARN" in {
-        val maybeMetadata = asyncClient.describeKey(keyArn).futureValue
+        val maybeMetadata = asyncClient.describeKey(keyArn.arnString).futureValue
         maybeMetadata shouldBe defined
         maybeMetadata.get.id shouldBe keyId
       }
@@ -82,16 +82,16 @@ class KMSClientIntegrationSpec extends FreeSpec with AwsIntegrationSpec with Str
     }
 
     "disable the key" in {
-      asyncClient.describeKey(keyArn).futureValue.get.enabled shouldBe true
+      asyncClient.describeKey(keyArn.arnString).futureValue.get.enabled shouldBe true
       asyncClient.disableKey(keyId)
       eventually {
-        asyncClient.describeKey(keyArn).futureValue.get.enabled shouldBe false
+        asyncClient.describeKey(keyArn.arnString).futureValue.get.enabled shouldBe false
       }(Eventually.PatienceConfig(2.minutes, 1.second))
     }
 
     "enable the key" in {
       asyncClient.describeKey(keyId).futureValue.get.enabled shouldBe false
-      asyncClient.enableKey(keyArn)
+      asyncClient.enableKey(keyArn.arnString)
       eventually {
         asyncClient.describeKey(keyId).futureValue.get.enabled shouldBe true
       }(Eventually.PatienceConfig(2.minutes, 1.second))
@@ -100,7 +100,7 @@ class KMSClientIntegrationSpec extends FreeSpec with AwsIntegrationSpec with Str
     "generate and decrypt a data key" in {
       val dataKey = asyncClient.generateDataKey(GenerateDataKeyRequest(alias, includePlaintext = true)).futureValue
 
-      dataKey.keyId shouldBe keyArn
+      dataKey.keyId shouldBe keyArn.arnString
       dataKey.ciphertext.length shouldBe > (0)
       dataKey.plaintext shouldBe defined
 
@@ -127,15 +127,15 @@ class KMSClientIntegrationSpec extends FreeSpec with AwsIntegrationSpec with Str
       deleteDate shouldBe >=(new Date(thirtyDaysFromNow - aDay))
       deleteDate shouldBe <=(new Date(thirtyDaysFromNow + aDay))
 
-      asyncClient.describeKey(keyArn).futureValue.get.deletionDate shouldBe Some(deleteDate)
+      asyncClient.describeKey(keyArn.arnString).futureValue.get.deletionDate shouldBe Some(deleteDate)
     }
 
     "cancel deletion of a key" in {
-      asyncClient.describeKey(keyArn).futureValue.get.deletionDate shouldBe defined
+      asyncClient.describeKey(keyArn.arnString).futureValue.get.deletionDate shouldBe defined
 
-      asyncClient.cancelKeyDeletion(keyArn).futureValue
+      asyncClient.cancelKeyDeletion(keyArn.arnString).futureValue
 
-      asyncClient.describeKey(keyArn).futureValue.get.deletionDate shouldBe empty
+      asyncClient.describeKey(keyArn.arnString).futureValue.get.deletionDate shouldBe empty
     }
 
     "schedule deletion of a key in seven days" in {

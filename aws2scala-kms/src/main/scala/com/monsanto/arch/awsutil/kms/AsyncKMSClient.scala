@@ -21,7 +21,7 @@ trait AsyncKMSClient extends AsyncAwsClient {
   def createKey(alias: String, description: String)(implicit m: Materializer): Future[KeyMetadata]
 
   /** Creates a new KMS key and returns a future with the resulting key metadata. */
-  def createKey(createKeyRequest: CreateKeyRequest)(implicit m: Materializer): Future[KeyMetadata]
+  def createKey(createKeyRequest: CreateKeyWithAliasRequest)(implicit m: Materializer): Future[KeyMetadata]
 
   /** Requests deletion of the given key within the given number of days.
     *

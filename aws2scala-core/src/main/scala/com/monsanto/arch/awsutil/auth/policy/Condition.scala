@@ -1017,14 +1017,23 @@ object Condition {
   }
 
   /** An enumeration of all set operation types. */
-  sealed trait SetOperation
+  sealed abstract class SetOperation(val prefix: String)
   object SetOperation {
     /** Matches when every key value matches the operation. */
-    case object ForAllValues extends SetOperation
+    case object ForAllValues extends SetOperation("ForAllValues:")
     /** Matches when any key value matches the operation. */
-    case object ForAnyValue extends SetOperation
+    case object ForAnyValue extends SetOperation("ForAnyValue:")
 
+    /** All possible set operations. */
     val values: Seq[SetOperation] = Seq(ForAllValues, ForAnyValue)
+
+    /** Extracts a set operation from a comparison type string by seeing if it
+      * begins with a set operation prefix.
+      */
+    object fromComparisonTypeString {
+      def unapply(comparisonTypeString: String): Option[SetOperation] =
+        values.find(op ⇒ comparisonTypeString.startsWith(op.prefix))
+    }
   }
 
   /** Qualifies a condition so that it performs a set operation against multiple
@@ -1037,11 +1046,7 @@ object Condition {
                                                           condition: Condition with MultipleKeyValueSupport) extends Condition {
     override def key: String = condition.key
 
-    override def comparisonType: String =
-      op match {
-        case SetOperation.ForAllValues ⇒ s"ForAllValues:${condition.comparisonType}"
-        case SetOperation.ForAnyValue  ⇒ s"ForAnyValue:${condition.comparisonType}"
-      }
+    override def comparisonType: String = s"${op.prefix}${condition.comparisonType}"
 
     override def comparisonValues: Seq[String] = condition.comparisonValues
   }
@@ -1051,37 +1056,28 @@ object Condition {
       * and comparison values.
       */
     object fromParts {
-      def unapply(parts: (String, String, Seq[String])): Option[MultipleKeyValueCondition] = {
-        val setOpParts = parts match {
-          case (key, ForAll(comparisonType), values) ⇒
-            Some((SetOperation.ForAllValues, (key, comparisonType, values)))
-          case (key, ForAny(comparisonType), values) ⇒
-            Some((SetOperation.ForAnyValue, (key, comparisonType, values)))
+      def unapply(parts: (String, String, Seq[String])): Option[MultipleKeyValueCondition] =
+        parts match {
+          case (key, SetOpAndComparisonType(op, comparisonType), values) ⇒
+            (key, comparisonType, values) match {
+              case Condition.fromParts(c: Condition with MultipleKeyValueSupport) ⇒
+                Some(MultipleKeyValueCondition(op, c))
+              case _ ⇒
+                None
+            }
           case _ ⇒
             None
         }
-        setOpParts.collect {
-          case (op, Condition.fromParts(c: Condition with MultipleKeyValueSupport)) ⇒
-            MultipleKeyValueCondition(op, c)
-        }
-      }
     }
 
-    private object ForAll {
-      def unapply(comparisonType: String): Option[String] =
-        if (comparisonType.startsWith("ForAllValues:")) {
-          Some(comparisonType.substring(13))
-        } else {
-          None
-        }
-    }
-
-    private object ForAny {
-      def unapply(comparisonType: String): Option[String] =
-        if (comparisonType.startsWith("ForAnyValue:")) {
-          Some(comparisonType.substring(12))
-        } else {
-          None
+    /** Extracts a set operation and the inner comparison type string from a comparison type string. */
+    private object SetOpAndComparisonType {
+      def unapply(comparisonType: String): Option[(SetOperation, String)] =
+        comparisonType match {
+          case SetOperation.fromComparisonTypeString(op) ⇒
+            Some((op, comparisonType.substring(op.prefix.length)))
+          case _ ⇒
+            None
         }
     }
   }
