@@ -213,7 +213,20 @@ trait IntegrationCleanup { this: FreeSpec with StrictLogging with AwsIntegration
           .via(iam.policyLister)
           .filter(policy ⇒ policy.created.before(oneHourAgo))
           .buffer(100, OverflowStrategy.backpressure)
-          .map { policy⇒ logger.info(s"Removing old IAM policy: ${policy.name}"); policy.arn }
+          .map { policy ⇒ logger.info(s"Found old IAM policy: ${policy.name}"); policy }
+          .flatMapConcat { policy ⇒
+            Source.single(policy.arn)
+              .via(iam.policyVersionLister)
+              .filterNot(_.isDefaultVersion)
+              .map { policyVersion ⇒
+                logger.info(s"Deleting ${policyVersion.versionId} from ${policy.name}")
+                DeletePolicyVersionRequest(policy.arn, policyVersion.versionId)
+              }
+              .via(iam.policyVersionDeleter)
+              .fold(0)((count, _) ⇒ count + 1)
+              .map { count ⇒ logger.info(s"Deleted $count versions from ${policy.name}"); policy }
+          }
+          .map { policy ⇒ logger.info(s"Removing old IAM policy: ${policy.name}"); policy.arn }
           .via(iam.policyDeleter)
           .runWith(Sink.count)
           .futureValue

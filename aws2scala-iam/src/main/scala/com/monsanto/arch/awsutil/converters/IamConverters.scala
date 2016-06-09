@@ -185,7 +185,7 @@ object IamConverters {
   implicit class AwsPolicyVersion(val policyVersion: aws.PolicyVersion) extends AnyVal {
     def asScala: ManagedPolicyVersion =
       ManagedPolicyVersion(
-        Policy.fromJson(policyVersion.getDocument),
+        Option(policyVersion.getDocument).map(d ⇒ Policy.fromJson(urlDecodeJson(d))),
         policyVersion.getVersionId,
         policyVersion.getIsDefaultVersion.booleanValue(),
         policyVersion.getCreateDate)
@@ -194,7 +194,7 @@ object IamConverters {
   implicit class ScalaPolicyVersion(val policyVersion: ManagedPolicyVersion) extends AnyVal {
     def asAws: aws.PolicyVersion =
       new aws.PolicyVersion()
-        .withDocument(policyVersion.document.toJson)
+        .withDocument(policyVersion.document.map(_.toJson).orNull)
         .withVersionId(policyVersion.versionId)
         .withIsDefaultVersion(java.lang.Boolean.valueOf(policyVersion.isDefaultVersion))
         .withCreateDate(policyVersion.created)
@@ -207,14 +207,7 @@ object IamConverters {
         role.getRoleName,
         Path.fromPathString(role.getPath),
         role.getRoleId,
-        Policy.fromJson {
-          val rawPolicy = role.getAssumeRolePolicyDocument
-          if (rawPolicy.toLowerCase.startsWith("%7b")) {
-            URLDecoder.decode(rawPolicy, "UTF-8")
-          } else {
-            rawPolicy
-          }
-        },
+        Policy.fromJson(urlDecodeJson(role.getAssumeRolePolicyDocument)),
         role.getCreateDate)
   }
 
@@ -252,6 +245,14 @@ object IamConverters {
       val awsUser = new aws.User(user.path.pathString, user.name, user.id, user.arn.arnString, user.created)
       user.passwordLastUsed.foreach(d ⇒ awsUser.setPasswordLastUsed(d))
       awsUser
+    }
+  }
+
+  private def urlDecodeJson(rawString: String): String = {
+    if (rawString.toLowerCase.startsWith("%7b")) {
+      URLDecoder.decode(rawString, "UTF-8")
+    } else {
+      rawString
     }
   }
 }

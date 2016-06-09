@@ -1,5 +1,7 @@
 package com.monsanto.arch.awsutil.identitymanagement
 
+import java.util.Date
+
 import akka.Done
 import com.monsanto.arch.awsutil.auth.policy.PolicyDSL._
 import com.monsanto.arch.awsutil.auth.policy.action.{IdentityManagementAction, SecurityTokenServiceAction}
@@ -23,6 +25,17 @@ class IdentityManagementIntegrationSpec extends FreeSpec with AwsIntegrationSpec
   private var testRole: Role = _
   private var testPolicyArn: PolicyArn = _
   private var testPolicy: ManagedPolicy = _
+  private var version1Created: Date = _
+  private var version2Created: Date = _
+
+  lazy val documentV2 = policy (
+    statements (
+      allow (
+        actions(IdentityManagementAction.GetUser, IdentityManagementAction.GetUserPolicy),
+        resources(Resource(testUser.arn.arnString))
+      )
+    )
+  )
 
   "the Identity Management client can" - {
     "get the current user" in {
@@ -88,6 +101,7 @@ class IdentityManagementIntegrationSpec extends FreeSpec with AwsIntegrationSpec
         case ManagedPolicy(`testPolicyName`, _, `theArn`, `testPathPrefix`, "v1", 0, true, Some("A test policy"), _, _) ⇒
       }
 
+      version1Created = result.created
       testPolicy = result
     }
 
@@ -117,6 +131,46 @@ class IdentityManagementIntegrationSpec extends FreeSpec with AwsIntegrationSpec
       }
     }
 
+    "create a new version of the managed policy" in {
+      val result = async.createPolicyVersion(testPolicyArn, documentV2, setAsDefault = false).futureValue
+
+      result should have (
+        'document (None),
+        'versionId ("v2"),
+        'isDefaultVersion (false)
+      )
+
+      // round to nearest second
+      version2Created = new Date((result.created.getTime / 1000) * 1000)
+
+      logger.info(s"Created policy version ${result.versionId} for ${testPolicyArn.arnString}")
+    }
+
+    "list policy versions" in {
+      val result = async.listPolicyVersions(testPolicyArn).futureValue
+
+      result should contain theSameElementsAs
+        Seq(
+          ManagedPolicyVersion(None, "v1", isDefaultVersion = true, version1Created),
+          ManagedPolicyVersion(None, "v2", isDefaultVersion = false, version2Created))
+    }
+
+    "set the default policy version" in {
+      val result = async.setDefaultPolicyVersion(testPolicyArn, "v2").futureValue
+      result shouldBe Done
+    }
+
+    "get a policy version" in {
+      val result = async.getPolicyVersion(testPolicyArn, "v2").futureValue
+
+      result should have (
+        'document (Some(documentV2)),
+        'versionId ("v2"),
+        'isDefaultVersion (true),
+        'created (version2Created)
+      )
+    }
+
     "attach a policy to a role" in {
       val result = async.attachRolePolicy(testRole.name, testPolicyArn).futureValue
       result shouldBe Done
@@ -130,6 +184,13 @@ class IdentityManagementIntegrationSpec extends FreeSpec with AwsIntegrationSpec
     "detach a policy from a role" in {
       val result = async.detachRolePolicy(testRole.name, testPolicyArn).futureValue
       result shouldBe Done
+    }
+
+    "delete a policy version" in {
+      val result = async.deletePolicyVersion(testPolicyArn, "v1").futureValue
+      result shouldBe Done
+
+      logger.info(s"Deleted policy version v1 from ${testPolicyArn.arnString}")
     }
 
     "delete the policy" in {

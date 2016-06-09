@@ -246,7 +246,7 @@ object IamScalaCheckImplicits {
   implicit lazy val arbManagedPolicyVersion: Arbitrary[ManagedPolicyVersion] =
     Arbitrary {
       for {
-        document ← arbitrary[Policy]
+        document ← Gen.option(arbitrary[Policy])
         versionId ← IamGen.policyVersionId
         isDefaultVersion ← arbitrary[Boolean]
         created ← arbitrary[Date]
