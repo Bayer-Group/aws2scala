@@ -135,4 +135,11 @@ trait AsyncIdentityManagementClient extends AsyncAwsClient {
     * @param arn the ARN of the policy for which to list versions
     */
   def listPolicyVersions(arn: PolicyArn)(implicit m: Materializer): Future[Seq[ManagedPolicyVersion]]
+
+  /** Sets the specified version of the specified policy as the policy’s default (operative) version.
+    *
+    * @param arn       the ARN of the policy whose default version to set
+    * @param versionId the policy version to set as the default (operative) version
+    */
+  def setDefaultPolicyVersion(arn: PolicyArn, versionId: String)(implicit m: Materializer): Future[Done]
 }

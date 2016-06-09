@@ -123,4 +123,9 @@ private[awsutil] class DefaultAsyncIdentityManagementClient(streaming: Streaming
     Source.single(arn)
       .via(streaming.policyVersionLister)
       .runWith(Sink.seq)
+
+  override def setDefaultPolicyVersion(arn: PolicyArn, versionId: String)(implicit m: Materializer) =
+    Source.single(SetDefaultPolicyVersionRequest(arn, versionId))
+      .via(streaming.defaultPolicyVersionSetter)
+      .runWith(Sink.ignore)
 }
