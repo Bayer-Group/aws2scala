@@ -229,6 +229,13 @@ object IamConverters {
         .withCreateDate(role.created)
   }
 
+  implicit class ScalaSetDefaultPolicyVersionRequest(val request: SetDefaultPolicyVersionRequest) extends AnyVal {
+    def asAws: aws.SetDefaultPolicyVersionRequest =
+      new aws.SetDefaultPolicyVersionRequest()
+        .withPolicyArn(request.arn.arnString)
+        .withVersionId(request.versionId)
+  }
+
   implicit class AwsUser(val user: aws.User) extends AnyVal {
     def asScala: User =
       User(

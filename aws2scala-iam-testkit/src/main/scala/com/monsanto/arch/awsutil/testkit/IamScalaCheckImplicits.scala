@@ -286,6 +286,12 @@ object IamScalaCheckImplicits {
   implicit lazy val shrinkGetPolicyVersionRequest: Shrink[GetPolicyVersionRequest] =
     Shrink.xmap((GetPolicyVersionRequest.apply _).tupled, GetPolicyVersionRequest.unapply(_).get)
 
+  implicit lazy val arbSetDefaultPolicyVersionRequest: Arbitrary[SetDefaultPolicyVersionRequest] =
+    Arbitrary(Gen.resultOf((SetDefaultPolicyVersionRequest.apply _).tupled))
+
+  implicit lazy val shrinkSetDefaultPolicyVersionRequest: Shrink[SetDefaultPolicyVersionRequest] =
+    Shrink.xmap((SetDefaultPolicyVersionRequest.apply _).tupled, SetDefaultPolicyVersionRequest.unapply(_).get)
+
   private def shrinkPolicyVersionId(versionId: String): Stream[String] =
     Shrink.shrink(versionId.substring(1).toInt).filter(_ >= 1).map(n ⇒ s"v$n")
 
