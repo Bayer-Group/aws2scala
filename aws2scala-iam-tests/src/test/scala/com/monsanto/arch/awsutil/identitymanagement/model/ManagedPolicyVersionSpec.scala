@@ -10,7 +10,7 @@ class ManagedPolicyVersionSpec extends FreeSpec {
   "a ManagedPolicyVersion should" - {
     "round-trip via its AWS equivalent" in {
       forAll { policyVersion: ManagedPolicyVersion ⇒
-        policyVersion.asAws.asScala shouldBe policyVersion
+        policyVersion.asAws.asScala(policyVersion.policyArn) shouldBe policyVersion
       }
     }
   }

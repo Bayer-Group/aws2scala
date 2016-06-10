@@ -246,11 +246,12 @@ object IamScalaCheckImplicits {
   implicit lazy val arbManagedPolicyVersion: Arbitrary[ManagedPolicyVersion] =
     Arbitrary {
       for {
+        policyArn ← arbitrary[PolicyArn]
         document ← Gen.option(arbitrary[Policy])
         versionId ← IamGen.policyVersionId
         isDefaultVersion ← arbitrary[Boolean]
         created ← arbitrary[Date]
-      } yield ManagedPolicyVersion(document, versionId, isDefaultVersion, created)
+      } yield ManagedPolicyVersion(policyArn, document, versionId, isDefaultVersion, created)
     }
 
   implicit lazy val shrinkManagedPolicyVersion: Shrink[ManagedPolicyVersion] =

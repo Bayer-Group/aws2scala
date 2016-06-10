@@ -183,8 +183,9 @@ object IamConverters {
   }
 
   implicit class AwsPolicyVersion(val policyVersion: aws.PolicyVersion) extends AnyVal {
-    def asScala: ManagedPolicyVersion =
+    def asScala(policyArn: PolicyArn): ManagedPolicyVersion =
       ManagedPolicyVersion(
+        policyArn,
         Option(policyVersion.getDocument).map(d ⇒ Policy.fromJson(urlDecodeJson(d))),
         policyVersion.getVersionId,
         policyVersion.getIsDefaultVersion.booleanValue(),

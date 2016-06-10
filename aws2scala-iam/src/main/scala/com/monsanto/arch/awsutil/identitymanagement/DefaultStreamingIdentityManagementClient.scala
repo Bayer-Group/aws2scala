@@ -93,9 +93,11 @@ private[awsutil] class DefaultStreamingIdentityManagementClient(iam: AmazonIdent
 
   override val policyVersionCreator =
     Flow[CreatePolicyVersionRequest]
-      .map(_.asAws)
-      .via[aws.CreatePolicyVersionResult,NotUsed](AWSFlow.simple(iam.createPolicyVersionAsync))
-      .map(_.getPolicyVersion.asScala)
+      .flatMapConcat { request ⇒
+        Source.single(request.asAws)
+          .via[aws.CreatePolicyVersionResult,NotUsed](AWSFlow.simple(iam.createPolicyVersionAsync))
+          .map(_.getPolicyVersion.asScala(request.arn))
+      }
       .named("IAM.policyVersionCreator")
 
   override val policyVersionDeleter =
@@ -109,16 +111,20 @@ private[awsutil] class DefaultStreamingIdentityManagementClient(iam: AmazonIdent
 
   override val policyVersionGetter =
     Flow[GetPolicyVersionRequest]
-      .map(_.asAws)
-      .via[aws.GetPolicyVersionResult,NotUsed](AWSFlow.simple(iam.getPolicyVersionAsync))
-      .map(_.getPolicyVersion.asScala)
+      .flatMapConcat { request ⇒
+        Source.single(request.asAws)
+          .via[aws.GetPolicyVersionResult,NotUsed](AWSFlow.simple(iam.getPolicyVersionAsync))
+          .map(_.getPolicyVersion.asScala(request.arn))
+      }
       .named("IAM.policyVersionGetter")
 
   override val policyVersionLister =
     Flow[PolicyArn]
-      .map(arn ⇒ new aws.ListPolicyVersionsRequest().withPolicyArn(arn.arnString))
-      .via[aws.ListPolicyVersionsResult,NotUsed](AWSFlow.pagedByMarker(iam.listPolicyVersionsAsync))
-      .mapConcat(_.getVersions.asScala.toList.map(_.asScala))
+      .flatMapConcat { arn ⇒
+        Source.single(new aws.ListPolicyVersionsRequest().withPolicyArn(arn.arnString))
+          .via[aws.ListPolicyVersionsResult,NotUsed](AWSFlow.pagedByMarker(iam.listPolicyVersionsAsync))
+          .mapConcat(_.getVersions.asScala.toList.map(_.asScala(arn)))
+      }
       .named("IAM.policyVersionLister")
 
   override val defaultPolicyVersionSetter =

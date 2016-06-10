@@ -151,8 +151,8 @@ class IdentityManagementIntegrationSpec extends FreeSpec with AwsIntegrationSpec
 
       result should contain theSameElementsAs
         Seq(
-          ManagedPolicyVersion(None, "v1", isDefaultVersion = true, version1Created),
-          ManagedPolicyVersion(None, "v2", isDefaultVersion = false, version2Created))
+          ManagedPolicyVersion(testPolicyArn, None, "v1", isDefaultVersion = true, version1Created),
+          ManagedPolicyVersion(testPolicyArn, None, "v2", isDefaultVersion = false, version2Created))
     }
 
     "set the default policy version" in {
@@ -164,6 +164,7 @@ class IdentityManagementIntegrationSpec extends FreeSpec with AwsIntegrationSpec
       val result = async.getPolicyVersion(testPolicyArn, "v2").futureValue
 
       result should have (
+        'policyArn (testPolicyArn),
         'document (Some(documentV2)),
         'versionId ("v2"),
         'isDefaultVersion (true),
