@@ -29,6 +29,9 @@ trait AsyncIdentityManagementClient extends AsyncAwsClient {
   /** Deletes the role with the given name.  The role must not have any policies attached. */
   def deleteRole(roleName: String)(implicit m: Materializer): Future[Done]
 
+  /** Retrieves information about the specified role. */
+  def getRole(roleName: String)(implicit m: Materializer): Future[Role]
+
   /** Lists all roles. */
   def listRoles()(implicit m: Materializer): Future[Seq[Role]]
 

@@ -31,6 +31,13 @@ private[awsutil] class DefaultStreamingIdentityManagementClient(iam: AmazonIdent
       .map(_.getRoleName)
       .named("IAM.roleDeleter")
 
+  override val roleGetter =
+    Flow[String]
+      .map(roleName ⇒ new aws.GetRoleRequest().withRoleName(roleName))
+      .via[aws.GetRoleResult, NotUsed](AWSFlow.simple(iam.getRoleAsync))
+      .map(_.getRole.asScala)
+      .named("IAM.roleGetter")
+
   override val rolePolicyAttacher =
     Flow[AttachRolePolicyRequest]
       .map(_.asAws)

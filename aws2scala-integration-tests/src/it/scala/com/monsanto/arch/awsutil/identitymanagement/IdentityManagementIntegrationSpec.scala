@@ -54,28 +54,26 @@ class IdentityManagementIntegrationSpec extends FreeSpec with AwsIntegrationSpec
 
       logger.info(s"Created role ${result.name} with ARN ${result.arn}")
 
-      testRole = result
+      // when we list or get a role, its created date will be truncated to a second
+      val truncatedCreated = new Date((result.created.getTime / 1000) * 1000)
+      testRole = result.copy(created = truncatedCreated)
     }
 
     "list roles" - {
-      val roleId = new Equality[Role] {
-        override def areEqual(a: Role, b: Any) = {
-          b match {
-            case r: Role ⇒ a.id == r.id
-            case _ ⇒ false
-          }
-        }
-      }
-
       "all of them" in {
         val result = async.listRoles().futureValue
-        (result should contain (testRole)) (decided by roleId)
+        result should contain (testRole)
       }
 
       "with a prefix" in {
         val result = async.listRoles(testPath).futureValue
-        (result should contain (testRole)) (decided by roleId)
+        result should contain (testRole)
       }
+    }
+
+    "get a particular role" in {
+      val result = async.getRole(testRole.name).futureValue
+      result shouldBe testRole
     }
 
     "create a managed policy" in {

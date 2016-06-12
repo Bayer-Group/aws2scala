@@ -103,6 +103,20 @@ class DefaultAsyncIdentityManagementClientSpec extends FreeSpec with MockFactory
       }
     }
 
+    "get a specified role" in {
+      forAll { role: Role ⇒
+        val streaming = mock[StreamingIdentityManagementClient]("streaming")
+        val async = new DefaultAsyncIdentityManagementClient(streaming)
+
+        (streaming.roleGetter _)
+          .expects()
+          .returningFlow(role.name, role)
+
+        val result = async.getRole(role.name).futureValue
+        result shouldBe role
+      }
+    }
+
     "attach managed policies to roles" in {
       forAll(
         CoreGen.iamName → "roleName",

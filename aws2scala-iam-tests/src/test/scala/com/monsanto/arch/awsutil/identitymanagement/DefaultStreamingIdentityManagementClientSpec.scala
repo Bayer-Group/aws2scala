@@ -97,6 +97,23 @@ class DefaultStreamingIdentityManagementClientSpec extends FreeSpec with MockFac
       }
     }
 
+    "a role getter" in {
+      forAll { role: Role ⇒
+        val iam = mock[AmazonIdentityManagementAsync]("iam")
+        val streaming = new DefaultStreamingIdentityManagementClient(iam)
+
+        (iam.getRoleAsync(_: aws.GetRoleRequest, _: AsyncHandler[aws.GetRoleRequest, aws.GetRoleResult]))
+          .expects(whereRequest { r ⇒
+            r should have ('RoleName (role.name))
+            true
+          })
+          .withAwsSuccess(new aws.GetRoleResult().withRole(role.asAws))
+
+        val result = Source.single(role.name).via(streaming.roleGetter).runWith(Sink.head).futureValue
+        result shouldBe role
+      }
+    }
+
     "a role policy attacher" in {
       forAll(
         CoreGen.iamName → "roleName",

@@ -15,6 +15,9 @@ trait StreamingIdentityManagementClient extends StreamingAwsClient {
   /** Returns a flow that given a role name will delete it and emit the name. */
   def roleDeleter: Flow[String, String, NotUsed]
 
+  /** Returns a flow that given a role name will emit a corresponding `Role` object. */
+  def roleGetter: Flow[String, Role, NotUsed]
+
   /** Returns a flow that will attach a managed policy to a role and then emit the role name. */
   def rolePolicyAttacher: Flow[AttachRolePolicyRequest, String, NotUsed]
 
