@@ -156,7 +156,7 @@ class DefaultAsyncIdentityManagementClientSpec extends FreeSpec with MockFactory
         val streaming = mock[StreamingIdentityManagementClient]("streaming")
         val async = new DefaultAsyncIdentityManagementClient(streaming)
 
-        val policies = Gen.resize(20, arbitrary[List[AttachedPolicy]]).reallySample
+        val policies = Gen.resize(20, arbitrary[List[AttachedRolePolicy]]).reallySample
 
         (streaming.attachedRolePolicyLister _)
           .expects()
@@ -175,7 +175,7 @@ class DefaultAsyncIdentityManagementClientSpec extends FreeSpec with MockFactory
         val streaming = mock[StreamingIdentityManagementClient]("streaming")
         val async = new DefaultAsyncIdentityManagementClient(streaming)
 
-        val policies = Gen.resize(20, arbitrary[List[AttachedPolicy]]).reallySample
+        val policies = Gen.resize(20, arbitrary[List[AttachedRolePolicy]]).reallySample
 
         (streaming.attachedRolePolicyLister _)
           .expects()

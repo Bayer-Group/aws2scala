@@ -54,10 +54,12 @@ private[awsutil] class DefaultStreamingIdentityManagementClient(iam: AmazonIdent
 
   override val attachedRolePolicyLister =
     Flow[ListAttachedRolePoliciesRequest]
-      .map(_.asAws)
-      .via[aws.ListAttachedRolePoliciesResult,NotUsed](AWSFlow.pagedByMarker(iam.listAttachedRolePoliciesAsync))
-      .mapConcat(_.getAttachedPolicies.asScala.toList)
-      .map(_.asScala)
+      .flatMapConcat { request ⇒
+        Source.single(request.asAws)
+          .via[aws.ListAttachedRolePoliciesResult,NotUsed](AWSFlow.pagedByMarker(iam.listAttachedRolePoliciesAsync))
+          .mapConcat(_.getAttachedPolicies.asScala.toList)
+          .map(_.asRoleScala(request.roleName))
+      }
       .named("IAM.attachedRolePolicyLister")
 
   override val userGetter =

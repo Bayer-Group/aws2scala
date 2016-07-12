@@ -21,8 +21,8 @@ object IamConverters {
   }
 
   implicit class AwsAttachedPolicy(val attachedPolicy: aws.AttachedPolicy) extends AnyVal {
-    def asScala: AttachedPolicy =
-      AttachedPolicy(PolicyArn.fromArnString(attachedPolicy.getPolicyArn), attachedPolicy.getPolicyName)
+    def asRoleScala(roleName: String): AttachedPolicy =
+      AttachedRolePolicy(attachedPolicy.getPolicyName, PolicyArn.fromArnString(attachedPolicy.getPolicyArn), roleName)
   }
 
   implicit class ScalaAttachedPolicy(val attachedPolicy: AttachedPolicy) extends AnyVal {

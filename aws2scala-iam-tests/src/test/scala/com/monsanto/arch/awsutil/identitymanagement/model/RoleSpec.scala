@@ -80,7 +80,7 @@ class RoleSpec extends FreeSpec with MockFactory with Materialised {
 
     "list attached managed policies" - {
       "all of them" in {
-        forAll { (role: Role, expected: Seq[AttachedPolicy]) ⇒
+        forAll { (role: Role, expected: Seq[AttachedRolePolicy]) ⇒
           implicit val client = mock[AsyncIdentityManagementClient]("client")
 
           (client.listAttachedRolePolicies(_: String)(_: Materializer))
@@ -93,7 +93,7 @@ class RoleSpec extends FreeSpec with MockFactory with Materialised {
       }
 
       "with a prefix" in {
-        forAll { (role: Role, prefix: Path, expected: Seq[AttachedPolicy]) ⇒
+        forAll { (role: Role, prefix: Path, expected: Seq[AttachedRolePolicy]) ⇒
           implicit val client = mock[AsyncIdentityManagementClient]("client")
 
           (client.listAttachedRolePolicies(_: String, _: Path)(_: Materializer))

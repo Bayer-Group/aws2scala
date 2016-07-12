@@ -15,15 +15,15 @@ class AttachedPolicySpec extends FreeSpec {
       forAll(arbitrary[PolicyArn], CoreGen.iamName) { (arn, name) ⇒
         val attachedPolicy = new aws.AttachedPolicy()
           .withPolicyArn(arn.arnString)
-          .withPolicyName(name)
+          .withPolicyName(arn.name)
 
-        attachedPolicy.asScala.asAws shouldBe attachedPolicy
+        attachedPolicy.asRoleScala(name).asAws shouldBe attachedPolicy
       }
     }
 
     "via its AWS equivalent" in {
-      forAll { attachedPolicy: AttachedPolicy ⇒
-        attachedPolicy.asAws.asScala shouldBe attachedPolicy
+      forAll { attachedPolicy: AttachedRolePolicy ⇒
+        attachedPolicy.asAws.asRoleScala(attachedPolicy.roleName) shouldBe attachedPolicy
       }
     }
   }

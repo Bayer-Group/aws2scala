@@ -166,7 +166,7 @@ class DefaultStreamingIdentityManagementClientSpec extends FreeSpec with MockFac
       forAll { request: ListAttachedRolePoliciesRequest ⇒
         val iam = mock[AmazonIdentityManagementAsync]("iam")
         val streaming = new DefaultStreamingIdentityManagementClient(iam)
-        val results = Gen.resize(20, arbitrary[List[AttachedPolicy]]).reallySample
+        val results = Gen.resize(20, arbitrary[List[AttachedRolePolicy]]).reallySample.map(_.copy(roleName = request.roleName))
 
         val pages = if (results.isEmpty) List(results) else results.grouped(5).toList
 

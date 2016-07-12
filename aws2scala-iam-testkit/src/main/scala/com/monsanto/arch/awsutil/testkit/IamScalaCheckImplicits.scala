@@ -181,15 +181,19 @@ object IamScalaCheckImplicits {
       Shrink.shrink(request.userName).filter(_.forall(_.nonEmpty)).map(x ⇒ request.copy(userName = x))
     }
 
-  implicit lazy val arbAttachedPolicy: Arbitrary[AttachedPolicy] =
+  implicit lazy val arbAttachedRolePolicy: Arbitrary[AttachedRolePolicy] =
     Arbitrary {
       for {
         policyArn ← arbitrary[PolicyArn]
-      } yield AttachedPolicy(policyArn, policyArn.name)
+        roleName ← CoreGen.iamName
+      } yield AttachedRolePolicy(policyArn.name, policyArn, roleName)
     }
 
-  implicit lazy val shrinkAttachedPolicy: Shrink[AttachedPolicy] =
-    Shrink(ap ⇒ Shrink.shrink(ap.arn).map(x ⇒ AttachedPolicy(x, x.name)))
+  implicit lazy val shrinkAttachedPolicy: Shrink[AttachedRolePolicy] =
+    Shrink { attachedPolicy ⇒
+      Shrink.shrink(attachedPolicy.arn).map(x ⇒ attachedPolicy.copy(name = x.name, arn = x)) append
+      Shrink.shrink(attachedPolicy.roleName).filter(_.nonEmpty).map(x ⇒ attachedPolicy.copy(roleName = x))
+    }
 
   implicit lazy val arbCreatePolicyRequest: Arbitrary[CreatePolicyRequest] =
     Arbitrary {

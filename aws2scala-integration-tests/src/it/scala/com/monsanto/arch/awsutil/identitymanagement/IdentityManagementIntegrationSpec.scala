@@ -177,7 +177,7 @@ class IdentityManagementIntegrationSpec extends FreeSpec with AwsIntegrationSpec
 
     "list the policies attached to a role" in {
       val result = async.listAttachedRolePolicies(testRole.name).futureValue
-      result should contain (AttachedPolicy(testPolicyArn, testPolicyName))
+      result should contain (AttachedRolePolicy(testPolicyName, testPolicyArn, testRole.name))
     }
 
     "detach a policy from a role" in {
