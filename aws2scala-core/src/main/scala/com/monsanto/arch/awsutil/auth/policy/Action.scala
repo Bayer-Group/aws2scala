@@ -48,5 +48,5 @@ object Action {
   }
 
   /** Used to generate `Action` instances when no matching action has been registered. */
-  private[awsutil] case class NamedAction(override val name: String) extends Action(name)
+  case class NamedAction(override val name: String) extends Action(name)
 }
