@@ -28,6 +28,7 @@ class DefaultKMSClientSpec extends FreeSpec with Materialised with MockFactory w
   case class Fixture(awsClient: AWSKMSAsync, asyncClient: AsyncKMSClient, streamingClient: StreamingKMSClient)
 
   private def withFixture(test: Fixture ⇒ Any): Unit = {
+    KMS.init()
     val aws = mock[AWSKMSAsync]("aws")
     val streaming = new DefaultStreamingKMSClient(aws)
     val async = new DefaultAsyncKMSClient(streaming)
