@@ -4,10 +4,10 @@ import UnidocKeys._
 // dependency versions
 val akka = "2.4.7"
 val aws = "1.11.6"
-val scalaCheck = "org.scalacheck"     %% "scalacheck"                          % "1.12.5"
+val scalaCheck = "org.scalacheck"     %% "scalacheck"                          % "1.12.6"
 val scalaTest  = "org.scalatest"      %% "scalatest"                           % "2.2.6"
 val sprayJson  = "io.spray"           %% "spray-json"                          % "1.3.2"
-val cftg       = "com.monsanto.arch"  %% "cloud-formation-template-generator"  % "3.3.4"
+val cftg       = "com.monsanto.arch"  %% "cloud-formation-template-generator"  % "3.5.1"
 
 val compileOnlyOptions = Seq(
   "-deprecation",
@@ -127,7 +127,7 @@ lazy val core = Project("aws2scala-core", file("aws2scala-core"))
     commonSettings,
     bintrayPublishingSettings,
     description := "Core library for aws2scala",
-    libraryDependencies += "com.typesafe" % "config" % "1.3.0"
+    libraryDependencies += "com.typesafe" % "config" % "1.3.1"
   )
 
 lazy val coreTestSupport = Project("aws2scala-core-test-support", file("aws2scala-core-test-support"))
@@ -194,8 +194,8 @@ lazy val ec2Testkit = Project("aws2scala-ec2-testkit", file("aws2scala-ec2-testk
     description := "Test utility library for aws2scala-ec2",
     libraryDependencies ++= Seq(
       scalaCheck,
-      "org.bouncycastle" % "bcprov-jdk15on" % "1.54",
-      "org.bouncycastle" % "bcpkix-jdk15on" % "1.54"
+      "org.bouncycastle" % "bcprov-jdk15on" % "1.55",
+      "org.bouncycastle" % "bcpkix-jdk15on" % "1.55"
     )
   )
 
