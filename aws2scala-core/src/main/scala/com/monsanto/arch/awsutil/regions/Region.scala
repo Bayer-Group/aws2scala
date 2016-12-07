@@ -11,6 +11,9 @@ object Region {
   /** US East (N. Virginia). */
   case object US_EAST_1 extends Region("us-east-1", Partition.Aws)
 
+  /** US East (Ohio). */
+  case object US_EAST_2 extends Region("us-east-2", Partition.Aws)
+
   /** US West (Oregon). */
   case object US_WEST_1 extends Region("us-west-1", Partition.Aws)
 
