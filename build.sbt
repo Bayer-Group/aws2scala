@@ -2,7 +2,7 @@ import java.util.Date
 import UnidocKeys._
 
 // dependency versions
-val akka = "2.4.7"
+val akka = "2.4.14"
 val aws = "1.11.6"
 val scalaCheck = "org.scalacheck"     %% "scalacheck"                          % "1.12.6"
 val scalaTest  = "org.scalatest"      %% "scalatest"                           % "2.2.6"
