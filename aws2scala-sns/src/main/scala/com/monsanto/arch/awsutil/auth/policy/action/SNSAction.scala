@@ -11,6 +11,8 @@ object SNSAction {
   case object AllSNSActions extends SNSAction("*")
   /** Action for the AddPermission operation. */
   case object AddPermission extends SNSAction("AddPermission")
+  /** Action for the CheckIfPhoneNumberIsOptedOut operation. */
+  case object CheckIfPhoneNumberIsOptedOut extends SNSAction("CheckIfPhoneNumberIsOptedOut")
   /** Action for the ConfirmSubscription operation. */
   case object ConfirmSubscription extends SNSAction("ConfirmSubscription")
   /** Action for the CreatePlatformApplication operation. */
@@ -31,10 +33,14 @@ object SNSAction {
   case object GetPlatformApplicationAttributes extends SNSAction("GetPlatformApplicationAttributes")
   /** Action for the GetSubscriptionAttributes operation. */
   case object GetSubscriptionAttributes extends SNSAction("GetSubscriptionAttributes")
+  /** Action for the GetSMSAttributes operation. */
+  case object GetSMSAttributes extends SNSAction("GetSMSAttributes")
   /** Action for the GetTopicAttributes operation. */
   case object GetTopicAttributes extends SNSAction("GetTopicAttributes")
   /** Action for the ListEndpointsByPlatformApplication operation. */
   case object ListEndpointsByPlatformApplication extends SNSAction("ListEndpointsByPlatformApplication")
+  /** Action for the ListPhoneNumbersOptedOut operation. */
+  case object ListPhoneNumbersOptedOut extends SNSAction("ListPhoneNumbersOptedOut")
   /** Action for the ListPlatformApplications operation. */
   case object ListPlatformApplications extends SNSAction("ListPlatformApplications")
   /** Action for the ListSubscriptions operation. */
@@ -43,6 +49,8 @@ object SNSAction {
   case object ListSubscriptionsByTopic extends SNSAction("ListSubscriptionsByTopic")
   /** Action for the ListTopics operation. */
   case object ListTopics extends SNSAction("ListTopics")
+  /** Action for the OptInPhoneNumber operation. */
+  case object OptInPhoneNumber extends SNSAction("OptInPhoneNumber")
   /** Action for the Publish operation. */
   case object Publish extends SNSAction("Publish")
   /** Action for the RemovePermission operation. */
@@ -51,6 +59,8 @@ object SNSAction {
   case object SetEndpointAttributes extends SNSAction("SetEndpointAttributes")
   /** Action for the SetPlatformApplicationAttributes operation. */
   case object SetPlatformApplicationAttributes extends SNSAction("SetPlatformApplicationAttributes")
+  /** Action for the SetSMSAttributes operation. */
+  case object SetSMSAttributes extends SNSAction("SetSMSAttributes")
   /** Action for the SetSubscriptionAttributes operation. */
   case object SetSubscriptionAttributes extends SNSAction("SetSubscriptionAttributes")
   /** Action for the SetTopicAttributes operation. */
@@ -61,17 +71,20 @@ object SNSAction {
   case object Unsubscribe extends SNSAction("Unsubscribe")
 
   val values: Seq[SNSAction] = Seq(
-    AllSNSActions, AddPermission, ConfirmSubscription, CreatePlatformApplication, CreatePlatformEndpoint, CreateTopic,
-    DeleteEndpoint, DeletePlatformApplication, DeleteTopic, GetEndpointAttributes, GetPlatformApplicationAttributes,
-    GetSubscriptionAttributes, GetTopicAttributes, ListEndpointsByPlatformApplication, ListPlatformApplications,
-    ListSubscriptions, ListSubscriptionsByTopic, ListTopics, Publish, RemovePermission, SetEndpointAttributes,
-    SetPlatformApplicationAttributes, SetSubscriptionAttributes, SetTopicAttributes, Subscribe, Unsubscribe
+    AllSNSActions, AddPermission, CheckIfPhoneNumberIsOptedOut, ConfirmSubscription, CreatePlatformApplication,
+    CreatePlatformEndpoint, CreateTopic, DeleteEndpoint, DeletePlatformApplication, DeleteTopic, GetEndpointAttributes,
+    GetPlatformApplicationAttributes, GetSMSAttributes, GetSubscriptionAttributes, GetTopicAttributes,
+    ListEndpointsByPlatformApplication, ListPhoneNumbersOptedOut, ListPlatformApplications, ListSubscriptions,
+    ListSubscriptionsByTopic, ListTopics, OptInPhoneNumber, Publish, RemovePermission, SetEndpointAttributes,
+    SetPlatformApplicationAttributes, SetSMSAttributes, SetSubscriptionAttributes, SetTopicAttributes, Subscribe,
+    Unsubscribe
   )
 
   private[awsutil] def registerActions(): Unit =
     Action.registerActions(
       SNSActions.AllSNSActions → SNSAction.AllSNSActions,
       SNSActions.AddPermission → SNSAction.AddPermission,
+      SNSActions.CheckIfPhoneNumberIsOptedOut -> SNSAction.CheckIfPhoneNumberIsOptedOut,
       SNSActions.ConfirmSubscription → SNSAction.ConfirmSubscription,
       SNSActions.CreatePlatformApplication → SNSAction.CreatePlatformApplication,
       SNSActions.CreatePlatformEndpoint → SNSAction.CreatePlatformEndpoint,
@@ -81,17 +94,21 @@ object SNSAction {
       SNSActions.DeleteTopic → SNSAction.DeleteTopic,
       SNSActions.GetEndpointAttributes → SNSAction.GetEndpointAttributes,
       SNSActions.GetPlatformApplicationAttributes → SNSAction.GetPlatformApplicationAttributes,
+      SNSActions.GetSMSAttributes → SNSAction.GetSMSAttributes,
       SNSActions.GetSubscriptionAttributes → SNSAction.GetSubscriptionAttributes,
       SNSActions.GetTopicAttributes → SNSAction.GetTopicAttributes,
       SNSActions.ListEndpointsByPlatformApplication → SNSAction.ListEndpointsByPlatformApplication,
+      SNSActions.ListPhoneNumbersOptedOut → SNSAction.ListPhoneNumbersOptedOut,
       SNSActions.ListPlatformApplications → SNSAction.ListPlatformApplications,
       SNSActions.ListSubscriptions → SNSAction.ListSubscriptions,
       SNSActions.ListSubscriptionsByTopic → SNSAction.ListSubscriptionsByTopic,
       SNSActions.ListTopics → SNSAction.ListTopics,
+      SNSActions.OptInPhoneNumber → SNSAction.OptInPhoneNumber,
       SNSActions.Publish → SNSAction.Publish,
       SNSActions.RemovePermission → SNSAction.RemovePermission,
       SNSActions.SetEndpointAttributes → SNSAction.SetEndpointAttributes,
       SNSActions.SetPlatformApplicationAttributes → SNSAction.SetPlatformApplicationAttributes,
+      SNSActions.SetSMSAttributes → SNSAction.SetSMSAttributes,
       SNSActions.SetSubscriptionAttributes → SNSAction.SetSubscriptionAttributes,
       SNSActions.SetTopicAttributes → SNSAction.SetTopicAttributes,
       SNSActions.Subscribe → SNSAction.Subscribe,

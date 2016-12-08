@@ -41,6 +41,7 @@ object KmsConverters {
         case aws.KeyState.Enabled         ⇒ KeyState.Enabled
         case aws.KeyState.Disabled        ⇒ KeyState.Disabled
         case aws.KeyState.PendingDeletion ⇒ KeyState.PendingDeletion
+        case aws.KeyState.PendingImport   ⇒ KeyState.PendingImport
       }
   }
 
@@ -50,6 +51,7 @@ object KmsConverters {
         case KeyState.Enabled         ⇒ aws.KeyState.Enabled
         case KeyState.Disabled        ⇒ aws.KeyState.Disabled
         case KeyState.PendingDeletion ⇒ aws.KeyState.PendingDeletion
+        case KeyState.PendingImport   ⇒ aws.KeyState.PendingImport
       }
   }
 

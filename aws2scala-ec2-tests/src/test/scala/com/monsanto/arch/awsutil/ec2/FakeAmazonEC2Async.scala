@@ -6,6 +6,7 @@ import com.amazonaws.handlers.AsyncHandler
 import com.amazonaws.regions.Region
 import com.amazonaws.services.ec2.AmazonEC2Async
 import com.amazonaws.services.ec2.model._
+import com.amazonaws.services.ec2.waiters.AmazonEC2Waiters
 import com.amazonaws.{AmazonWebServiceRequest, ResponseMetadata}
 
 //noinspection NotImplementedCode
@@ -795,4 +796,108 @@ class FakeAmazonEC2Async extends AmazonEC2Async {
   override def getConsoleScreenshotAsync(getConsoleScreenshotRequest: GetConsoleScreenshotRequest): Future[GetConsoleScreenshotResult] = ???
   override def getConsoleScreenshotAsync(getConsoleScreenshotRequest: GetConsoleScreenshotRequest, asyncHandler: AsyncHandler[GetConsoleScreenshotRequest, GetConsoleScreenshotResult]): Future[GetConsoleScreenshotResult] = ???
   override def getConsoleScreenshot(getConsoleScreenshotRequest: GetConsoleScreenshotRequest): GetConsoleScreenshotResult = ???
+
+  override def acceptReservedInstancesExchangeQuoteAsync(acceptReservedInstancesExchangeQuoteRequest: AcceptReservedInstancesExchangeQuoteRequest): Future[AcceptReservedInstancesExchangeQuoteResult] = ???
+
+  override def acceptReservedInstancesExchangeQuoteAsync(acceptReservedInstancesExchangeQuoteRequest: AcceptReservedInstancesExchangeQuoteRequest, asyncHandler: AsyncHandler[AcceptReservedInstancesExchangeQuoteRequest, AcceptReservedInstancesExchangeQuoteResult]): Future[AcceptReservedInstancesExchangeQuoteResult] = ???
+
+  override def createEgressOnlyInternetGatewayAsync(createEgressOnlyInternetGatewayRequest: CreateEgressOnlyInternetGatewayRequest): Future[CreateEgressOnlyInternetGatewayResult] = ???
+
+  override def createEgressOnlyInternetGatewayAsync(createEgressOnlyInternetGatewayRequest: CreateEgressOnlyInternetGatewayRequest, asyncHandler: AsyncHandler[CreateEgressOnlyInternetGatewayRequest, CreateEgressOnlyInternetGatewayResult]): Future[CreateEgressOnlyInternetGatewayResult] = ???
+
+  override def describeIdentityIdFormatAsync(describeIdentityIdFormatRequest: DescribeIdentityIdFormatRequest): Future[DescribeIdentityIdFormatResult] = ???
+
+  override def describeIdentityIdFormatAsync(describeIdentityIdFormatRequest: DescribeIdentityIdFormatRequest, asyncHandler: AsyncHandler[DescribeIdentityIdFormatRequest, DescribeIdentityIdFormatResult]): Future[DescribeIdentityIdFormatResult] = ???
+
+  override def describeHostReservationOfferingsAsync(describeHostReservationOfferingsRequest: DescribeHostReservationOfferingsRequest): Future[DescribeHostReservationOfferingsResult] = ???
+
+  override def describeHostReservationOfferingsAsync(describeHostReservationOfferingsRequest: DescribeHostReservationOfferingsRequest, asyncHandler: AsyncHandler[DescribeHostReservationOfferingsRequest, DescribeHostReservationOfferingsResult]): Future[DescribeHostReservationOfferingsResult] = ???
+
+  override def disassociateSubnetCidrBlockAsync(disassociateSubnetCidrBlockRequest: DisassociateSubnetCidrBlockRequest): Future[DisassociateSubnetCidrBlockResult] = ???
+
+  override def disassociateSubnetCidrBlockAsync(disassociateSubnetCidrBlockRequest: DisassociateSubnetCidrBlockRequest, asyncHandler: AsyncHandler[DisassociateSubnetCidrBlockRequest, DisassociateSubnetCidrBlockResult]): Future[DisassociateSubnetCidrBlockResult] = ???
+
+  override def associateSubnetCidrBlockAsync(associateSubnetCidrBlockRequest: AssociateSubnetCidrBlockRequest): Future[AssociateSubnetCidrBlockResult] = ???
+
+  override def associateSubnetCidrBlockAsync(associateSubnetCidrBlockRequest: AssociateSubnetCidrBlockRequest, asyncHandler: AsyncHandler[AssociateSubnetCidrBlockRequest, AssociateSubnetCidrBlockResult]): Future[AssociateSubnetCidrBlockResult] = ???
+
+  override def getReservedInstancesExchangeQuoteAsync(getReservedInstancesExchangeQuoteRequest: GetReservedInstancesExchangeQuoteRequest): Future[GetReservedInstancesExchangeQuoteResult] = ???
+
+  override def getReservedInstancesExchangeQuoteAsync(getReservedInstancesExchangeQuoteRequest: GetReservedInstancesExchangeQuoteRequest, asyncHandler: AsyncHandler[GetReservedInstancesExchangeQuoteRequest, GetReservedInstancesExchangeQuoteResult]): Future[GetReservedInstancesExchangeQuoteResult] = ???
+
+  override def describeHostReservationsAsync(describeHostReservationsRequest: DescribeHostReservationsRequest): Future[DescribeHostReservationsResult] = ???
+
+  override def describeHostReservationsAsync(describeHostReservationsRequest: DescribeHostReservationsRequest, asyncHandler: AsyncHandler[DescribeHostReservationsRequest, DescribeHostReservationsResult]): Future[DescribeHostReservationsResult] = ???
+
+  override def purchaseHostReservationAsync(purchaseHostReservationRequest: PurchaseHostReservationRequest): Future[PurchaseHostReservationResult] = ???
+
+  override def purchaseHostReservationAsync(purchaseHostReservationRequest: PurchaseHostReservationRequest, asyncHandler: AsyncHandler[PurchaseHostReservationRequest, PurchaseHostReservationResult]): Future[PurchaseHostReservationResult] = ???
+
+  override def unassignIpv6AddressesAsync(unassignIpv6AddressesRequest: UnassignIpv6AddressesRequest): Future[UnassignIpv6AddressesResult] = ???
+
+  override def unassignIpv6AddressesAsync(unassignIpv6AddressesRequest: UnassignIpv6AddressesRequest, asyncHandler: AsyncHandler[UnassignIpv6AddressesRequest, UnassignIpv6AddressesResult]): Future[UnassignIpv6AddressesResult] = ???
+
+  override def modifyIdentityIdFormatAsync(modifyIdentityIdFormatRequest: ModifyIdentityIdFormatRequest): Future[ModifyIdentityIdFormatResult] = ???
+
+  override def modifyIdentityIdFormatAsync(modifyIdentityIdFormatRequest: ModifyIdentityIdFormatRequest, asyncHandler: AsyncHandler[ModifyIdentityIdFormatRequest, ModifyIdentityIdFormatResult]): Future[ModifyIdentityIdFormatResult] = ???
+
+  override def deleteEgressOnlyInternetGatewayAsync(deleteEgressOnlyInternetGatewayRequest: DeleteEgressOnlyInternetGatewayRequest): Future[DeleteEgressOnlyInternetGatewayResult] = ???
+
+  override def deleteEgressOnlyInternetGatewayAsync(deleteEgressOnlyInternetGatewayRequest: DeleteEgressOnlyInternetGatewayRequest, asyncHandler: AsyncHandler[DeleteEgressOnlyInternetGatewayRequest, DeleteEgressOnlyInternetGatewayResult]): Future[DeleteEgressOnlyInternetGatewayResult] = ???
+
+  override def associateVpcCidrBlockAsync(associateVpcCidrBlockRequest: AssociateVpcCidrBlockRequest): Future[AssociateVpcCidrBlockResult] = ???
+
+  override def associateVpcCidrBlockAsync(associateVpcCidrBlockRequest: AssociateVpcCidrBlockRequest, asyncHandler: AsyncHandler[AssociateVpcCidrBlockRequest, AssociateVpcCidrBlockResult]): Future[AssociateVpcCidrBlockResult] = ???
+
+  override def describeEgressOnlyInternetGatewaysAsync(describeEgressOnlyInternetGatewaysRequest: DescribeEgressOnlyInternetGatewaysRequest): Future[DescribeEgressOnlyInternetGatewaysResult] = ???
+
+  override def describeEgressOnlyInternetGatewaysAsync(describeEgressOnlyInternetGatewaysRequest: DescribeEgressOnlyInternetGatewaysRequest, asyncHandler: AsyncHandler[DescribeEgressOnlyInternetGatewaysRequest, DescribeEgressOnlyInternetGatewaysResult]): Future[DescribeEgressOnlyInternetGatewaysResult] = ???
+
+  override def getHostReservationPurchasePreviewAsync(getHostReservationPurchasePreviewRequest: GetHostReservationPurchasePreviewRequest): Future[GetHostReservationPurchasePreviewResult] = ???
+
+  override def getHostReservationPurchasePreviewAsync(getHostReservationPurchasePreviewRequest: GetHostReservationPurchasePreviewRequest, asyncHandler: AsyncHandler[GetHostReservationPurchasePreviewRequest, GetHostReservationPurchasePreviewResult]): Future[GetHostReservationPurchasePreviewResult] = ???
+
+  override def disassociateVpcCidrBlockAsync(disassociateVpcCidrBlockRequest: DisassociateVpcCidrBlockRequest): Future[DisassociateVpcCidrBlockResult] = ???
+
+  override def disassociateVpcCidrBlockAsync(disassociateVpcCidrBlockRequest: DisassociateVpcCidrBlockRequest, asyncHandler: AsyncHandler[DisassociateVpcCidrBlockRequest, DisassociateVpcCidrBlockResult]): Future[DisassociateVpcCidrBlockResult] = ???
+
+  override def assignIpv6AddressesAsync(assignIpv6AddressesRequest: AssignIpv6AddressesRequest): Future[AssignIpv6AddressesResult] = ???
+
+  override def assignIpv6AddressesAsync(assignIpv6AddressesRequest: AssignIpv6AddressesRequest, asyncHandler: AsyncHandler[AssignIpv6AddressesRequest, AssignIpv6AddressesResult]): Future[AssignIpv6AddressesResult] = ???
+
+  override def getHostReservationPurchasePreview(getHostReservationPurchasePreviewRequest: GetHostReservationPurchasePreviewRequest): GetHostReservationPurchasePreviewResult = ???
+
+  override def describeHostReservations(describeHostReservationsRequest: DescribeHostReservationsRequest): DescribeHostReservationsResult = ???
+
+  override def disassociateSubnetCidrBlock(disassociateSubnetCidrBlockRequest: DisassociateSubnetCidrBlockRequest): DisassociateSubnetCidrBlockResult = ???
+
+  override def unassignIpv6Addresses(unassignIpv6AddressesRequest: UnassignIpv6AddressesRequest): UnassignIpv6AddressesResult = ???
+
+  override def associateSubnetCidrBlock(associateSubnetCidrBlockRequest: AssociateSubnetCidrBlockRequest): AssociateSubnetCidrBlockResult = ???
+
+  override def purchaseHostReservation(purchaseHostReservationRequest: PurchaseHostReservationRequest): PurchaseHostReservationResult = ???
+
+  override def disassociateVpcCidrBlock(disassociateVpcCidrBlockRequest: DisassociateVpcCidrBlockRequest): DisassociateVpcCidrBlockResult = ???
+
+  override def describeHostReservationOfferings(describeHostReservationOfferingsRequest: DescribeHostReservationOfferingsRequest): DescribeHostReservationOfferingsResult = ???
+
+  override def deleteEgressOnlyInternetGateway(deleteEgressOnlyInternetGatewayRequest: DeleteEgressOnlyInternetGatewayRequest): DeleteEgressOnlyInternetGatewayResult = ???
+
+  override def describeIdentityIdFormat(describeIdentityIdFormatRequest: DescribeIdentityIdFormatRequest): DescribeIdentityIdFormatResult = ???
+
+  override def modifyIdentityIdFormat(modifyIdentityIdFormatRequest: ModifyIdentityIdFormatRequest): ModifyIdentityIdFormatResult = ???
+
+  override def getReservedInstancesExchangeQuote(getReservedInstancesExchangeQuoteRequest: GetReservedInstancesExchangeQuoteRequest): GetReservedInstancesExchangeQuoteResult = ???
+
+  override def createEgressOnlyInternetGateway(createEgressOnlyInternetGatewayRequest: CreateEgressOnlyInternetGatewayRequest): CreateEgressOnlyInternetGatewayResult = ???
+
+  override def associateVpcCidrBlock(associateVpcCidrBlockRequest: AssociateVpcCidrBlockRequest): AssociateVpcCidrBlockResult = ???
+
+  override def acceptReservedInstancesExchangeQuote(acceptReservedInstancesExchangeQuoteRequest: AcceptReservedInstancesExchangeQuoteRequest): AcceptReservedInstancesExchangeQuoteResult = ???
+
+  override def waiters(): AmazonEC2Waiters = ???
+
+  override def describeEgressOnlyInternetGateways(describeEgressOnlyInternetGatewaysRequest: DescribeEgressOnlyInternetGatewaysRequest): DescribeEgressOnlyInternetGatewaysResult = ???
+
+  override def assignIpv6Addresses(assignIpv6AddressesRequest: AssignIpv6AddressesRequest): AssignIpv6AddressesResult = ???
 }

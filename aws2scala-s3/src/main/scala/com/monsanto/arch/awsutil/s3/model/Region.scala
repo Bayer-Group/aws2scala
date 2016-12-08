@@ -22,6 +22,14 @@ object Region extends AwsEnumerationCompanion[Region,aws.Region] {
     * requests to these buckets to reduce any latency experienced after the first hour of creating a bucket in this region.
     */
   case object US_West extends Region(aws.Region.US_West)
+  /**
+    * The US-East-2 (Ohio) Amazon S3 Region. This region uses Amazon S3 servers located in Ohio.
+    *
+    * When using buckets in this region, set the client endpoint to `s3-us-east-2.amazonaws.com` on all
+    * requests to these buckets to reduce any latency experienced after the first hour of creating a bucket in this region.
+    */
+
+  case object US_East_2 extends Region(aws.Region.US_East_2)
 
   /** The US-West-2 (Oregon) Region. This region uses Amazon S3 servers located in Oregon.
     *
@@ -69,6 +77,13 @@ object Region extends AwsEnumerationCompanion[Region,aws.Region] {
     */
   case object AP_Seoul extends Region(aws.Region.AP_Seoul)
 
+  /** The Asia Pacific (Mumbai) Region. This region uses Amazon S3 servers located in Mumbai.
+    *
+    * When using buckets in this region, set the client endpoint to `s3.ap-south-1.amazonaws.com` on all requests
+    * to these buckets to reduce any latency experienced after the first hour of creating a bucket in this region.
+    */
+  case object AP_Mumbai extends Region(aws.Region.AP_Mumbai)
+
   /** The South America (Sao Paulo) Region. This region uses Amazon S3 servers located in Sao Paulo.
     *
     * When using buckets in this region, set the client endpoint to `s3-sa-east-1.amazonaws.com` on all requests to
@@ -84,6 +99,6 @@ object Region extends AwsEnumerationCompanion[Region,aws.Region] {
 
   /** All valid values for the enumeration. */
   override def values: Seq[Region] =
-    Seq(US_Standard, US_West, US_West_2, US_GovCloud, AP_Seoul, AP_Singapore, AP_Singapore, AP_Sydney, AP_Tokyo,
-      EU_Ireland, EU_Frankfurt, CN_Beijing, SA_SaoPaulo)
+    Seq(US_Standard, US_West, US_West_2, US_East_2, US_GovCloud, AP_Seoul, AP_Singapore, AP_Singapore, AP_Sydney,
+      AP_Tokyo, AP_Mumbai, EU_Ireland, EU_Frankfurt, CN_Beijing, SA_SaoPaulo)
 }

@@ -32,6 +32,9 @@ object Region {
   /** Asia Pacific (Sydney). */
   case object AP_SOUTHEAST_2 extends Region("ap-southeast-2", Partition.Aws)
 
+  /** Asia Pacific (Mumbai). */
+  case object AP_SOUTH_1 extends Region("ap-south-1", Partition.Aws)
+
   /** Asia Pacific (Tokyo). */
   case object AP_NORTHEAST_1 extends Region("ap-northeast-1", Partition.Aws)
 
@@ -45,8 +48,8 @@ object Region {
   case object CN_NORTH_1 extends Region("cn-north-1", Partition.China)
 
   /** All valid values for the enumeration. */
-  val values: Seq[Region] = Seq(GovCloud, US_EAST_1, US_WEST_1, US_WEST_2, EU_WEST_1, EU_CENTRAL_1,
-    AP_SOUTHEAST_1, AP_SOUTHEAST_2, AP_NORTHEAST_1, AP_NORTHEAST_2, SA_EAST_1, CN_NORTH_1)
+  val values: Seq[Region] = Seq(GovCloud, US_EAST_1, US_EAST_2, US_WEST_1, US_WEST_2, EU_WEST_1, EU_CENTRAL_1,
+    AP_SOUTHEAST_1, AP_SOUTHEAST_2, AP_SOUTH_1, AP_NORTHEAST_1, AP_NORTHEAST_2, SA_EAST_1, CN_NORTH_1)
 
   /** Extracts a region from its name. */
   def unapply(str: String): Option[Region] = values.find(_.name == str)

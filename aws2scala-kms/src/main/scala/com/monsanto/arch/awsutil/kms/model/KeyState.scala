@@ -16,8 +16,11 @@ object KeyState {
   /** Indicates that the key is pending deletion. */
   case object PendingDeletion extends KeyState("PendingDeletion")
 
+  /** Indicates that the key is pending import. */
+  case object PendingImport extends KeyState("PendingImport")
+
   /** All possible key state values. */
-  val values: Seq[KeyState] = Seq(Enabled, Disabled, PendingDeletion)
+  val values: Seq[KeyState] = Seq(Enabled, Disabled, PendingDeletion, PendingImport)
 
   /** Utility for building/extracting a `KeyUsage` instance from an identifier string. */
   object fromName {
