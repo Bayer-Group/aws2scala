@@ -220,6 +220,7 @@ class BucketSpec extends FreeSpec with MockFactory with Materialised {
 
   "Bucket.validName" - {
     val lowerDigitChar = Gen.oneOf(('a' to 'z') ++ ('0' to '9'))
+    def positive(n: Int): Int = Math.max(n,1)
     def nameContaining(sub: String): Gen[String] = {
       val subLen = sub.length
       val baseMin = (3 - subLen).max(1)
@@ -227,7 +228,7 @@ class BucketSpec extends FreeSpec with MockFactory with Materialised {
       val gen =
         for {
           baseName ← UtilGen.stringOf(lowerDigitChar, baseMin, baseMax)
-          index ← Gen.choose(1, baseName.length - 1)
+          index ← Gen.choose(1, positive(baseName.length - 1))
         } yield {
           val (start, end) = baseName.splitAt(index)
           s"$start$sub$end"

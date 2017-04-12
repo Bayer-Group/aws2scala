@@ -16,7 +16,7 @@ trait AdaptableScalaFutures extends ScalaFutures {
       PatienceConfig(500.milliseconds, 10.milliseconds)
     }
 
-  override implicit def patienceConfig = lazyConfig
+  override implicit def patienceConfig: PatienceConfig = lazyConfig
 }
 
 object AdaptableScalaFutures extends AdaptableScalaFutures {

@@ -69,7 +69,7 @@ class DefaultStreamingS3ClientSpec extends FreeSpec with MockFactory with Materi
     }
 
     "list buckets" in {
-      forAll(maxSize(25)) { buckets: Seq[Bucket] ⇒
+      forAll(SizeRange(25)) { buckets: Seq[Bucket] ⇒
         withFixture { f ⇒
           (f.s3.listBuckets(_: aws.ListBucketsRequest))
             .expects(*)

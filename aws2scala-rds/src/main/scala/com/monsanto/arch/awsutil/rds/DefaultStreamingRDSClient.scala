@@ -4,7 +4,7 @@ import akka.NotUsed
 import akka.stream.scaladsl.Flow
 import com.amazonaws.services.rds.AmazonRDSAsync
 import com.amazonaws.services.rds.model.{Option ⇒ _, _}
-import com.monsanto.arch.awsutil.AWSFlow
+import com.monsanto.arch.awsutil._
 
 import scala.collection.JavaConverters._
 

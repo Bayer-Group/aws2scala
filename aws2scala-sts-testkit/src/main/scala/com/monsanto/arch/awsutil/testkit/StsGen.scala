@@ -1,6 +1,5 @@
 package com.monsanto.arch.awsutil.testkit
 
-import com.monsanto.arch.awsutil.Arn
 import com.monsanto.arch.awsutil.identitymanagement.model.RoleArn
 import com.monsanto.arch.awsutil.securitytoken.model._
 import com.monsanto.arch.awsutil.testkit.StsScalaCheckImplicits._

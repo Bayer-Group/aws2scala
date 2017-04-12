@@ -9,8 +9,6 @@ import com.monsanto.arch.awsutil.{Account, Arn}
 import org.scalacheck.Arbitrary.arbitrary
 import org.scalacheck.{Arbitrary, Gen, Shrink}
 
-import scala.util.Try
-
 object SnsScalaCheckImplicits {
   SNS.init()
 

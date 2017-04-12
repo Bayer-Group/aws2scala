@@ -15,7 +15,8 @@ class PolicySpec extends FreeSpec with AwsEnumerationBehaviours {
     "round trip" - {
       "via its AWS equivalent" in {
         forAll { policy: Policy ⇒
-          policy.asAws.asScala should equal (policy.copy(version = Some(Policy.Version.`2012-10-17`)))
+          //compiler will not accept the 'policyEq' implicit if it is not passed explicitly, not sure why
+          policy.asAws.asScala.shouldEqual(policy.copy(version = Some(Policy.Version.`2012-10-17`)))(policyEq)
         }
       }
 

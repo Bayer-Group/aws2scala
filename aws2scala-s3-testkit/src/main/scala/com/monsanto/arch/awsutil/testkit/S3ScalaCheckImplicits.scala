@@ -86,7 +86,7 @@ object S3ScalaCheckImplicits {
     Shrink {
       case c: Grantee.Canonical ⇒ Shrink.shrink(c)
       case e: Grantee.EmailAddress ⇒ Shrink.shrink(e)
-      case g: Grantee.GroupGrantee ⇒ Stream.empty
+      case _: Grantee.GroupGrantee ⇒ Stream.empty
     }
 
   implicit lazy val arbGranteeCanonical: Arbitrary[Grantee.Canonical] =

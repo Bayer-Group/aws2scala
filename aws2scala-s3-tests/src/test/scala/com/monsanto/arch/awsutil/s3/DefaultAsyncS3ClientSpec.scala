@@ -44,7 +44,7 @@ class DefaultAsyncS3ClientSpec extends FreeSpec with MockFactory with Materialis
   }
 
   "list buckets" in {
-    forAll(maxSize(25)) { buckets: List[Bucket] ⇒
+    forAll(SizeRange(25)) { buckets: List[Bucket] ⇒
       val streaming = mock[StreamingS3Client]("streaming")
       val async = new DefaultAsyncS3Client(streaming)
 

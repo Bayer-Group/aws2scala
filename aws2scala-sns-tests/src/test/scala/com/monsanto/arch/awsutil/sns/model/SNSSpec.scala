@@ -11,7 +11,7 @@ import org.scalatest.Matchers._
 import org.scalatest.prop.GeneratorDrivenPropertyChecks._
 
 class SNSSpec extends FreeSpec with MockFactory with Materialised with FlowMockUtils {
-  private implicit val generatorDrivenConfig = PropertyCheckConfig(minSuccessful = 50, maxSize = 50)
+  private implicit val generatorDrivenConfig = PropertyCheckConfiguration(minSuccessful = 50, sizeRange = 50)
 
   "the SNS interface" - {
     "creates topics" - {
@@ -31,7 +31,7 @@ class SNSSpec extends FreeSpec with MockFactory with Materialised with FlowMockU
     }
 
     "lists topics" in {
-      forAll(maxSize(25)) { topics: List[Topic] ⇒
+      forAll(SizeRange(25)) { topics: List[Topic] ⇒
         implicit val sns = mock[StreamingSNSClient]("sns")
 
         (sns.topicLister _)
@@ -53,7 +53,7 @@ class SNSSpec extends FreeSpec with MockFactory with Materialised with FlowMockU
     }
 
     "lists subscriptions" in {
-      forAll(maxSize(25)) { subscriptionSummaries: List[SubscriptionSummary] ⇒
+      forAll(SizeRange(25)) { subscriptionSummaries: List[SubscriptionSummary] ⇒
         implicit val sns = mock[StreamingSNSClient]("sns")
 
         (sns.subscriptionLister _)
@@ -113,7 +113,7 @@ class SNSSpec extends FreeSpec with MockFactory with Materialised with FlowMockU
     }
 
     "lists platform applications" in {
-      forAll(maxSize(25)) { applications: List[PlatformApplication] ⇒
+      forAll(SizeRange(25)) { applications: List[PlatformApplication] ⇒
         implicit val sns = mock[StreamingSNSClient]("sns")
 
         (sns.platformApplicationLister _)

@@ -5,7 +5,7 @@ import akka.stream.scaladsl.{Flow, Source}
 import com.amazonaws.services.sns.{AmazonSNSAsync, model ⇒ aws}
 import com.monsanto.arch.awsutil.sns.model.AwsConverters._
 import com.monsanto.arch.awsutil.sns.model._
-import com.monsanto.arch.awsutil.{AWSFlow, AWSFlowAdapter}
+import com.monsanto.arch.awsutil._
 
 import scala.collection.JavaConverters._
 

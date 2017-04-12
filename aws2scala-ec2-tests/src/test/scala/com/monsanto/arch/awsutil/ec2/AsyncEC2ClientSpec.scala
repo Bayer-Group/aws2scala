@@ -49,7 +49,7 @@ class AsyncEC2ClientSpec extends FreeSpec with MockFactory with Materialised wit
 
     "describe key pairs" - {
       "all of them" in {
-        forAll(maxSize(30)) { keyPairInfo: List[KeyPairInfo] ⇒
+        forAll(SizeRange(30)) { keyPairInfo: List[KeyPairInfo] ⇒
           val streaming = mock[StreamingEC2Client]("streaming")
           val async = new DefaultAsyncEC2Client(streaming)
 

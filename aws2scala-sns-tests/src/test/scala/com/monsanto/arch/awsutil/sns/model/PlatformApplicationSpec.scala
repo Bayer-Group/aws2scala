@@ -17,7 +17,7 @@ import org.scalatest.Matchers._
 import org.scalatest.prop.GeneratorDrivenPropertyChecks._
 
 class PlatformApplicationSpec extends FreeSpec with MockFactory with Materialised with FlowMockUtils {
-  private implicit val generatorDrivenConfig = PropertyCheckConfig(minSuccessful = 50, maxSize = 50)
+  private implicit val generatorDrivenConfig = PropertyCheckConfiguration(minSuccessful = 50, sizeRange = 50)
 
   "the PlatformApplication object can" - {
     "build an object from an ARN" in {

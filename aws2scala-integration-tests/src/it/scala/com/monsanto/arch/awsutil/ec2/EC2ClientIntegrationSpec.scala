@@ -13,6 +13,7 @@ import com.monsanto.arch.cloudformation.model._
 import com.monsanto.arch.cloudformation.model.resource._
 import com.typesafe.scalalogging.StrictLogging
 import org.scalactic.Equality
+import org.scalactic.source.Position
 import org.scalatest.FreeSpec
 import org.scalatest.Matchers._
 
@@ -88,7 +89,7 @@ class EC2ClientIntegrationSpec extends FreeSpec with AwsIntegrationSpec with Str
           .filter(s ⇒ completedStatuses(s.stackStatus))
           .take(1)
           .runWith(Sink.head)
-          .futureValue(StackPatience)
+          .futureValue(StackPatience,Position.here)
 
       stack.stackStatus shouldBe StackStatus.CREATE_COMPLETE
 
@@ -140,7 +141,7 @@ class EC2ClientIntegrationSpec extends FreeSpec with AwsIntegrationSpec with Str
 
       val deleteComplete = Source.single(DeleteStackRequest(stackName, Seq.empty))
         .via(streamingCloudFormation.stackDeleter)
-        .flatMapConcat { stackName ⇒
+        .flatMapConcat { _ ⇒
           Source.tick(5.seconds, 5.seconds, Some(stackID))
             .via(streamingCloudFormation.stackDescriber)
             .map { s ⇒
@@ -151,7 +152,7 @@ class EC2ClientIntegrationSpec extends FreeSpec with AwsIntegrationSpec with Str
             .take(1)
         }
         .runWith(Sink.head)
-        .futureValue(StackPatience)
+        .futureValue(StackPatience,Position.here)
 
       deleteComplete.getStackName shouldBe stackName
 

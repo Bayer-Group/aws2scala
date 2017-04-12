@@ -9,7 +9,7 @@ import akka.stream.testkit.scaladsl.{TestSink, TestSource}
 import akka.stream.testkit.{TestPublisher, TestSubscriber}
 import com.amazonaws.{AmazonClientException, AmazonWebServiceRequest}
 import com.monsanto.arch.awsutil.impl.AWSGraphStageSpec._
-import com.monsanto.arch.awsutil.{AWSAsyncCall, AWSFlow}
+import com.monsanto.arch.awsutil._
 import com.typesafe.config.ConfigFactory
 import org.scalamock.scalatest.MockFactory
 import org.scalatest.Matchers._

@@ -2,7 +2,6 @@ package com.monsanto.arch.awsutil.testkit
 
 import java.util.Date
 
-import com.monsanto.arch.awsutil.Arn
 import com.monsanto.arch.awsutil.auth.policy.Policy
 import com.monsanto.arch.awsutil.identitymanagement.model.RoleArn
 import com.monsanto.arch.awsutil.securitytoken.SecurityTokenService
