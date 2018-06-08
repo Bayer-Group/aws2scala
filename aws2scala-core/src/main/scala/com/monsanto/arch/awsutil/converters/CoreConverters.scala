@@ -248,6 +248,7 @@ object CoreConverters {
     def asScala: Principal.Service with Principal.Service.AwsEnumerated =
       service match {
         case policy.Principal.Services.AllServices             ⇒ Principal.Service.AllServices
+        case policy.Principal.Services.AmazonApiGateway        ⇒ Principal.Service.AmazonApiGateway
         case policy.Principal.Services.AmazonEC2               ⇒ Principal.Service.AmazonEC2
         case policy.Principal.Services.AmazonElasticTranscoder ⇒ Principal.Service.AmazonElasticTranscoder
         case policy.Principal.Services.AWSCloudHSM             ⇒ Principal.Service.AWSCloudHSM
@@ -260,6 +261,7 @@ object CoreConverters {
     def asAws: policy.Principal.Services =
       service match {
         case Principal.Service.AllServices             ⇒ policy.Principal.Services.AllServices
+        case Principal.Service.AmazonApiGateway        ⇒ policy.Principal.Services.AmazonApiGateway
         case Principal.Service.AmazonEC2               ⇒ policy.Principal.Services.AmazonEC2
         case Principal.Service.AmazonElasticTranscoder ⇒ policy.Principal.Services.AmazonElasticTranscoder
         case Principal.Service.AWSCloudHSM             ⇒ policy.Principal.Services.AWSCloudHSM

@@ -3,7 +3,7 @@ package com.monsanto.arch.awsutil.sns.model
 import com.monsanto.arch.awsutil.sns.model.AwsConverters._
 import com.monsanto.arch.awsutil.testkit.SnsScalaCheckImplicits._
 import org.scalacheck.{Arbitrary, Gen, Shrink}
-import spray.json.{pimpAny, pimpString}
+import spray.json._
 
 case class SubscriptionAttributes(arn: SubscriptionArn,
                                   endpoint: SubscriptionEndpoint,

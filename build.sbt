@@ -2,12 +2,12 @@ import java.util.Date
 import UnidocKeys._
 
 // dependency versions
-val akka = "2.5.6"
-val aws = "1.11.64"
-val scalaCheck = "org.scalacheck"     %% "scalacheck"                          % "1.13.4"
-val scalaTest  = "org.scalatest"      %% "scalatest"                           % "3.0.4" % "test"
-val sprayJson  = "io.spray"           %% "spray-json"                          % "1.3.3"
-val cftg       = "com.monsanto.arch"  %% "cloud-formation-template-generator"  % "3.5.2"
+val akka = "2.5.13"
+val aws = "1.11.343"
+val scalaCheck = "org.scalacheck"     %% "scalacheck"                          % "1.14.0"
+val scalaTest  = "org.scalatest"      %% "scalatest"                           % "3.0.5" % "test"
+val sprayJson  = "io.spray"           %% "spray-json"                          % "1.3.4"
+val cftg       = "com.monsanto.arch"  %% "cloud-formation-template-generator"  % "3.9.1"
 
 def crossVersionScalaOptions(scalaVersion: String) = {
   CrossVersion.partialVersion(scalaVersion) match {
@@ -97,7 +97,7 @@ lazy val noPublishingSettings = Seq(
 
 val commonDependencies = Seq(
   "com.typesafe.akka"           %% "akka-stream"    % akka,
-  "com.typesafe.scala-logging"  %% "scala-logging"  % "3.5.0",
+  "com.typesafe.scala-logging"  %% "scala-logging"  % "3.9.0",
   awsDependency("core")
 )
 
@@ -113,9 +113,9 @@ lazy val testSupport = Project("aws2scala-test-support", file("aws2scala-test-su
     libraryDependencies ++= Seq(
       "com.typesafe.akka"  %% "akka-slf4j"                   % akka,
       scalaCheck,
-      "org.scalamock"      %% "scalamock-scalatest-support"  % "3.5.0",
+      "org.scalamock"      %% "scalamock-scalatest-support"  % "3.6.0",
       scalaTest,
-      "ch.qos.logback"      % "logback-classic"              % "1.1.7"
+      "ch.qos.logback"      % "logback-classic"              % "1.2.3"
     ) ++ commonDependencies
   )
 
@@ -137,7 +137,7 @@ lazy val core = Project("aws2scala-core", file("aws2scala-core"))
     commonSettings,
     bintrayPublishingSettings,
     description := "Core library for aws2scala",
-    libraryDependencies += "com.typesafe" % "config" % "1.3.1"
+    libraryDependencies += "com.typesafe" % "config" % "1.3.3"
   )
 
 lazy val coreTestSupport = Project("aws2scala-core-test-support", file("aws2scala-core-test-support"))
@@ -204,8 +204,8 @@ lazy val ec2Testkit = Project("aws2scala-ec2-testkit", file("aws2scala-ec2-testk
     description := "Test utility library for aws2scala-ec2",
     libraryDependencies ++= Seq(
       scalaCheck,
-      "org.bouncycastle" % "bcprov-jdk15on" % "1.55",
-      "org.bouncycastle" % "bcpkix-jdk15on" % "1.55"
+      "org.bouncycastle" % "bcprov-jdk15on" % "1.59",
+      "org.bouncycastle" % "bcpkix-jdk15on" % "1.59"
     )
   )
 

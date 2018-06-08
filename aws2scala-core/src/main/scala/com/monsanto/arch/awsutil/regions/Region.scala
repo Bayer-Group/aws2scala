@@ -23,6 +23,12 @@ object Region {
   /** EU West (Ireland). */
   case object EU_WEST_1 extends Region("eu-west-1", Partition.Aws)
 
+  /** EU West (London). */
+  case object EU_WEST_2 extends Region("eu-west-2", Partition.Aws)
+
+  /** EU West (Paris). */
+  case object EU_WEST_3 extends Region("eu-west-3", Partition.Aws)
+
   /** EU Central (Frankfurt). */
   case object EU_CENTRAL_1 extends Region("eu-central-1", Partition.Aws)
 
@@ -47,9 +53,16 @@ object Region {
   /** China (Beijing). */
   case object CN_NORTH_1 extends Region("cn-north-1", Partition.China)
 
+  /** China (Ningxia). */
+  case object CN_NORTHWEST_1 extends Region("cn-northwest-1", Partition.China)
+
+  /** Canada (Central). */
+  case object CA_CENTRAL_1 extends Region("ca-central-1", Partition.Aws)
+
   /** All valid values for the enumeration. */
-  val values: Seq[Region] = Seq(GovCloud, US_EAST_1, US_EAST_2, US_WEST_1, US_WEST_2, EU_WEST_1, EU_CENTRAL_1,
-    AP_SOUTHEAST_1, AP_SOUTHEAST_2, AP_SOUTH_1, AP_NORTHEAST_1, AP_NORTHEAST_2, SA_EAST_1, CN_NORTH_1)
+  val values: Seq[Region] = Seq(GovCloud, US_EAST_1, US_EAST_2, US_WEST_1, US_WEST_2, EU_WEST_1, EU_WEST_2, EU_WEST_3, EU_CENTRAL_1,
+    AP_SOUTHEAST_1, AP_SOUTHEAST_2, AP_SOUTH_1, AP_NORTHEAST_1, AP_NORTHEAST_2, SA_EAST_1, CN_NORTH_1, CN_NORTHWEST_1,
+    CA_CENTRAL_1)
 
   /** Extracts a region from its name. */
   def unapply(str: String): Option[Region] = values.find(_.name == str)

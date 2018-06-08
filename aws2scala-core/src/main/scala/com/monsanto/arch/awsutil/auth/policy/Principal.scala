@@ -89,7 +89,7 @@ object Principal {
     case object AllServices extends Service("*") with AwsEnumerated
 
     /** Matches the Amazon API Gateway service. */
-    case object AmazonAPIGateway extends Service("apigateway.amazonaws.com")
+    case object AmazonApiGateway extends Service("apigateway.amazonaws.com") with AwsEnumerated
 
     /** Matches the Amazon Elastic Compute Cloud (EC2) service. */
     case object AmazonEC2 extends Service("ec2.amazonaws.com") with AwsEnumerated
@@ -141,7 +141,7 @@ object Principal {
 
     /** All valid values for the enumeration. */
     val values: Seq[Service] =
-      Seq(AllServices, AmazonAPIGateway, AmazonEC2, AmazonEC2ContainerService, AmazonEC2SpotFleet,
+      Seq(AllServices, AmazonApiGateway, AmazonEC2, AmazonEC2ContainerService, AmazonEC2SpotFleet,
         AmazonElasticMapReduce, AmazonElasticTranscoder, AmazonInspector, AmazonVPCFlowLogs, AmazonWorkSpaces,
         AWSCloudHSM, AWSCloudTrail, AWSConfig, AWSDataPipeline, AWSLambda, AWSOpsWorks, AWSServiceCatalog)
 
