@@ -49,6 +49,12 @@ object Region extends AwsEnumerationCompanion[Region,aws.Region] {
   /** The EU (Frankfurt) Amazon S3 Region. This region uses Amazon S3 servers located in Frankfurt. */
   case object EU_Frankfurt extends Region(aws.Region.EU_Frankfurt)
 
+  /** The EU (London) Amazon S3 Region. This region uses Amazon S3 servers located in London. */
+  case object EU_London extends Region(aws.Region.EU_London)
+
+  /** The EU (Paris) Amazon S3 Region. This region uses Amazon S3 servers located in Paris. */
+  case object EU_Paris extends Region(aws.Region.EU_Paris)
+
   /** The Asia Pacific (Singapore) Region. This region uses Amazon S3 servers located in Singapore.
     *
     * When using buckets in this region, set the client endpoint to `s3-ap-southeast-1.amazonaws.com` on all requests
@@ -97,8 +103,20 @@ object Region extends AwsEnumerationCompanion[Region,aws.Region] {
     */
   case object CN_Beijing extends Region(aws.Region.CN_Beijing)
 
+  /** The China (Ningxia) Region. This region uses Amazon S3 servers located in Ningxia.
+    *
+    * When using buckets in this region, you must set the client endpoint to `s3.cn-northwest-1.amazonaws.com.cn`.
+    */
+  case object CN_Northwest_1 extends Region(aws.Region.CN_Northwest_1)
+
+  /** The Canada (Central)	 Region. This region uses Amazon S3 servers located in Canada.
+    *
+    */
+  case object CA_Central extends Region(aws.Region.CA_Central)
+
   /** All valid values for the enumeration. */
   override def values: Seq[Region] =
     Seq(US_Standard, US_West, US_West_2, US_East_2, US_GovCloud, AP_Seoul, AP_Singapore, AP_Singapore, AP_Sydney,
-      AP_Tokyo, AP_Mumbai, EU_Ireland, EU_Frankfurt, CN_Beijing, SA_SaoPaulo)
+      AP_Tokyo, AP_Mumbai, EU_Ireland, EU_Frankfurt, EU_London, EU_Paris, CN_Beijing, CN_Northwest_1, SA_SaoPaulo,
+      CA_Central)
 }
