@@ -54,8 +54,8 @@ object ApiMappingsPlugin extends AutoPlugin {
           }.get
       }
       (apiMappingsJava.value ++ apiMappingsScala.value).collect(findMapping) + (RtJar → url(JavaApiLocation))
-    },
-    (doc in Compile) <<= apiMappingsFixJavaLinks(doc in Compile)
+    }
+//    (doc in Compile) := apiMappingsFixJavaLinks(doc in Compile)
   )
 
   private lazy val RtJar = System.getProperty("sun.boot.class.path").split(JFile.pathSeparator).collectFirst {

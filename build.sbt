@@ -1,5 +1,9 @@
 import java.util.Date
-import UnidocKeys._
+
+import sbt.{Credentials, Path, Resolver}
+
+//import UnidocKeys._
+import sbt.{Credentials, Path, Resolver}
 
 // dependency versions
 val akka = "2.5.13"
@@ -68,25 +72,24 @@ lazy val commonSettings = Seq(
 val AwsDocURL = "http://docs.aws.amazon.com/AWSJavaSDK/latest/javadoc"
 
 def createAwsApiMappings(libs: String*) = libs.map(lib ⇒ ("com.amazonaws", s"aws-java-sdk-$lib") → AwsDocURL).toMap
+publishTo in ThisBuild := Def.taskDyn[Option[Resolver]] {
+  if (isSnapshot.value)
+    Def.task(Some("Artifactory Realm" at "https://oss.jfrog.org/oss-snapshot-local/"))
+  else
+    Def.task(publishTo.value) /* Value set by bintray-sbt plugin */
+}.value
+
+credentials := Def.taskDyn[Seq[Credentials]] {
+  if (isSnapshot.value)
+    Def.task(List(Path.userHome / ".bintray" / ".artifactory").filter(_.exists).map(Credentials(_)))
+  else
+    Def.task(credentials.value) /* Value set by bintray-sbt plugin */
+}.value
 
 lazy val bintrayPublishingSettings = Seq(
   bintrayOrganization := Some("monsanto"),
   bintrayPackageLabels := Seq("aws", "scala", "akka-streams"),
-  bintrayVcsUrl := Some("https://github.com/MonsantoCo/aws2scala.git"),
-  publishTo := {
-    if (isSnapshot.value) Some("OJO Snapshots" at s"https://oss.jfrog.org/artifactory/oss-snapshot-local;build.timestamp=${new Date().getTime}")
-    else publishTo.value
-  },
-  credentials ++= {
-    List(bintrayCredentialsFile.value)
-      .filter(_.exists())
-      .map(f ⇒ Credentials.toDirect(Credentials(f)))
-      .map(c ⇒ Credentials("Artifactory Realm", "oss.jfrog.org", c.userName, c.passwd))
-  },
-  bintrayReleaseOnPublish := {
-    if (isSnapshot.value) false
-    else bintrayReleaseOnPublish.value
-  }
+  bintrayVcsUrl := Some("https://github.com/MonsantoCo/aws2scala.git")
 )
 
 lazy val noPublishingSettings = Seq(
@@ -447,6 +450,6 @@ lazy val aws2scala = (project in file("."))
     commonSettings,
     noPublishingSettings,
     // unidoc
-    unidocSettings,
-    unidocProjectFilter in (ScalaUnidoc, unidoc) := inAnyProject -- inProjects(testSupport, coreTestSupport)
+//    unidocSettings,
+//    unidocProjectFilter in (ScalaUnidoc, unidoc) := inAnyProject -- inProjects(testSupport, coreTestSupport)
   )
