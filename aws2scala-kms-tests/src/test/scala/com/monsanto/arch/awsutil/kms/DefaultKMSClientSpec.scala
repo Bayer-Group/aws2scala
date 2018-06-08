@@ -22,7 +22,6 @@ import org.scalatest.Matchers._
 import scala.collection.JavaConverters._
 
 class DefaultKMSClientSpec extends FreeSpec with Materialised with MockFactory with AwsMockUtils {
-  private val alias = "someAlias"
   private val keyIdentifier = "arn:test-key:0"
 
   case class Fixture(awsClient: AWSKMSAsync, asyncClient: AsyncKMSClient, streamingClient: StreamingKMSClient)

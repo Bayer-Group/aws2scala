@@ -1,6 +1,5 @@
 package com.monsanto.arch.awsutil.identitymanagement.model
 
-import com.monsanto.arch.awsutil.Arn
 import com.monsanto.arch.awsutil.testkit.CoreScalaCheckImplicits._
 import org.scalatest.FreeSpec
 import org.scalatest.Matchers._

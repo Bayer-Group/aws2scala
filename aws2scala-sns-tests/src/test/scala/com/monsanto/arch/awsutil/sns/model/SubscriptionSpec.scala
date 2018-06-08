@@ -12,7 +12,7 @@ import org.scalatest.prop.GeneratorDrivenPropertyChecks._
 import spray.json.pimpAny
 
 class SubscriptionSpec extends FreeSpec with Materialised with MockFactory with FlowMockUtils {
-  private implicit val generatorDrivenConfig = PropertyCheckConfig(minSuccessful = 50, maxSize = 50)
+  private implicit val generatorDrivenConfig = PropertyCheckConfiguration(minSuccessful = 50, sizeRange = 50)
 
   "the Subscription companion object" - {
     "can build a subscription using" - {

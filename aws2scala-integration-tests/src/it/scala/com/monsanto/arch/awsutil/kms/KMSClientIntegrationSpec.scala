@@ -6,6 +6,7 @@ import com.monsanto.arch.awsutil.kms.model.{GenerateDataKeyRequest, KeyArn}
 import com.monsanto.arch.awsutil.test_support.AwsScalaFutures._
 import com.monsanto.arch.awsutil.test_support.{AwsIntegrationSpec, IntegrationTest}
 import com.typesafe.scalalogging.StrictLogging
+import org.scalactic.source.Position
 import org.scalatest.FreeSpec
 import org.scalatest.Matchers._
 import org.scalatest.concurrent.Eventually
@@ -86,7 +87,7 @@ class KMSClientIntegrationSpec extends FreeSpec with AwsIntegrationSpec with Str
       asyncClient.disableKey(keyId)
       eventually {
         asyncClient.describeKey(keyArn.arnString).futureValue.get.enabled shouldBe false
-      }(Eventually.PatienceConfig(2.minutes, 1.second))
+      }(Eventually.PatienceConfig(2.minutes, 1.second), Position.here)
     }
 
     "enable the key" in {
@@ -94,7 +95,7 @@ class KMSClientIntegrationSpec extends FreeSpec with AwsIntegrationSpec with Str
       asyncClient.enableKey(keyArn.arnString)
       eventually {
         asyncClient.describeKey(keyId).futureValue.get.enabled shouldBe true
-      }(Eventually.PatienceConfig(2.minutes, 1.second))
+      }(Eventually.PatienceConfig(2.minutes, 1.second), Position.here)
     }
 
     "generate and decrypt a data key" in {

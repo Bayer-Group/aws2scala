@@ -7,7 +7,6 @@ import com.monsanto.arch.awsutil.s3.model.S3.Implicits
 import com.monsanto.arch.awsutil.s3.{AsyncS3Client, UploadSource}
 
 import scala.concurrent.Future
-import scala.language.implicitConversions
 
 /** Represents an S3 bucket and allows operations on the bucket through method invocation.
   *

@@ -7,7 +7,7 @@ import com.amazonaws.AmazonServiceException
 import com.amazonaws.services.kms.{AWSKMSAsync, model ⇒ aws}
 import com.monsanto.arch.awsutil.converters.KmsConverters._
 import com.monsanto.arch.awsutil.kms.model._
-import com.monsanto.arch.awsutil.{AWSFlow, AWSFlowAdapter}
+import com.monsanto.arch.awsutil._
 
 import scala.collection.JavaConverters._
 
@@ -94,7 +94,7 @@ private[awsutil] class DefaultStreamingKMSClient(kms: AWSKMSAsync) extends Strea
         val inputCopy = b.add(Broadcast[CreateKeyWithAliasRequest](2))
         val metadataCopy = b.add(Broadcast[KeyMetadata](2))
         val aliasInputs = b.add(Zip[String,String])
-        val outputSync = b.add(ZipWith[KeyMetadata, String, KeyMetadata]((a,b) ⇒ a))
+        val outputSync = b.add(ZipWith[KeyMetadata, String, KeyMetadata]((a,_) ⇒ a))
 
         // create the key
         inputCopy.out(0) ~> keyCreator ~> metadataCopy.in

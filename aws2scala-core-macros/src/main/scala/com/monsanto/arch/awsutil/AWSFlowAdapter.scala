@@ -4,9 +4,6 @@ import java.util.concurrent.{Future ⇒ JFuture, TimeUnit}
 
 import com.amazonaws.AmazonWebServiceRequest
 import com.amazonaws.handlers.AsyncHandler
-import com.monsanto.arch.awsutil.impl.Macros
-
-import scala.language.experimental.macros
 
 /** Type class used for paging through asynchronous AWS requests. */
 trait AWSFlowAdapter[Request <: AmazonWebServiceRequest, Result] {
@@ -28,23 +25,35 @@ object AWSFlowAdapter {
   /** Generates a flow adapter from an async method handle.  The implementation depends on the fact that
     * paging is handled by calling `Request.withNextToken` and `Response.getNextToken`.
     */
-  def nextTokenFlowAdapter[Request <: AmazonWebServiceRequest, Result]
+  def nextTokenFlowAdapter[Request <: AmazonWebServiceRequest: TakesNextToken, Result: HasNextToken]
         (asyncCall: AWSAsyncCall[Request,Result]): AWSFlowAdapter[Request,Result] =
-    macro Macros.nextTokenFlowAdapter[Request, Result]
+    new AWSFlowAdapter[Request,Result] {
+      override def processRequest: RequestProcessor = asyncCall
+      override def getToken(result: Result): Option[String] = HasNextToken[Result].getToken(result)
+      override def withToken(request: Request, token: String): Request = TakesNextToken[Request].withToken(request,token)
+    }
 
   /** Generates a flow adapter from an async method handle.  The implementation depends on the fact that
     * paging is handled by calling `Request.withMarker` and `Response.getNextMarker`.
     */
-  def nextMarkerFlowAdapter[Request <: AmazonWebServiceRequest, Result]
+  def nextMarkerFlowAdapter[Request <: AmazonWebServiceRequest: TakesMarker, Result: HasNextMarker]
         (asyncCall: AWSAsyncCall[Request,Result]): AWSFlowAdapter[Request,Result] =
-    macro Macros.nextMarkerFlowAdapter[Request, Result]
+    new AWSFlowAdapter[Request,Result] {
+      override def processRequest: RequestProcessor = asyncCall
+      override def getToken(result: Result): Option[String] = HasNextMarker[Result].getNextMarker(result)
+      override def withToken(request: Request, token: String): Request = TakesMarker[Request].withMarker(request,token)
+    }
 
   /** Generates a flow adapter from an async method handle.  The implementation depends on the fact that
     * paging is handled by calling `Request.withMarker` and `Response.getMarker`.
     */
-  def markerFlowAdapter[Request <: AmazonWebServiceRequest, Result]
+  def markerFlowAdapter[Request <: AmazonWebServiceRequest: TakesMarker, Result: HasMarker]
         (asyncCall: AWSAsyncCall[Request,Result]): AWSFlowAdapter[Request,Result] =
-    macro Macros.markerFlowAdapter[Request, Result]
+    new AWSFlowAdapter[Request,Result] {
+      override def processRequest: RequestProcessor = asyncCall
+      override def getToken(result: Result): Option[String] = HasMarker[Result].getMarker(result)
+      override def withToken(request: Request, token: String): Request = TakesMarker[Request].withMarker(request,token)
+    }
 
   /** A utility for wrapping an asynchronous AWS call that returns a useless POJO.  This utility will make the result
     * of the call be the request that was passed in.

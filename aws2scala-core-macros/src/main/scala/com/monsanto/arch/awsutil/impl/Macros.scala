@@ -1,137 +1,32 @@
 package com.monsanto.arch.awsutil.impl
 
-import com.amazonaws.AmazonWebServiceRequest
-import com.monsanto.arch.awsutil.{AWSAsyncCall, AWSFlowAdapter}
 import scala.reflect.macros.blackbox
 
 /** Contains macro implementations. */
 object Macros {
-  def nextTokenFlowAdapter[Request <: AmazonWebServiceRequest, Result]
-        (c: blackbox.Context)
-        (asyncCall: c.Expr[AWSAsyncCall[Request,Result]])
-        (implicit requestType: c.WeakTypeTag[Request], resultType: c.WeakTypeTag[Result]): c.Tree = {
+
+  def hasNextTokenImpl[Result](c: blackbox.Context)(implicit resultType: c.WeakTypeTag[Result]): c.Tree = {
     import c.universe._
-    val adapterType = weakTypeOf[AWSFlowAdapter[Request,Result]]
-    q"""
-      new $adapterType {
-        def processRequest: RequestProcessor = $asyncCall
-        def getToken(result: $resultType) = Option(result.getNextToken).filter(_.nonEmpty)
-        def withToken(request: $requestType, token: String) = request.withNextToken(token)
-      }
-    """
+    q"new HasNextToken[$resultType] { def getToken(res: $resultType) = Option(res.getNextToken).filter(_.nonEmpty) }"
   }
 
-  def pagedByNextToken[Request <: AmazonWebServiceRequest, Result]
-        (c: blackbox.Context)
-        (asyncCall: c.Expr[AWSAsyncCall[Request,Result]])
-        (implicit requestType: c.WeakTypeTag[Request], resultType: c.WeakTypeTag[Result]): c.Tree = {
+  def takesNextTokenImpl[Request](c: blackbox.Context)(implicit requestType: c.WeakTypeTag[Request]): c.Tree = {
     import c.universe._
-    val stageType = weakTypeTag[AWSGraphStage[Request,Result]]
-    val flowAdapterObject = weakTypeTag[AWSFlowAdapter[Request,Result]].tpe.companion
-    q"""
-      akka.stream.scaladsl.Flow.fromGraph(new $stageType($flowAdapterObject.nextTokenFlowAdapter($asyncCall)))
-        .map {
-          case Left(exception) ⇒ throw exception
-          case Right(result)   ⇒ result
-        }
-    """
+    q"new TakesNextToken[$requestType] { def withToken(req: $requestType, tok: String) = req.withNextToken(tok) }"
   }
 
-  def pagedByNextTokenEither[Request <: AmazonWebServiceRequest, Result]
-        (c: blackbox.Context)
-        (asyncCall: c.Expr[AWSAsyncCall[Request,Result]])
-        (implicit requestType: c.WeakTypeTag[Request], resultType: c.WeakTypeTag[Result]): c.Tree = {
+  def hasNextMarkerImpl[Result](c: blackbox.Context)(implicit resultType: c.WeakTypeTag[Result]): c.Tree = {
     import c.universe._
-    val stageType = weakTypeTag[AWSGraphStage[Request,Result]]
-    val flowAdapterObject = weakTypeTag[AWSFlowAdapter[Request,Result]].tpe.companion
-    q"""
-      akka.stream.scaladsl.Flow.fromGraph(new $stageType($flowAdapterObject.nextTokenFlowAdapter($asyncCall)))
-    """
+    q"new HasNextMarker[$resultType] { def getNextMarker(res: $resultType) = Option(res.getNextMarker).filter(_.nonEmpty) }"
   }
 
-  def nextMarkerFlowAdapter[Request <: AmazonWebServiceRequest, Result]
-        (c: blackbox.Context)
-        (asyncCall: c.Expr[AWSAsyncCall[Request,Result]])
-        (implicit requestType: c.WeakTypeTag[Request], resultType: c.WeakTypeTag[Result]): c.Tree = {
+  def hasMarkerImpl[Result](c: blackbox.Context)(implicit resultType: c.WeakTypeTag[Result]): c.Tree = {
     import c.universe._
-    val adapterType = weakTypeOf[AWSFlowAdapter[Request,Result]]
-    q"""
-      new $adapterType {
-        def processRequest: RequestProcessor = $asyncCall
-        def getToken(result: $resultType) = Option(result.getNextMarker).filter(_.nonEmpty)
-        def withToken(request: $requestType, token: String) = request.withMarker(token)
-      }
-      """
+    q"new HasMarker[$resultType] { def getMarker(res: $resultType) = Option(res.getMarker).filter(_.nonEmpty) }"
   }
 
-  def pagedByNextMarker[Request <: AmazonWebServiceRequest, Result]
-        (c: blackbox.Context)
-        (asyncCall: c.Expr[AWSAsyncCall[Request,Result]])
-        (implicit requestType: c.WeakTypeTag[Request], resultType: c.WeakTypeTag[Result]): c.Tree = {
+  def takesMarkerImpl[Request](c: blackbox.Context)(implicit requestType: c.WeakTypeTag[Request]): c.Tree = {
     import c.universe._
-    val stageType = weakTypeTag[AWSGraphStage[Request,Result]]
-    val flowAdapterObject = weakTypeTag[AWSFlowAdapter[Request,Result]].tpe.companion
-    q"""
-      akka.stream.scaladsl.Flow.fromGraph(new $stageType($flowAdapterObject.nextMarkerFlowAdapter($asyncCall)))
-        .map {
-          case Left(exception) ⇒ throw exception
-          case Right(result)   ⇒ result
-        }
-    """
-  }
-
-  def pagedByNextMarkerEither[Request <: AmazonWebServiceRequest, Result]
-        (c: blackbox.Context)
-        (asyncCall: c.Expr[AWSAsyncCall[Request,Result]])
-        (implicit requestType: c.WeakTypeTag[Request], resultType: c.WeakTypeTag[Result]): c.Tree = {
-    import c.universe._
-    val stageType = weakTypeTag[AWSGraphStage[Request,Result]]
-    val flowAdapterObject = weakTypeTag[AWSFlowAdapter[Request,Result]].tpe.companion
-    q"""
-      akka.stream.scaladsl.Flow.fromGraph(new $stageType($flowAdapterObject.nextMarkerFlowAdapter($asyncCall)))
-    """
-  }
-
-  def markerFlowAdapter[Request <: AmazonWebServiceRequest, Result]
-        (c: blackbox.Context)
-        (asyncCall: c.Expr[AWSAsyncCall[Request,Result]])
-        (implicit requestType: c.WeakTypeTag[Request], resultType: c.WeakTypeTag[Result]): c.Tree = {
-    import c.universe._
-    val adapterType = weakTypeOf[AWSFlowAdapter[Request,Result]]
-    q"""
-      new $adapterType {
-        def processRequest: RequestProcessor = $asyncCall
-        def getToken(result: $resultType) = Option(result.getMarker).filter(_.nonEmpty)
-        def withToken(request: $requestType, token: String) = request.withMarker(token)
-      }
-      """
-  }
-
-  def pagedByMarker[Request <: AmazonWebServiceRequest, Result]
-        (c: blackbox.Context)
-        (asyncCall: c.Expr[AWSAsyncCall[Request,Result]])
-        (implicit requestType: c.WeakTypeTag[Request], resultType: c.WeakTypeTag[Result]): c.Tree = {
-    import c.universe._
-    val stageType = weakTypeTag[AWSGraphStage[Request,Result]]
-    val flowAdapterObject = weakTypeTag[AWSFlowAdapter[Request,Result]].tpe.companion
-    q"""
-      akka.stream.scaladsl.Flow.fromGraph(new $stageType($flowAdapterObject.markerFlowAdapter($asyncCall)))
-        .map {
-          case Left(exception) ⇒ throw exception
-          case Right(result)   ⇒ result
-        }
-    """
-  }
-
-  def pagedByMarkerEither[Request <: AmazonWebServiceRequest, Result]
-        (c: blackbox.Context)
-        (asyncCall: c.Expr[AWSAsyncCall[Request,Result]])
-        (implicit requestType: c.WeakTypeTag[Request], resultType: c.WeakTypeTag[Result]): c.Tree = {
-    import c.universe._
-    val stageType = weakTypeTag[AWSGraphStage[Request,Result]]
-    val flowAdapterObject = weakTypeTag[AWSFlowAdapter[Request,Result]].tpe.companion
-    q"""
-      akka.stream.scaladsl.Flow.fromGraph(new $stageType($flowAdapterObject.markerFlowAdapter($asyncCall)))
-    """
+    q"new TakesMarker[$requestType] { def withMarker(req: $requestType, marker:String) = req.withMarker(marker) }"
   }
 }

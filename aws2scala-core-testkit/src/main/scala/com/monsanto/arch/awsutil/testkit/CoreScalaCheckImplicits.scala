@@ -325,13 +325,13 @@ object CoreScalaCheckImplicits {
     }
 
   implicit def arbAction: Arbitrary[Action] =
-    Arbitrary(Gen.oneOf((Action.toAwsConversions - Action.AllActions).keys.toList))
+    Arbitrary(Gen.oneOf(if (Action.toAwsConversions.size > 1) (Action.toAwsConversions - Action.AllActions).keys.toList else Statement.allActions))
 
   implicit def arbActions: Arbitrary[Seq[Action]] =
     Arbitrary {
       Gen.frequency(
         1 → Gen.const(Statement.allActions),
-        19 → UtilGen.listOfSqrtN(arbitrary[Action]))
+        19 → UtilGen.listOfSqrtN(arbitrary[Action]).map(_.distinct))
     }
 
   implicit lazy val arbPath: Arbitrary[Path] = {

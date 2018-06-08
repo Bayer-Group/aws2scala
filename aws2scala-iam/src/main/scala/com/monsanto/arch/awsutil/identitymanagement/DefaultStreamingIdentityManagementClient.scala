@@ -5,7 +5,7 @@ import akka.stream.scaladsl.{Flow, Source}
 import com.amazonaws.services.identitymanagement.{AmazonIdentityManagementAsync, model ⇒ aws}
 import com.monsanto.arch.awsutil.converters.IamConverters._
 import com.monsanto.arch.awsutil.identitymanagement.model._
-import com.monsanto.arch.awsutil.{AWSFlow, AWSFlowAdapter}
+import com.monsanto.arch.awsutil._
 
 import scala.collection.JavaConverters._
 

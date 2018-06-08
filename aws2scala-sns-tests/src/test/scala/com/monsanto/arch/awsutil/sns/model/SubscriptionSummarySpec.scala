@@ -13,7 +13,7 @@ import org.scalatest.Matchers._
 import org.scalatest.prop.GeneratorDrivenPropertyChecks._
 
 class SubscriptionSummarySpec extends FreeSpec with MockFactory with Materialised {
-  private implicit val generatorDrivenConfig = PropertyCheckConfig(minSuccessful = 50, maxSize = 50)
+  private implicit val generatorDrivenConfig = PropertyCheckConfiguration(minSuccessful = 50, sizeRange = 50)
 
   "a SubscriptionSummary should" - {
     "indicate if it is pending" in {

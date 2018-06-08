@@ -20,7 +20,7 @@ import spray.json.{JsObject, JsString, JsonParser}
 import scala.collection.JavaConverters._
 
 class DefaultSNSClientSpec extends FreeSpec with MockFactory with AwsMockUtils with Materialised {
-  private implicit val generatorDrivenConfig = PropertyCheckConfig(minSuccessful = 50, maxSize = 50)
+  private implicit val generatorDrivenConfig = PropertyCheckConfiguration(minSuccessful = 50, sizeRange = 50)
 
   "the default SNS client can" - {
     "create a topic" in {
@@ -170,7 +170,7 @@ class DefaultSNSClientSpec extends FreeSpec with MockFactory with AwsMockUtils w
 
     "list subscriptions" - {
       "all of them" in {
-        forAll(maxSize(20)) { subscriptionSummaries: List[SubscriptionSummary] ⇒
+        forAll(SizeRange(20)) { subscriptionSummaries: List[SubscriptionSummary] ⇒
           withFixture { f ⇒
             val listings = if (subscriptionSummaries.isEmpty) List(subscriptionSummaries) else subscriptionSummaries.grouped(5).toList
             listings.zipWithIndex.foreach { case (listing, i) ⇒
@@ -197,7 +197,7 @@ class DefaultSNSClientSpec extends FreeSpec with MockFactory with AwsMockUtils w
       }
 
       "by topic" in {
-        forAll(maxSize(20)) { (topicArn: TopicArn, subscriptionSummaries: List[SubscriptionSummary]) ⇒
+        forAll(SizeRange(20)) { (topicArn: TopicArn, subscriptionSummaries: List[SubscriptionSummary]) ⇒
           withFixture { f ⇒
             val listings = if (subscriptionSummaries.isEmpty) List(subscriptionSummaries) else subscriptionSummaries.grouped(5).toList
             listings.zipWithIndex.foreach { case (listing, i) ⇒

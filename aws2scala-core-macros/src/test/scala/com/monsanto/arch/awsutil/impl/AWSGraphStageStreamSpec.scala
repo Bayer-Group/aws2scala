@@ -6,8 +6,9 @@ import akka.stream.scaladsl._
 import akka.stream.{ActorMaterializer, FlowShape}
 import com.amazonaws.AmazonWebServiceRequest
 import com.amazonaws.handlers.AsyncHandler
-import com.monsanto.arch.awsutil.{AWSAsyncCall, AWSFlow}
+import com.monsanto.arch.awsutil._
 import org.scalacheck.Gen
+import org.scalactic.source.Position
 import org.scalamock.scalatest.MockFactory
 import org.scalatest.concurrent.{Eventually, ScalaFutures}
 import org.scalatest.prop.GeneratorDrivenPropertyChecks
@@ -53,7 +54,7 @@ class AWSGraphStageStreamSpec extends FreeSpec with MockFactory with BeforeAndAf
           val result = graph.run()
           eventually {
             result.eitherValue.get shouldBe Left(dynamite)
-          }(eventuallyPatienceConfig)
+          }(eventuallyPatienceConfig, Position.here)
         }
       }
     }
@@ -61,7 +62,7 @@ class AWSGraphStageStreamSpec extends FreeSpec with MockFactory with BeforeAndAf
     "from multiple requests" - {
       "with no throttling" - {
         "terminating normally" in {
-          forAll(Gen.nonEmptyListOf(Gen.nonEmptyListOf(Gen.posNum[Int])) → "list of pages", maxSize(10)) { listOfPages ⇒
+          forAll(Gen.nonEmptyListOf(Gen.nonEmptyListOf(Gen.posNum[Int])) → "list of pages", SizeRange(10)) { listOfPages ⇒
             val flow = createFlowFor(listOfPages)
             val source = Source(listOfPages.indices.map(TestRequest(_)))
             val graph = source.via(flow).toMat(sink)(Keep.right)
@@ -70,20 +71,20 @@ class AWSGraphStageStreamSpec extends FreeSpec with MockFactory with BeforeAndAf
         }
 
         "terminating with an error" in {
-          forAll(Gen.nonEmptyListOf(Gen.nonEmptyListOf(Gen.posNum[Int])) → "list of pages", maxSize(10)) { listOfPages ⇒
+          forAll(Gen.nonEmptyListOf(Gen.nonEmptyListOf(Gen.posNum[Int])) → "list of pages", SizeRange(10)) { listOfPages ⇒
             val flow = createFlowFor(listOfPages, terminalError = Some(dynamite))
             val source = Source(listOfPages.indices.map(TestRequest(_)))
             val result = source.via(flow).toMat(sink)(Keep.right).run()
             eventually {
               result.eitherValue.get shouldBe Left(dynamite)
-            }(eventuallyPatienceConfig)
+            }(eventuallyPatienceConfig,Position.here)
           }
         }
       }
 
       "with the source throttled" - {
         "terminating normally" in {
-          forAll(Gen.nonEmptyListOf(Gen.nonEmptyListOf(Gen.posNum[Int])) → "list of pages", maxSize(8)) { listOfPages ⇒
+          forAll(Gen.nonEmptyListOf(Gen.nonEmptyListOf(Gen.posNum[Int])) → "list of pages", SizeRange(8)) { listOfPages ⇒
             val flow = createFlowFor(listOfPages)
             val source = Source(listOfPages.indices.map(TestRequest(_))).via(rateLimit(throttle))
             val graph = source.via(flow).toMat(sink)(Keep.right)
@@ -92,20 +93,20 @@ class AWSGraphStageStreamSpec extends FreeSpec with MockFactory with BeforeAndAf
         }
 
         "terminating with an error" in {
-          forAll(Gen.nonEmptyListOf(Gen.nonEmptyListOf(Gen.posNum[Int])) → "list of pages", maxSize(8)) { listOfPages ⇒
+          forAll(Gen.nonEmptyListOf(Gen.nonEmptyListOf(Gen.posNum[Int])) → "list of pages", SizeRange(8)) { listOfPages ⇒
             val flow = createFlowFor(listOfPages, terminalError = Some(dynamite))
             val source = Source(listOfPages.indices.map(TestRequest(_))).via(rateLimit(throttle))
             val result = source.via(flow).toMat(sink)(Keep.right).run()
             eventually {
               result.eitherValue.get shouldBe Left(dynamite)
-            }(eventuallyPatienceConfig)
+            }(eventuallyPatienceConfig,Position.here)
           }
         }
       }
 
       "with the sink throttled" - {
         "terminating normally" in {
-          forAll(Gen.nonEmptyListOf(Gen.nonEmptyListOf(Gen.posNum[Int])) → "list of pages", maxSize(6)) { listOfPages ⇒
+          forAll(Gen.nonEmptyListOf(Gen.nonEmptyListOf(Gen.posNum[Int])) → "list of pages", SizeRange(6)) { listOfPages ⇒
             val flow = createFlowFor(listOfPages)
             val source = Source(listOfPages.indices.map(TestRequest(_)))
             val graph = source.via(flow).via(rateLimit(throttle)).toMat(sink)(Keep.right)
@@ -114,20 +115,20 @@ class AWSGraphStageStreamSpec extends FreeSpec with MockFactory with BeforeAndAf
         }
 
         "terminating with an error" in {
-          forAll(Gen.nonEmptyListOf(Gen.nonEmptyListOf(Gen.posNum[Int])) → "list of pages", maxSize(6)) { listOfPages ⇒
+          forAll(Gen.nonEmptyListOf(Gen.nonEmptyListOf(Gen.posNum[Int])) → "list of pages", SizeRange(6)) { listOfPages ⇒
             val flow = createFlowFor(listOfPages, terminalError = Some(dynamite))
             val source = Source(listOfPages.indices.map(TestRequest(_)))
             val result = source.via(flow).via(rateLimit(throttle)).toMat(sink)(Keep.right).run()
             eventually {
               result.eitherValue.get shouldBe Left(dynamite)
-            }(eventuallyPatienceConfig)
+            }(eventuallyPatienceConfig,Position.here)
           }
         }
       }
 
       "when the processor is slow" - {
         "terminating normally" in {
-          forAll(Gen.nonEmptyListOf(Gen.nonEmptyListOf(Gen.posNum[Int])) → "list of pages", maxSize(6)) { listOfPages ⇒
+          forAll(Gen.nonEmptyListOf(Gen.nonEmptyListOf(Gen.posNum[Int])) → "list of pages", SizeRange(6)) { listOfPages ⇒
             val flow = createFlowFor(listOfPages, throttle = throttle)
             val source = Source(listOfPages.indices.map(TestRequest(_)))
             val graph = source.via(flow).toMat(sink)(Keep.right)
@@ -136,13 +137,13 @@ class AWSGraphStageStreamSpec extends FreeSpec with MockFactory with BeforeAndAf
         }
 
         "terminating with an error" in {
-          forAll(Gen.nonEmptyListOf(Gen.nonEmptyListOf(Gen.posNum[Int])) → "list of pages", maxSize(6)) { listOfPages ⇒
+          forAll(Gen.nonEmptyListOf(Gen.nonEmptyListOf(Gen.posNum[Int])) → "list of pages", SizeRange(6)) { listOfPages ⇒
             val flow = createFlowFor(listOfPages, throttle = throttle, terminalError = Some(dynamite))
             val source = Source(listOfPages.indices.map(TestRequest(_)))
             val result = source.via(flow).toMat(sink)(Keep.right).run()
             eventually {
               result.eitherValue.get shouldBe Left(dynamite)
-            }(eventuallyPatienceConfig)
+            }(eventuallyPatienceConfig,Position.here)
           }
         }
       }

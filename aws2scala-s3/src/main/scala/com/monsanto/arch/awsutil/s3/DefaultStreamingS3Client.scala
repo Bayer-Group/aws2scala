@@ -10,12 +10,11 @@ import akka.stream.FlowShape
 import akka.stream.scaladsl.GraphDSL.Implicits._
 import akka.stream.scaladsl._
 import com.amazonaws.handlers.AsyncHandler
-import com.amazonaws.regions.ServiceAbbreviations
 import com.amazonaws.services.s3.transfer.{Download, TransferManager}
 import com.amazonaws.services.s3.{AmazonS3, AmazonS3Client, model ⇒ aws}
 import com.monsanto.arch.awsutil.s3.model.AwsConverters._
 import com.monsanto.arch.awsutil.s3.model.{BucketNameAndKey, CreateBucketRequest}
-import com.monsanto.arch.awsutil.{AWSAsyncCall, AWSFlow, AwsSettings}
+import com.monsanto.arch.awsutil._
 import com.typesafe.scalalogging.LazyLogging
 
 import scala.collection.JavaConverters._
@@ -248,7 +247,7 @@ private[awsutil] class DefaultStreamingS3Client(s3client: AmazonS3, transferMana
         logger.warn("Not using concrete Amazon S3 client, getUrl results may be incorrect")
         Flow[BucketNameAndKey]
           .map { o ⇒
-            new URL(s"https://${o.bucketName}.${settings.region.getServiceEndpoint(ServiceAbbreviations.S3)}/${o.key}")
+            new URL(s"https://${o.bucketName}.${settings.region.getServiceEndpoint(AmazonS3.ENDPOINT_PREFIX)}/${o.key}")
           }
           .named("S3.pseudoObjectUrlGetter")
     }

@@ -21,7 +21,7 @@ import org.scalatest.prop.GeneratorDrivenPropertyChecks._
 class DefaultStreamingIdentityManagementClientSpec extends FreeSpec with MockFactory with Materialised with AwsMockUtils with AwsMatcherSupport {
   "the default StreamingIdentityManagementClient provides" - {
     "a role lister" in {
-      forAll(maxSize(30)) { (maybePrefix: Option[Path], scalaRoles: List[Role]) ⇒
+      forAll(SizeRange(30)) { (maybePrefix: Option[Path], scalaRoles: List[Role]) ⇒
         val awsRoles = scalaRoles.map(_.asAws)
         val iam = mock[AmazonIdentityManagementAsync]("iam")
         val streaming = new DefaultStreamingIdentityManagementClient(iam)
@@ -57,7 +57,7 @@ class DefaultStreamingIdentityManagementClientSpec extends FreeSpec with MockFac
     }
 
     "a role creator" in {
-      forAll(maxSize(20)) { requestsWithRoles: List[(CreateRoleRequest,Role)] ⇒
+      forAll(SizeRange(20)) { requestsWithRoles: List[(CreateRoleRequest,Role)] ⇒
         val iam = mock[AmazonIdentityManagementAsync]("iam")
         val streaming = new DefaultStreamingIdentityManagementClient(iam)
         val (requests, createdRoles) = requestsWithRoles.unzip
@@ -347,7 +347,7 @@ class DefaultStreamingIdentityManagementClientSpec extends FreeSpec with MockFac
     }
 
     "a policy version lister" in {
-      forAll(maxSize(20)) { (arn: PolicyArn, versions: Seq[ManagedPolicyVersion]) ⇒
+      forAll(SizeRange(20)) { (arn: PolicyArn, versions: Seq[ManagedPolicyVersion]) ⇒
         val iam = mock[AmazonIdentityManagementAsync]("iam")
         val streaming = new DefaultStreamingIdentityManagementClient(iam)
 

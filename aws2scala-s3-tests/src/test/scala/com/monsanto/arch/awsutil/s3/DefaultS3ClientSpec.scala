@@ -6,8 +6,7 @@ import java.util.concurrent.TimeoutException
 import java.util.{Date, UUID}
 
 import akka.stream.scaladsl.{Sink, Source}
-import com.amazonaws.event.ProgressListener
-import com.amazonaws.services.s3.model.{Region ⇒ S3Region, ProgressEvent ⇒ _, ProgressListener ⇒ _, _}
+import com.amazonaws.services.s3.model. _
 import com.amazonaws.services.s3.transfer.model.UploadResult
 import com.amazonaws.services.s3.transfer.{Download, TransferManager, Upload}
 import com.amazonaws.services.s3.{AbstractAmazonS3, Headers}
@@ -18,15 +17,15 @@ import com.monsanto.arch.awsutil.test_support.AdaptableScalaFutures._
 import com.monsanto.arch.awsutil.test_support.Materialised
 import com.typesafe.config.ConfigFactory
 import org.scalacheck.Gen
+import org.scalactic.source.Position
 import org.scalamock.scalatest.MockFactory
-import org.scalatest.FreeSpec
 import org.scalatest.Matchers._
 import org.scalatest.prop.GeneratorDrivenPropertyChecks._
-import spray.json.JsonParser
+import org.scalatest.{Assertion, FreeSpec}
 
 import scala.collection.JavaConverters._
+import scala.concurrent.Await
 import scala.concurrent.duration.DurationInt
-import scala.concurrent.{Await, Promise}
 
 class DefaultS3ClientSpec extends FreeSpec with Materialised with MockFactory {
   private val userName = System.getProperty("user.name")
@@ -42,13 +41,6 @@ class DefaultS3ClientSpec extends FreeSpec with Materialised with MockFactory {
 
   def s3behaviours(settings: AwsSettings): Unit = {
     val bucketName = s"aws2scala-s3-test-common-${UUID.randomUUID()}"
-    val s3region = settings.region.getName match {
-      case "us-east-1" => S3Region.US_Standard
-      case "us-west-2" => S3Region.US_West_2
-    }
-    val defaultBucketPolicy = settings.s3.defaultBucketPolicy.map { policy =>
-      JsonParser(policy.replace("@BUCKET_NAME@", bucketName))
-    }
     val sseValue = settings.s3.defaultPutObjectHeaders.get(Headers.SERVER_SIDE_ENCRYPTION)
     sseValue shouldBe settings.s3.defaultCopyObjectHeaders.get(Headers.SERVER_SIDE_ENCRYPTION)
 
@@ -448,7 +440,7 @@ class DefaultS3ClientSpec extends FreeSpec with Materialised with MockFactory {
         }
         .anyNumberOfTimes()
 
-      val result = f.asyncClient.emptyBucket(bucketName).futureValue(PatienceConfig(1.second, 100.milliseconds))
+      val result = f.asyncClient.emptyBucket(bucketName).futureValue(PatienceConfig(1.second, 100.milliseconds), Position.here)
       result shouldBe bucketName
     }
 
@@ -536,7 +528,7 @@ class DefaultS3ClientSpec extends FreeSpec with Materialised with MockFactory {
           (f.s3.deleteBucket(_: String)).expects(bucketName)
         }
 
-        val bucketNames = bucketAndKeys.map(_._1).toList
+        val bucketNames = bucketAndKeys.keys.toList
         val result =
           Source(bucketNames)
             .via(f.streamingClient.bucketEmptierAndDeleter)
@@ -555,7 +547,7 @@ class DefaultS3ClientSpec extends FreeSpec with Materialised with MockFactory {
       (f.s3.listObjects(_: ListObjectsRequest))
         .expects(where{r: ListObjectsRequest ⇒
           r.getBucketName == bucketNameAndKey.bucketName && r.getPrefix == bucketNameAndKey.key})
-        .onCall { r: ListObjectsRequest ⇒
+        .onCall { _: ListObjectsRequest ⇒
           val listing = mock[ObjectListing]
           (listing.getObjectSummaries _).expects().returning(List.empty[S3ObjectSummary].asJava)
           (listing.getNextMarker _).expects()
@@ -569,7 +561,6 @@ class DefaultS3ClientSpec extends FreeSpec with Materialised with MockFactory {
                    summary: S3ObjectSummary): Unit = {
       val upload = {
         val upload = mock[Upload]("upload")
-        val listener = Promise[ProgressListener]
         (upload.waitForUploadResult _).expects().returning {
           val result = mock[UploadResult]("result")
           (result.getBucketName _).expects().returning(bucketName).anyNumberOfTimes()
@@ -593,7 +584,7 @@ class DefaultS3ClientSpec extends FreeSpec with Materialised with MockFactory {
     }
   }
 
-  private def withFixture(settings: AwsSettings)(test: BasicFixture => Any): Unit = {
+  private def withFixture(settings: AwsSettings)(test: BasicFixture => Assertion): Assertion = {
     val s3 = mock[AbstractAmazonS3]("s3")
     val transferManager = mock[TransferManager]("transferManager")
     val streamingClient = new DefaultStreamingS3Client(s3, transferManager, settings)(materialiser.executionContext)

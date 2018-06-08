@@ -5,7 +5,7 @@ import akka.stream.scaladsl.Flow
 import com.amazonaws.services.cloudformation.{AmazonCloudFormationAsync, model ⇒ aws}
 import com.monsanto.arch.awsutil.cloudformation.model.AwsConverters._
 import com.monsanto.arch.awsutil.cloudformation.model.{DeleteStackRequest, ValidatedTemplate}
-import com.monsanto.arch.awsutil.{AWSFlow, AWSFlowAdapter}
+import com.monsanto.arch.awsutil._
 
 import scala.collection.JavaConverters._
 

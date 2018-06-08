@@ -74,7 +74,7 @@ class DefaultAsyncIdentityManagementClientSpec extends FreeSpec with MockFactory
     }
 
     "list all roles" in {
-      forAll(maxSize(50)) { roles: List[Role] ⇒
+      forAll(SizeRange(50)) { roles: List[Role] ⇒
         val streaming = mock[StreamingIdentityManagementClient]("streaming")
         val async = new DefaultAsyncIdentityManagementClient(streaming)
 
