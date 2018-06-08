@@ -234,18 +234,18 @@ object DefaultCloudFormationClientSpec {
     val topicDisplayNameParameter = testTemplateParameter(stackName)
 
     val template = Template(
-      Description = TemplateDescription,
+      Description = Some(TemplateDescription),
       Parameters = Some(Seq(topicDisplayNameParameter)),
       Conditions = None,
       Mappings = None,
-      Resources = Some(Seq(
+      Resources = Seq(
         `AWS::SNS::Topic`("TestSNSTopic",
           DisplayName = Some(ParameterRef(topicDisplayNameParameter)),
           Subscription = None,
           TopicName = None
         ),
         `AWS::IAM::Group`("TestGroup")
-      )),
+      ),
       Routables = None,
       Outputs = None)
 

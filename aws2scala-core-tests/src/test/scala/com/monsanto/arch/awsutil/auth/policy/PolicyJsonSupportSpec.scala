@@ -13,7 +13,7 @@ import org.scalacheck.Gen
 import org.scalatest.FreeSpec
 import org.scalatest.Matchers._
 import org.scalatest.prop.GeneratorDrivenPropertyChecks._
-import spray.json.{JsArray, JsNull, JsObject, JsString, JsValue, pimpString}
+import spray.json._
 
 class PolicyJsonSupportSpec extends FreeSpec {
   TestAction.registerActions()

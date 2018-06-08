@@ -4,7 +4,7 @@ import com.monsanto.arch.awsutil.auth.policy.Policy
 import com.monsanto.arch.awsutil.testkit.CoreScalaCheckImplicits._
 import com.monsanto.arch.awsutil.testkit.SnsScalaCheckImplicits._
 import org.scalacheck.{Arbitrary, Gen, Shrink}
-import spray.json.{pimpAny, pimpString}
+import spray.json._
 
 case class TopicAttributes(arn: TopicArn,
                            displayName: String,

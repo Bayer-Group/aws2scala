@@ -7,9 +7,10 @@ sealed abstract class NetworkInterfaceStatus(val toAws: aws.NetworkInterfaceStat
 
 object NetworkInterfaceStatus extends AwsEnumerationCompanion[NetworkInterfaceStatus, aws.NetworkInterfaceStatus] {
   case object Attaching extends NetworkInterfaceStatus(aws.NetworkInterfaceStatus.Attaching)
+  case object Associated extends NetworkInterfaceStatus(aws.NetworkInterfaceStatus.Associated)
   case object Available extends NetworkInterfaceStatus(aws.NetworkInterfaceStatus.Available)
   case object Detaching extends NetworkInterfaceStatus(aws.NetworkInterfaceStatus.Detaching)
   case object InUse extends NetworkInterfaceStatus(aws.NetworkInterfaceStatus.InUse)
 
-  override val values: Seq[NetworkInterfaceStatus] = Seq(Attaching, Available, Detaching, InUse)
+  override val values: Seq[NetworkInterfaceStatus] = Seq(Attaching, Associated, Available, Detaching, InUse)
 }

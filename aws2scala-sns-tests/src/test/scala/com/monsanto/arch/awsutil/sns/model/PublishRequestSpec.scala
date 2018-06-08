@@ -8,7 +8,7 @@ import org.scalactic.Equality
 import org.scalatest.FreeSpec
 import org.scalatest.Matchers._
 import org.scalatest.prop.GeneratorDrivenPropertyChecks._
-import spray.json.{JsObject, JsString, pimpString}
+import spray.json._
 
 class PublishRequestSpec extends FreeSpec {
   "a PublishRequest should" - {
